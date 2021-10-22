@@ -277,7 +277,7 @@ function Rest(restOptions) {
     /**
      * 
      * 
-     * UPDATE ORDER
+     * UPDATE ORDERS
      * 
      * 
      */
