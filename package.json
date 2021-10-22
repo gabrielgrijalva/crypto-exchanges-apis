@@ -7,5 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Gabriel Grijalva Flores",
-  "license": "ISC"
+  "license": "ISC",
+  "typings": "./src/types-declarations/index.d.ts",
+  "dependencies": {
+    "moment": "^2.29.1",
+    "qs": "^6.10.1"
+  }
 }
