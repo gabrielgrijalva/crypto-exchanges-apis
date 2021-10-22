@@ -11,6 +11,7 @@
   "typings": "./src/types-declarations/index.d.ts",
   "dependencies": {
     "moment": "^2.29.1",
-    "qs": "^6.10.1"
+    "qs": "^6.10.1",
+    "uuid": "^8.3.2"
   }
 }
