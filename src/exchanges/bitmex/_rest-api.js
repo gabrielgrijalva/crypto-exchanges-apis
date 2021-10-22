@@ -268,7 +268,7 @@ function Rest(restOptions) {
       if (params.quantity) {
         data.orderQty = params.quantity;
       }
-      const response = await request.private('PUT', '/api/v1/order', params);
+      const response = await request.private('PUT', '/api/v1/order', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
