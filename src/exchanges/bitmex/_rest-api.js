@@ -17,7 +17,7 @@ const Request = require('../../_shared-classes/request');
 /**
  * @param {RestApi.params} params
  * @param {Object | string} responseData 
- * @returns {RestApi.RestErrorResponse}
+ * @returns {{ error: RestApi.RestErrorResponseData }}
  */
 function handleResponseError(params, responseData) {
   /** @type {RestApi.restErrorResponseDataType} */
@@ -47,8 +47,7 @@ function handleResponseError(params, responseData) {
     type = 'request-timeout';
   }
   return {
-    error: true,
-    data: {
+    error: {
       type: type,
       params: params,
       exchange: responseData,
@@ -164,7 +163,7 @@ function Rest(restOptions) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      return { error: false, data: params };
+      return { data: params };
     },
     /**
      * 
@@ -196,7 +195,7 @@ function Rest(restOptions) {
         if (v.error) {
           return handleResponseError(params[i], v);
         }
-        return { error: false, data: params[i] };
+        return { data: params[i] };
       });
     },
     /**
@@ -213,7 +212,7 @@ function Rest(restOptions) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      return { error: false, data: params };
+      return { data: params };
     },
     /**
      * 
@@ -233,7 +232,7 @@ function Rest(restOptions) {
         if (v.error) {
           return handleResponseError(params[i], v);
         }
-        return { error: false, data: params[i] };
+        return { data: params[i] };
       });
     },
     /**
@@ -250,7 +249,7 @@ function Rest(restOptions) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      return { error: false, data: params };
+      return { data: params };
     },
     /**
      * 
@@ -272,7 +271,7 @@ function Rest(restOptions) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      return { error: false, data: params };
+      return { data: params };
     },
     /**
      * 
@@ -302,7 +301,7 @@ function Rest(restOptions) {
         if (v.error) {
           return handleResponseError(params[i], v);
         }
-        return { error: false, data: params[i] };
+        return { data: params[i] };
       });
     },
     /**
@@ -332,7 +331,7 @@ function Rest(restOptions) {
         candle.volume = +response.data.v[i];
         return candle;
       });
-      return { error: false, data: candles };
+      return { data: candles };
     },
     /**
      * 
@@ -397,7 +396,7 @@ function Rest(restOptions) {
         equity: balances.equity,
         balance: balances.balance,
       };
-      return { error: false, data: data };
+      return { data: data };
     },
     /**
      * 
@@ -415,7 +414,7 @@ function Rest(restOptions) {
         return handleResponseError(params, response.data);
       }
       const price = +response.data[0].price;
-      return { error: false, data: price };
+      return { data: price };
     },
     /**
      * 
@@ -448,7 +447,7 @@ function Rest(restOptions) {
         liqPxS: liqPxS,
         liqPxB: liqPxB,
       };
-      return { error: false, data: liquidation };
+      return { data: liquidation };
     },
     /**
      * 
@@ -468,7 +467,7 @@ function Rest(restOptions) {
         current: +response.data[0].fundingRate,
         estimated: +response.data[0].indicativeFundingRate,
       };
-      return { error: false, data: fundings };
+      return { data: fundings };
     },
   };
   return rest;
