@@ -25,23 +25,23 @@ declare namespace RestApi {
    * 
    */
   type createOrderParams = {
-    id?: string;
+    id: string;
     side: 'sell' | 'buy';
     type: 'limit' | 'market';
     price?: number;
     symbol: string;
     quantity: number;
     direction: 'open' | 'close';
-    description?: string;
+    description: string;
   }
   type createOrdersParams = createOrderParams[];
   type cancelOrderParams = {
     id: string;
-    symbol?: string;
+    symbol: string;
   }
   type cancelOrdersParams = cancelOrderParams[];
   type cancelOrdersAllParams = {
-    symbol?: string;
+    symbol: string;
   }
   type updateOrderParams = {
     id: string;
@@ -126,7 +126,7 @@ declare namespace RestApi {
     'request-not-accepted';
   type RestErrorResponseData = {
     type: restErrorResponseDataType;
-    params: params | null;
+    params: params;
     exchange: any;
   }
   /**
@@ -170,38 +170,34 @@ declare namespace RestApi {
    * 
    */
   type RestResponse<T> = {
-    error: boolean;
-    data: T;
-  }
-  type RestErrorResponse = {
-    error: boolean;
-    data: RestErrorResponseData;
+    data?: T;
+    error?: RestErrorResponseData;
   }
   interface Rest {
     request: Request;
     /**
      * CREATE FUNCTIONS
      */
-    createOrder(params: createOrderParams): Promise<RestResponse<createOrderResponseData> | RestErrorResponse>;
-    createOrders(params: createOrdersParams): Promise<(RestResponse<createOrderResponseData> | RestErrorResponse)[]>;
+    createOrder(params: createOrderParams): Promise<RestResponse<createOrderResponseData>>;
+    createOrders(params: createOrdersParams): Promise<RestResponse<createOrderResponseData>[]>;
     /**
      * CANCEL FUNCTIONS
      */
-    cancelOrder(params: cancelOrderParams): Promise<RestResponse<cancelOrderResponseData> | RestErrorResponse>;
-    cancelOrders(params: cancelOrdersParams): Promise<(RestResponse<cancelOrderResponseData> | RestErrorResponse)[]>;
-    cancelOrdersAll(params: cancelOrdersAllParams): Promise<RestResponse<cancelOrdersAllResponseData> | RestErrorResponse>;
+    cancelOrder(params: cancelOrderParams): Promise<RestResponse<cancelOrderResponseData>>;
+    cancelOrders(params: cancelOrdersParams): Promise<RestResponse<cancelOrderResponseData>[]>;
+    cancelOrdersAll(params: cancelOrdersAllParams): Promise<RestResponse<cancelOrdersAllResponseData>>;
     /**
      * UPDATE FUNCTIONS
      */
-    updateOrder(params: updateOrderParams): Promise<RestResponse<updateOrderResponseData> | RestErrorResponse>;
-    updateOrders(params: updateOrdersParams): Promise<(RestResponse<updateOrderResponseData> | RestErrorResponse)[]>;
+    updateOrder(params: updateOrderParams): Promise<RestResponse<updateOrderResponseData>>;
+    updateOrders(params: updateOrdersParams): Promise<RestResponse<updateOrderResponseData>[]>;
     /**
      * INFORMATION FUNCTIONS
      */
-    getCandles(params: getCandlesParams): Promise<RestResponse<getCandlesResponseData> | RestErrorResponse>;
-    getPosition(params: getPositionParams): Promise<RestResponse<getPositionResponseData> | RestErrorResponse>;
-    getLastPrice(params: getLastPriceParams): Promise<RestResponse<getLastPriceResponseData> | RestErrorResponse>;
-    getLiquidation(params: getLiquidationParams): Promise<RestResponse<getLiquidationResponseData> | RestErrorResponse>;
-    getFundingRates(params: getFundingRatesParams): Promise<RestResponse<getFundingRatesResponseData> | RestErrorResponse>;
+    getCandles(params: getCandlesParams): Promise<RestResponse<getCandlesResponseData>>;
+    getPosition(params: getPositionParams): Promise<RestResponse<getPositionResponseData>>;
+    getLastPrice(params: getLastPriceParams): Promise<RestResponse<getLastPriceResponseData>>;
+    getLiquidation(params: getLiquidationParams): Promise<RestResponse<getLiquidationResponseData>>;
+    getFundingRates(params: getFundingRatesParams): Promise<RestResponse<getFundingRatesResponseData>>;
   }
 }
