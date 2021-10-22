@@ -23,23 +23,24 @@ function handleResponseError(params, responseData) {
   /** @type {RestApi.restErrorResponseDataType} */
   let type = 'unknown';
   if (responseData.error) {
-    if (responseData.error.message === 'Not Found'
-      || responseData.error.message === 'Invalid ordStatus'
-      || responseData.error.message === 'Invalid origClOrdID'
-      || responseData.error.message === 'Invalid amend: orderQty, leavesQty, price, stopPx unchanged'
-      || responseData.error.message === 'Unable to cancel order'
-      || responseData.error.message === 'Unable to cancel order due to existing state: Filled'
-      || responseData.error.message === 'Unable to cancel order due to existing state: Canceled'
-      || responseData.error.message === 'Unable to cancel order: Not found or not owned by user') {
+    const errorMessage = responseData.error.message || responseData.error;
+    if (errorMessage === 'Not Found'
+      || errorMessage === 'Invalid ordStatus'
+      || errorMessage === 'Invalid origClOrdID'
+      || errorMessage === 'Invalid amend: orderQty, leavesQty, price, stopPx unchanged'
+      || errorMessage === 'Unable to cancel order'
+      || errorMessage === 'Unable to cancel order due to existing state: Filled'
+      || errorMessage === 'Unable to cancel order due to existing state: Canceled'
+      || errorMessage === 'Unable to cancel order: Not found or not owned by user') {
       type = 'order-not-found';
     }
-    if (responseData.error.message === 'Rate limit exceeded, retry in 1 seconds.') {
+    if (errorMessage === 'Rate limit exceeded, retry in 1 seconds.') {
       type = 'api-rate-limit';
     }
-    if (responseData.error.message === 'The system is currently overloaded. Please try again later.') {
+    if (errorMessage === 'The system is currently overloaded. Please try again later.') {
       type = 'request-not-accepted';
     }
-    if (responseData.error.message.includes('Account has insufficient Available Balance')) {
+    if (errorMessage.includes('Account has insufficient Available Balance')) {
       type = 'insufficient-funds';
     }
   }
