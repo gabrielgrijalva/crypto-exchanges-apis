@@ -384,8 +384,8 @@ function Rest(restOptions) {
       const isolatedMarginS = positions.qtyS ? (positions.qtyS / positions.pxS) / params.leverage : 0;
       const isolatedMarginB = positions.qtyB ? (positions.qtyB / positions.pxB) / params.leverage : 0;
       const balance = initialBalance - isolatedMarginS - isolatedMarginB
-      balances.equity = marginBalance;
-      balances.balance = balance;
+      balances.equity = round.normal(marginBalance, 8);
+      balances.balance = round.normal(balance, 8);
       // Return information
       const data = {
         pxS: positions.pxS,
