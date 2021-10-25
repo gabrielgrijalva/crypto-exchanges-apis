@@ -146,7 +146,7 @@ declare namespace RestApi {
     url: string;
     data?: string;
     method: string,
-    headers: any;
+    headers?: any;
   }
   type requestSendReturn = {
     data: any;
