@@ -87,7 +87,7 @@ function private(method, path, data) {
     headers: headers,
   };
   return this.send(requestSendParams);
-}
+};
 /**
  * @param {number} interval 
  * @returns {string}
