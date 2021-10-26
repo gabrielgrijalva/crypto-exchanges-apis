@@ -337,68 +337,42 @@ function Rest(restOptions) {
     /**
      * 
      * 
+     * GET EQUITT
+     * 
+     * 
+     */
+    getEquity: async (params) => {
+      const data = {};
+      data.currency = params.asset;
+      const response = await request.private('GET', '/api/v1/user/margin', data);
+      if (response.status >= 400) {
+        return handleResponseError(params, response.data);
+      }
+      const equity = round.normal(response.data.marginBalance / 100000000, 8);
+      return { data: equity };
+    },
+    /**
+     * 
+     * 
      * GET POSITION
      * 
      * 
      */
     getPosition: async (params) => {
-      // Get trade
-      const tradeData = {};
-      tradeData.symbol = params.symbol;
-      tradeData.reverse = true;
-      const tradeResponse = await request.private('GET', '/api/v1/trade', tradeData);
-      if (tradeResponse.status >= 400) {
-        return handleResponseError(params, tradeResponse.data);
+      const data = {};
+      data.filter = { symbol: params.symbol };
+      const response = await request.private('GET', '/api/v1/position', data);
+      if (response.status >= 400) {
+        return handleResponseError(params, response.data);
       }
-      // Get position 
-      const positionData = {};
-      positionData.filter = { symbol: params.symbol };
-      const positionResponse = await request.private('GET', '/api/v1/position', positionData);
-      if (positionResponse.status >= 400) {
-        return handleResponseError(params, positionResponse.data);
-      }
-      // Get margin
-      const marginData = {};
-      marginData.currency = 'XBt';
-      const marginResponse = await request.private('GET', '/api/v1/user/margin', marginData);
-      if (marginResponse.status >= 400) {
-        return handleResponseError(params, marginResponse.data);
-      }
-      // Calculate positions
-      const positions = {};
-      positions.qtyS = Math.abs(positionResponse.data[0] && +positionResponse.data[0].currentQty < 0 ? +positionResponse.data[0].currentQty : 0);
-      positions.qtyB = Math.abs(positionResponse.data[0] && +positionResponse.data[0].currentQty > 0 ? +positionResponse.data[0].currentQty : 0);
-      positions.pxS = positions.qtyS ? +positionResponse.data[0].avgEntryPrice : 0;
-      positions.pxB = positions.qtyB ? +positionResponse.data[0].avgEntryPrice : 0;
-      // Calculate positions pnl
-      const positionsPnl = {};
-      const contVal = params.contractValue;
-      positionsPnl.pnlS = round.normal((positions.pxS && positions.qtyS
-        ? (contVal / tradeResponse.data[0].price - contVal / positions.pxS) : 0) * positions.qtyS, 8);
-      positionsPnl.pnlB = round.normal((positions.pxB && positions.qtyB
-        ? (contVal / positions.pxB - contVal / tradeResponse.data[0].price) : 0) * positions.qtyB, 8);
-      // Calculate balance and equity
-      const balances = {};
-      const marginBalance = marginResponse.data.marginBalance / 100000000;
-      const initialBalance = marginBalance - positionsPnl.pnlS - positionsPnl.pnlB;
-      const isolatedMarginS = positions.qtyS ? (positions.qtyS / positions.pxS) / params.leverage : 0;
-      const isolatedMarginB = positions.qtyB ? (positions.qtyB / positions.pxB) / params.leverage : 0;
-      const balance = initialBalance - isolatedMarginS - isolatedMarginB
-      balances.equity = round.normal(marginBalance, 8);
-      balances.balance = round.normal(balance, 8);
-      // Return information
-      const data = {
-        pxS: positions.pxS,
-        pxB: positions.pxB,
-        qtyS: positions.qtyS,
-        qtyB: positions.qtyB,
-        pnlS: positionsPnl.pnlS,
-        pnlB: positionsPnl.pnlB,
-        equity: balances.equity,
-        balance: balances.balance,
-      };
-      return { data: data };
+      const qtyS = Math.abs(response.data[0] && +response.data[0].currentQty < 0 ? +response.data[0].currentQty : 0);
+      const qtyB = Math.abs(response.data[0] && +response.data[0].currentQty > 0 ? +response.data[0].currentQty : 0);
+      const pxS = qtyS ? +response.data[0].avgEntryPrice : 0;
+      const pxB = qtyB ? +response.data[0].avgEntryPrice : 0;
+      const position = { qtyS, qtyB, pxS, pxB };
+      return { data: position };
     },
+
     /**
      * 
      * 
