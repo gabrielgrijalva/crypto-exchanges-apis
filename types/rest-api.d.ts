@@ -44,6 +44,7 @@ declare namespace RestApi {
   }
   type updateOrderParams = {
     id: string;
+    symbol: string;
     price?: number;
     quantity?: number;
   }
