@@ -32,7 +32,6 @@ declare namespace RestApi {
     symbol: string;
     quantity: number;
     direction: 'open' | 'close';
-    description: string;
   }
   type createOrdersParams = createOrderParams[];
   type cancelOrderParams = {
