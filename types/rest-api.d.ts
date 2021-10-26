@@ -55,10 +55,7 @@ declare namespace RestApi {
     interval: number;
   }
   type getPositionParams = {
-    asset: string;
     symbol: string;
-    leverage: number;
-    contractValue: number;
   }
   type getLastPriceParams = {
     symbol: string;
@@ -95,10 +92,6 @@ declare namespace RestApi {
     pxB: number;
     qtyS: number;
     qtyB: number;
-    pnlS: number;
-    pnlB: number;
-    equity: number;
-    balance: number;
   };
   type getLastPriceResponseData = number;
   type getLiquidationResponseData = {
