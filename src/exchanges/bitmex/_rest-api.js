@@ -56,6 +56,16 @@ function handleResponseError(params, responseData) {
   }
 };
 /**
+ * @param {number} interval 
+ * @returns {string}
+ */
+function getCandleResolution(interval) {
+  if (interval === 60000) { return '1' };
+  if (interval === 300000) { return '5' };
+  if (interval === 3600000) { return '60' };
+  if (interval === 86400000) { return '1d' };
+};
+/**
  * 
  * 
  * 
@@ -87,16 +97,6 @@ function private(method, path, data) {
     headers: headers,
   };
   return this.send(requestSendParams);
-};
-/**
- * @param {number} interval 
- * @returns {string}
- */
-function getCandleResolution(interval) {
-  if (interval === 60000) { return '1' };
-  if (interval === 300000) { return '5' };
-  if (interval === 3600000) { return '60' };
-  if (interval === 86400000) { return '1d' };
 };
 /**
  * 
@@ -314,7 +314,7 @@ function Rest(restOptions) {
      */
     getCandles: async (params) => {
       const data = {};
-      data.to = moment.utc(params.finish).unix();
+      data.to = moment.utc(params.start).add(params.interval * 10080, 'milliseconds').unix();
       data.from = moment.utc(params.start).add(params.interval, 'milliseconds').unix();
       data.symbol = params.symbol;
       data.resolution = getCandleResolution(params.interval);
