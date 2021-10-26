@@ -55,6 +55,7 @@ declare namespace RestApi {
     interval: number;
   }
   type getPositionParams = {
+    asset: string;
     symbol: string;
     leverage: number;
     contractValue: number;
