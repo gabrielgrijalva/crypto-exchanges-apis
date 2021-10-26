@@ -49,6 +49,10 @@ declare namespace RestApi {
     quantity?: number;
   }
   type updateOrdersParams = updateOrderParams[];
+  type getEquityParams = {
+    asset: string;
+    symbol: string;
+  }
   type getCandlesParams = {
     start: string;
     symbol: string;
@@ -66,7 +70,7 @@ declare namespace RestApi {
   type getFundingRatesParams = {
     symbol: string;
   }
-  type params = cancelOrderParams | cancelOrdersAllParams | updateOrderParams | createOrderParams | getPositionParams
+  type params = cancelOrderParams | cancelOrdersAllParams | updateOrderParams | getEquityParams | createOrderParams | getPositionParams
     | getLastPriceParams | getLiquidationParams | getFundingRatesParams | updateOrdersParams | cancelOrdersParams | createOrdersParams | null;
   /**
    * 
@@ -79,6 +83,7 @@ declare namespace RestApi {
   type cancelOrderResponseData = cancelOrderParams;
   type cancelOrdersAllResponseData = cancelOrdersAllParams;
   type updateOrderResponseData = updateOrderParams;
+  type getEquityResponseData = number;
   type getCandlesResponseData = {
     timestamp: string;
     open: number;
@@ -187,6 +192,7 @@ declare namespace RestApi {
     /**
      * INFORMATION FUNCTIONS
      */
+    getEquity(params: getEquityParams): Promise<RestResponse<getEquityResponseData>>;
     getCandles(params: getCandlesParams): Promise<RestResponse<getCandlesResponseData>>;
     getPosition(params: getPositionParams): Promise<RestResponse<getPositionResponseData>>;
     getLastPrice(params: getLastPriceParams): Promise<RestResponse<getLastPriceResponseData>>;
