@@ -308,6 +308,23 @@ function Rest(restOptions) {
     /**
      * 
      * 
+     * GET EQUITT
+     * 
+     * 
+     */
+    getEquity: async (params) => {
+      const data = {};
+      data.currency = params.asset;
+      const response = await request.private('GET', '/api/v1/user/margin', data);
+      if (response.status >= 400) {
+        return handleResponseError(params, response.data);
+      }
+      const equity = round.normal(response.data.marginBalance / 100000000, 8);
+      return { data: equity };
+    },
+    /**
+     * 
+     * 
      * GET CANDLES
      * 
      * 
@@ -333,23 +350,6 @@ function Rest(restOptions) {
         return candle;
       });
       return { data: candles };
-    },
-    /**
-     * 
-     * 
-     * GET EQUITT
-     * 
-     * 
-     */
-    getEquity: async (params) => {
-      const data = {};
-      data.currency = params.asset;
-      const response = await request.private('GET', '/api/v1/user/margin', data);
-      if (response.status >= 400) {
-        return handleResponseError(params, response.data);
-      }
-      const equity = round.normal(response.data.marginBalance / 100000000, 8);
-      return { data: equity };
     },
     /**
      * 
