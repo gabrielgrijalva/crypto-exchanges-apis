@@ -51,7 +51,6 @@ declare namespace RestApi {
   type updateOrdersParams = updateOrderParams[];
   type getCandlesParams = {
     start: string;
-    finish: string;
     symbol: string;
     interval: number;
   }
