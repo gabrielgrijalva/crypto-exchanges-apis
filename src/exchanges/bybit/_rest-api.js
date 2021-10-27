@@ -109,13 +109,6 @@ function private(method, path, data) {
   };
   return this.send(requestSendParams);
 };
-// /**
-//  * @param {number} interval 
-//  * @returns {string}
-//  */
-// function getCandleResolution(interval) {
-
-// };
 /**
  * 
  * 
