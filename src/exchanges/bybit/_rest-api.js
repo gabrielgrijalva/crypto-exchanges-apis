@@ -221,7 +221,7 @@ function Rest(restOptions) {
     cancelOrdersAll: async (params) => {
       const data = {};
       data.symbol = params.symbol;
-      const response = await request.private('DELETE', '/v2/private/order/cancelAll', data);
+      const response = await request.private('POST', '/v2/private/order/cancelAll', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
