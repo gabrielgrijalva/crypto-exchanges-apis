@@ -117,6 +117,7 @@ declare namespace RestApi {
    */
   type restErrorResponseDataType =
     'unknown' |
+    'no-function' |
     'api-rate-limit' |
     'request-timeout' |
     'order-not-found' |
@@ -187,8 +188,8 @@ declare namespace RestApi {
     /**
      * UPDATE FUNCTIONS
      */
-    updateOrder(params: updateOrderParams): Promise<RestResponse<updateOrderResponseData>>;
-    updateOrders(params: updateOrdersParams): Promise<RestResponse<updateOrderResponseData>[]>;
+    updateOrder?(params: updateOrderParams): Promise<RestResponse<updateOrderResponseData>>;
+    updateOrders?(params: updateOrdersParams): Promise<RestResponse<updateOrderResponseData>[]>;
     /**
      * INFORMATION FUNCTIONS
      */
