@@ -62,9 +62,7 @@ function orderAndStringifyData(params) {
  * @returns {string | number}
  */
 function getCandleResolution(interval) {
-  if (interval === 86400000) {
-    return 'D';
-  }
+  if (interval === 86400000) { return 'D' };
   return interval / 1000;
 };
 /**
