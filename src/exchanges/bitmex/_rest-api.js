@@ -417,11 +417,7 @@ function Rest(restOptions) {
       const markPx = +instrumentResponse.data[0].markPrice;
       const liqPxS = positionResponse.data[0] && +positionResponse.data[0].currentQty < 0 ? +positionResponse.data[0].liquidationPrice : 0;
       const liqPxB = positionResponse.data[0] && +positionResponse.data[0].currentQty > 0 ? +positionResponse.data[0].liquidationPrice : 0;
-      const liquidation = {
-        markPx: markPx,
-        liqPxS: liqPxS,
-        liqPxB: liqPxB,
-      };
+      const liquidation = { markPx, liqPxS, liqPxB, };
       return { data: liquidation };
     },
     /**
