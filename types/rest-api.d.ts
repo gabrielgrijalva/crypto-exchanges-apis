@@ -121,6 +121,7 @@ declare namespace RestApi {
     'api-rate-limit' |
     'request-timeout' |
     'order-not-found' |
+    'post-only-reject' |
     'insufficient-funds' |
     'request-not-accepted';
   type RestErrorResponseData = {
