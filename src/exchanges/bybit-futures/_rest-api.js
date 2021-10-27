@@ -369,8 +369,8 @@ function Rest(restOptions) {
       const tickersResult = tickersResponse.data.result;
       const positionResult = positionResponse.data.result;
       const markPx = +tickersResult[0].mark_price;
-      const liqPxS = positionResult.side === 'Sell' ? positionResult.liq_price : 0;
-      const liqPxB = positionResult.side === 'Buy' ? positionResult.liq_price : 0;
+      const liqPxS = positionResult.side === 'Sell' ? +positionResult.liq_price : 0;
+      const liqPxB = positionResult.side === 'Buy' ? +positionResult.liq_price : 0;
       const liquidation = { markPx, liqPxS, liqPxB, };
       return { data: liquidation };
     },
