@@ -47,6 +47,7 @@ declare namespace RestApi {
     symbol: string;
     price?: number;
     quantity?: number;
+    fQuantity?: number;
   }
   type updateOrdersParams = updateOrderParams[];
   type getEquityParams = {
@@ -65,6 +66,7 @@ declare namespace RestApi {
     symbol: string;
   }
   type getLiquidationParams = {
+    asset: string;
     symbol: string;
   }
   type getFundingRatesParams = {
