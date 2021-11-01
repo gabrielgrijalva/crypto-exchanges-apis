@@ -142,7 +142,7 @@ declare namespace RestApi {
     restOptions: restOptions,
     key?(method: string, path: string, data: any): Promise<requestSendReturn>;
     public?(method: string, path: string, data: any): Promise<requestSendReturn>;
-    private?(method: string, path: string, data: any): Promise<requestSendReturn>;
+    private?(method: string, path: string, data: any, query?: any): Promise<requestSendReturn>;
   }
   type requestSendParams = {
     url: string;
@@ -162,7 +162,7 @@ declare namespace RestApi {
     send(params: requestSendParams): Promise<requestSendReturn>;
     key?(method: string, path: string, data: any): Promise<requestSendReturn>;
     public?(method: string, path: string, data: any): Promise<requestSendReturn>;
-    private?(method: string, path: string, data: any): Promise<requestSendReturn>;
+    private?(method: string, path: string, data: any, query?: any): Promise<requestSendReturn>;
   }
   /**
    * 
