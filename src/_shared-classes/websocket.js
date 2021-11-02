@@ -17,9 +17,9 @@ function WebSocket() {
     send: (data) => {
       wsInstance ? wsInstance.send(data) : null;
     },
-    connect: (url) => {
+    connect: (url, options) => {
       if (wsInstance) { webSocket.disconnect() };
-      wsInstance = new ws(url);
+      wsInstance = new ws(url, options);
       wsInstance.on('pong', () => clearTimeout(wsInstanceTimeout));
       wsInstanceInterval = setInterval(() => {
         wsInstance.ping();
