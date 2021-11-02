@@ -2,12 +2,12 @@
 declare namespace WsApi {
   import * as Events from 'events';
   /**
-    * 
-    * 
-    * WS OPTIONS
-    * 
-    * 
-    */
+   * 
+   * 
+   * WS OPTIONS
+   * 
+   * 
+   */
   type wsOptions = {
     url?: string;
     apiKey?: string;
