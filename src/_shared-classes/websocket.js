@@ -75,5 +75,6 @@ function WebSocket() {
       wsInstance ? wsInstance.removeListener('message', listener) : null;
     },
   };
+  return webSocket;
 }
 module.exports = WebSocket;
