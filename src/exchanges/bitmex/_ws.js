@@ -169,18 +169,15 @@ function Ws(wsOptions) {
       };
       webSocketInstrument.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
-        if (messageParse.table !== 'instrument' || messageParse.action !== 'update') { return };
+        if (messageParse.table !== 'instrument' || !messageParse.data || !messageParse.data[0]) { return };
         const instrumentInfo = messageParse.data[0];
-        if (!instrumentInfo) { return };
         liquidation.markPx = +instrumentInfo.markPrice ? +instrumentInfo.markPrice : liquidation.markPx;
         eventEmitter.emit('update', liquidation);
       });
       webSocketPosition.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
-        if (messageParse.table !== 'position' || (messageParse.action !== 'insert'
-          && messageParse.action !== 'update')) { return };
+        if (messageParse.table !== 'position' || !messageParse.data || !messageParse.data[0]) { return };
         const positionInfo = messageParse.data[0];
-        if (!positionInfo) { return };
         if (isNaN(+positionInfo.currentQty)) { return };
         liquidation.pxS = +positionInfo.currentQty < 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : liquidation.pxS) : 0;
         liquidation.pxB = +positionInfo.currentQty > 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : liquidation.pxB) : 0;
