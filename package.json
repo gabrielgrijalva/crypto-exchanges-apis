@@ -8,10 +8,11 @@
   },
   "author": "Gabriel Grijalva Flores",
   "license": "ISC",
-  "typings": "./src/types-declarations/index.d.ts",
   "dependencies": {
+    "@types/ws": "^8.2.0",
     "moment": "^2.29.1",
     "qs": "^6.10.1",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "ws": "^8.2.3"
   }
 }
