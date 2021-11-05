@@ -10,7 +10,43 @@ function WebSocket() {
   const onErrorFunctions = [];
   const onMessageFunctions = [];
   /**
+   * 
+   * 
+   * 
+   * Default functions
+   * 
+   * 
+   * 
+   */
+  const pingPongFunction = () => {
+    wsInstance.on('pong', () => clearTimeout(wsInstanceTimeout));
+    wsInstanceInterval = setInterval(() => {
+      if (wsInstance.readyState === wsInstance.OPEN) {
+        wsInstance.ping();
+      }
+      wsInstanceTimeout = setTimeout(disconnectFunction, 5000);
+    }, 5000);
+  };
+  const disconnectFunction = () => {
+    clearTimeout(wsInstanceTimeout);
+    clearInterval(wsInstanceInterval);
+    if (wsInstance && wsInstance.readyState === wsInstance.OPEN) {
+      wsInstance.close();
+    }
+    wsInstance = null;
+    wsInstanceTimeout = null;
+    wsInstanceInterval = null;
+  };
+  onOpenFunctions.push(pingPongFunction);
+  onCloseFunctions.push(disconnectFunction);
+  /**
+   * 
+   * 
+   * 
    * @type {WsApi.WebSocket}
+   * 
+   * 
+   * 
    */
   const webSocket = {
     // Util functions
@@ -20,22 +56,12 @@ function WebSocket() {
     connect: (url, options) => {
       if (wsInstance) { webSocket.disconnect() };
       wsInstance = new ws(url, options);
-      wsInstance.on('pong', () => clearTimeout(wsInstanceTimeout));
-      wsInstanceInterval = setInterval(() => {
-        wsInstance.ping();
-        wsInstanceTimeout = setTimeout(webSocket.disconnect, 5000);
-      });
+      onOpenFunctions.forEach(v => wsInstance.on('open', v));
+      onCloseFunctions.forEach(v => wsInstance.on('close', v));
+      onErrorFunctions.forEach(v => wsInstance.on('error', v));
+      onMessageFunctions.forEach(v => wsInstance.on('message', v));
     },
-    disconnect: () => {
-      clearTimeout(wsInstanceTimeout);
-      clearInterval(wsInstanceInterval);
-      if (wsInstance && wsInstance.readyState === wsInstance.OPEN) {
-        wsInstance.close();
-      }
-      wsInstance = null;
-      wsInstanceTimeout = null;
-      wsInstanceInterval = null;
-    },
+    disconnect: disconnectFunction,
     // Add function listener
     addOnOpen: (listener) => {
       onOpenFunctions.push(listener);
