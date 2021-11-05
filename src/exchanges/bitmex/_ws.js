@@ -120,7 +120,7 @@ function Ws(wsOptions) {
     position: async (positionParams) => {
       /** @type {WsN.positionEventEmitter} */
       const eventEmitter = new Events.EventEmitter();
-      const topic = `execution:${positionParams.symbol}`;
+      const topic = `position:${positionParams.symbol}`;
       const webSocket = WebSocket(topic, wsOptions);
       await webSocket.connect();
       /** @type {WsN.dataPosition} */
