@@ -130,10 +130,8 @@ function Ws(wsOptions) {
       };
       webSocket.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
-        if (messageParse.table !== 'position' || (messageParse.action !== 'insert'
-          && messageParse.action !== 'update')) { return };
+        if (messageParse.table !== 'position' || !messageParse.data || !messageParse.data[0]) { return };
         const positionInfo = messageParse.data[0];
-        if (!positionInfo) { return };
         if (isNaN(+positionInfo.currentQty)) { return };
         position.pxS = +positionInfo.currentQty < 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : position.pxS) : 0;
         position.pxB = +positionInfo.currentQty > 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : position.pxB) : 0;
