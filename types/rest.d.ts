@@ -2,7 +2,9 @@ declare namespace RestN {
   /**
    * 
    * 
+   * 
    * REST OPTIONS
+   * 
    * 
    * 
    */
@@ -20,7 +22,9 @@ declare namespace RestN {
   /**
    * 
    * 
+   * 
    * REST PARAMS
+   * 
    * 
    * 
    */
@@ -77,7 +81,9 @@ declare namespace RestN {
   /**
    * 
    * 
+   * 
    * REST RESPONSE
+   * 
    * 
    * 
    */
@@ -113,7 +119,9 @@ declare namespace RestN {
   /**
    * 
    * 
+   * 
    * REST ERROR RESPONSE
+   * 
    * 
    * 
    */
@@ -134,7 +142,9 @@ declare namespace RestN {
   /**
    * 
    * 
+   * 
    * REQUEST INTERFACE
+   * 
    * 
    * 
    */
@@ -167,7 +177,9 @@ declare namespace RestN {
   /**
    * 
    * 
+   * 
    * REST INTERFACE
+   * 
    * 
    * 
    */

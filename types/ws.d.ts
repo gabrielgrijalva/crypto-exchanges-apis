@@ -4,7 +4,9 @@ declare namespace WsN {
   /**
    * 
    * 
+   * 
    * WS OPTIONS
+   * 
    * 
    * 
    */
@@ -17,7 +19,9 @@ declare namespace WsN {
   /**
    * 
    * 
+   * 
    * WS ORDERS
+   * 
    * 
    * 
    */
@@ -54,7 +58,9 @@ declare namespace WsN {
   /**
    * 
    * 
+   * 
    * WS POSITION
+   * 
    * 
    * 
    */
@@ -77,7 +83,9 @@ declare namespace WsN {
   /**
    * 
    * 
+   * 
    * WS LIQUIDATION
+   * 
    * 
    * 
    */
@@ -98,7 +106,9 @@ declare namespace WsN {
   /**
    * 
    * 
+   * 
    * WEBSOCKET INTERFACE
+   * 
    * 
    * 
    */
@@ -124,7 +134,9 @@ declare namespace WsN {
   /**
    * 
    * 
+   * 
    * WS INTERFACE
+   * 
    * 
    * 
    */
