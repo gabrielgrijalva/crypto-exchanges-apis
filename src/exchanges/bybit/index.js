@@ -1,1 +1,1 @@
-exports.RestApi = require('./_rest-api');
+exports.Rest = require('./_rest');
