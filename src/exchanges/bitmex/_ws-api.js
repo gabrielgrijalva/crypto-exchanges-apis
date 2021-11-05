@@ -195,5 +195,6 @@ function Ws(wsOptions) {
       return { info: liquidation, events: eventEmitter };
     },
   };
+  return ws;
 }
-
+module.exports = Ws;
