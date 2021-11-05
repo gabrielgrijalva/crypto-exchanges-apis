@@ -135,8 +135,8 @@ function Ws(wsOptions) {
         const positionInfo = messageParse.data[0];
         if (!positionInfo) { return };
         if (isNaN(+positionInfo.currentQty)) { return };
-        position.pxS = +positionInfo.currentQty < 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : this.pxS) : 0;
-        position.pxB = +positionInfo.currentQty > 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : this.pxB) : 0;
+        position.pxS = +positionInfo.currentQty < 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : position.pxS) : 0;
+        position.pxB = +positionInfo.currentQty > 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : position.pxB) : 0;
         position.qtyS = +positionInfo.currentQty < 0 ? Math.abs(+positionInfo.currentQty) : 0;
         position.qtyB = +positionInfo.currentQty > 0 ? Math.abs(+positionInfo.currentQty) : 0;
         eventEmitter.emit('update', position);
@@ -184,8 +184,8 @@ function Ws(wsOptions) {
         const positionInfo = messageParse.data[0];
         if (!positionInfo) { return };
         if (isNaN(+positionInfo.currentQty)) { return };
-        liquidation.pxS = +positionInfo.currentQty < 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : this.pxS) : 0;
-        liquidation.pxB = +positionInfo.currentQty > 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : this.pxB) : 0;
+        liquidation.pxS = +positionInfo.currentQty < 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : liquidation.pxS) : 0;
+        liquidation.pxB = +positionInfo.currentQty > 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : liquidation.pxB) : 0;
         liquidation.qtyS = +positionInfo.currentQty < 0 ? Math.abs(+positionInfo.currentQty) : 0;
         liquidation.qtyB = +positionInfo.currentQty > 0 ? Math.abs(+positionInfo.currentQty) : 0;
         liquidation.pxLiqS = +positionInfo.currentQty < 0 ? (+positionInfo.liquidationPrice ? +positionInfo.liquidationPrice : liquidation.pxLiqS) : 0;
