@@ -46,7 +46,7 @@ function createCancelation(data) {
  * 
  */
 /**
- * @param {WsApi.wsOptions} [wsOptions]
+ * @param {WsN.wsOptions} [wsOptions]
  */
 function Ws(wsOptions) {
   // Default wsOptions values
@@ -58,7 +58,7 @@ function Ws(wsOptions) {
   /** 
    * 
    * 
-   * @type {WsApi.Ws} 
+   * @type {WsN.Ws} 
    * 
    * 
    */
@@ -73,7 +73,7 @@ function Ws(wsOptions) {
      * 
      */
     orders: async (ordersParams) => {
-      /** @type {WsApi.ordersEventEmitter} */
+      /** @type {WsN.ordersEventEmitter} */
       const eventEmitter = new Events.EventEmitter();
       const topic = `execution:${ordersParams.symbol}`;
       const webSocket = WebSocket(topic, wsOptions);
@@ -118,12 +118,12 @@ function Ws(wsOptions) {
      * 
      */
     position: async (positionParams) => {
-      /** @type {WsApi.positionEventEmitter} */
+      /** @type {WsN.positionEventEmitter} */
       const eventEmitter = new Events.EventEmitter();
       const topic = `execution:${positionParams.symbol}`;
       const webSocket = WebSocket(topic, wsOptions);
       await webSocket.connect();
-      /** @type {WsApi.dataPosition} */
+      /** @type {WsN.dataPosition} */
       const position = {
         pxS: 0, pxB: 0,
         qtyS: 0, qtyB: 0,
@@ -153,7 +153,7 @@ function Ws(wsOptions) {
      * 
      */
     liquidation: async (liquidationParams) => {
-      /** @type {WsApi.liquidationEventEmitter} */
+      /** @type {WsN.liquidationEventEmitter} */
       const eventEmitter = new Events.EventEmitter();
       // Instrument websocket
       const topicInstrument = `instrument:${liquidationParams.symbol}`;
@@ -163,7 +163,7 @@ function Ws(wsOptions) {
       const webSocketPosition = WebSocket(topicPosition, wsOptions);
       await Promise.all([webSocketInstrument.connect(), webSocketPosition.connect()]);
       // Liquidation info
-      /** @type {WsApi.dataLiquidation} */
+      /** @type {WsN.dataLiquidation} */
       const liquidation = {
         pxS: 0, pxB: 0,
         qtyS: 0, qtyB: 0,

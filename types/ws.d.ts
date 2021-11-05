@@ -1,5 +1,5 @@
 
-declare namespace WsApi {
+declare namespace WsN {
   import * as Events from 'events';
   /**
    * 

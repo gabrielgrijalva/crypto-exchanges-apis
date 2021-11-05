@@ -40,7 +40,7 @@ function getSignedHeaders(apiKey, apiSecret) {
  */
 /** 
  * @param {string} topic
- * @param {WsApi.wsOptions} wsOptions
+ * @param {WsN.wsOptions} wsOptions
  */
 function BitmexWebSocket(topic, wsOptions) {
   const webSocket = WebSocket();

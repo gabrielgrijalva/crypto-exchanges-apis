@@ -43,7 +43,7 @@ function WebSocket() {
    * 
    * 
    * 
-   * @type {WsApi.WebSocket}
+   * @type {WsN.WebSocket}
    * 
    * 
    * 
