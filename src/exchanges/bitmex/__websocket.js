@@ -52,7 +52,7 @@ function BitmexWebSocket(topic, wsOptions) {
         const apiSecret = wsOptions.apiSecret;
         const signedHeaders = getSignedHeaders(apiKey, apiSecret);
         const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
-        webSocket.connect(`${url}?subscribe=${topic}`, signedHeaders);
+        webSocket.connect(`${url}?subscribe=${topic}`, { headers: signedHeaders });
         webSocket.addOnMessage(function onMessageConnectFunction(message) {
           const messageParsed = JSON.parse(message);
           if (messageParsed.success && messageParsed.subscribe === topic) {
