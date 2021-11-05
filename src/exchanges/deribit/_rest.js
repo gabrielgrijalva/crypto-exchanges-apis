@@ -15,12 +15,12 @@ const Request = require('../../_shared-classes/request');
  * 
  */
 /**
- * @param {RestApi.params} params
+ * @param {RestN.params} params
  * @param {Object | string} responseData 
- * @returns {{ error: RestApi.RestErrorResponseData }}
+ * @returns {{ error: RestN.RestErrorResponseData }}
  */
 function handleResponseError(params, responseData) {
-  /** @type {RestApi.restErrorResponseDataType} */
+  /** @type {RestN.restErrorResponseDataType} */
   let type = 'unknown';
   if (responseData.error) {
     if (responseData.error.message === 'too_many_requests') {
@@ -69,8 +69,8 @@ function getCandleResolution(interval) {
  * 
  */
 /** 
- * @this {RestApi.Request} 
- * @returns {Promise<RestApi.requestSendReturn>}
+ * @this {RestN.Request} 
+ * @returns {Promise<RestN.requestSendReturn>}
  */
 function public(method, path, data) {
   const dataStringified = data ? `?${qs.stringify(data)}` : '';
@@ -81,8 +81,8 @@ function public(method, path, data) {
   return this.send(requestSendParams);
 };
 /** 
- * @this {RestApi.Request} 
- * @returns {Promise<RestApi.requestSendReturn>}
+ * @this {RestN.Request} 
+ * @returns {Promise<RestN.requestSendReturn>}
  */
 function private(method, path, data) {
   const nonce = uuid();
@@ -110,7 +110,7 @@ function private(method, path, data) {
  * 
  */
 /** 
- * @param {RestApi.restOptions} [restOptions] 
+ * @param {RestN.restOptions} [restOptions] 
  */
 function Rest(restOptions) {
   // Default restOptions values
@@ -129,7 +129,7 @@ function Rest(restOptions) {
   /** 
    * 
    * 
-   * @type {RestApi.Rest} 
+   * @type {RestN.Rest} 
    * 
    * 
    */

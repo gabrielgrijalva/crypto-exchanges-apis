@@ -1,4 +1,4 @@
-declare namespace RestApi {
+declare namespace RestN {
   /**
    * 
    * 
