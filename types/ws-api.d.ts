@@ -42,13 +42,58 @@ declare namespace WsApi {
   }[];
   type ordersEventEmitter = Events.EventEmitter & {
     // Emit 'event' functions
-    emit(event: 'executions', dataExecutions);
-    emit(event: 'cancelations', dataCancelations);
-    emit(event: 'creations-updates', dataCreationsUpdates);
+    emit(event: 'executions', data: dataExecutions);
+    emit(event: 'cancelations', data: dataCancelations);
+    emit(event: 'creations-updates', data: dataCreationsUpdates);
     // On 'event' functions
     on(event: 'executions', listener: (data: dataExecutions) => void);
     on(event: 'cancelations', listener: (data: dataCancelations) => void);
     on(event: 'creations-updates', listener: (data: dataCreationsUpdates) => void);
+  }
+  type ordersPromiseReturn = { events: ordersEventEmitter };
+  /**
+   * 
+   * 
+   * WS POSITION
+   * 
+   * 
+   */
+  type positionParams = {
+    symbol: string;
+  }
+  type dataPosition = {
+    pxS: number;
+    pxB: number;
+    qtyS: number;
+    qtyB: number;
+  }
+  type positionEventEmitter = Events.EventEmitter & {
+    // Emit 'event' functions
+    emit(event: 'update', data: dataPosition);
+    // On 'event' functions
+    on(event: 'update', listener: (data: dataPosition) => void);
+  }
+  type positionPromiseReturn = { info: dataPosition, events: positionEventEmitter };
+  /**
+   * 
+   * 
+   * WS LIQUIDATION
+   * 
+   * 
+   */
+  type liquidationParams = {
+    symbol: string;
+  }
+  type dataLiquidation = dataPosition & {
+    markPx: number;
+    pxLiqS: number;
+    pxLiqB: number;
+  }
+  type liquidationEventEmitter = Events.EventEmitter & {
+    // Emit 'event' functions
+    emit(event: 'update', data: dataLiquidation);
+    // On 'event' functions
+    on(event: 'update', listener: (data: dataLiquidation) => void);
   }
   /**
    * 
@@ -84,7 +129,9 @@ declare namespace WsApi {
    * 
    */
   interface Ws {
-    orders(params: ordersParams): ordersEventEmitter;
+    orders(params: ordersParams): Promise<{ events: ordersEventEmitter }>;
+    position(params: positionParams): Promise<{ info: dataPosition, events: positionEventEmitter }>;
+    liquidation(params: liquidationParams): Promise<{ info: dataLiquidation, events: liquidationEventEmitter }>;
   }
 
 }
