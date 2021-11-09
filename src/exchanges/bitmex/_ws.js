@@ -66,12 +66,12 @@ function connectWebSocket(topic, webSocket, wsOptions) {
     const signedHeaders = getSignedHeaders(apiKey, apiSecret);
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
     webSocket.connect(`${url}?subscribe=${topic}`, { headers: signedHeaders });
-    webSocket.addOnMessage(function addOnMessageFunc(message) {
+    webSocket.addOnMessage(function connectFunction(message) {
       const messageParse = JSON.parse(message);
       if (messageParse.success && messageParse.subscribe === topic) {
         resolve();
         clearTimeout(connectTimeout);
-        webSocket.removeOnMessage(addOnMessageFunc);
+        webSocket.removeOnMessage(connectFunction);
       }
     });
   });
