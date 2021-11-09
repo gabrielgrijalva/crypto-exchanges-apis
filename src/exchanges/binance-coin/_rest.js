@@ -420,6 +420,22 @@ function Rest(restOptions) {
       const fundings = { current, estimated, };
       return { data: fundings };
     },
+    /**
+     * 
+     * 
+     * GET LISTEN KEY
+     * 
+     * 
+     */
+    _getListenKey: async (params) => {
+      const data = {};
+      const response = await request.private('POST', '/dapi/v1/listenKey', data);
+      if (response.status >= 400) {
+        return handleResponseError(params, response.data);
+      }
+      const listenKey = response.data.listenKey;
+      return { data: listenKey };
+    }
   };
   return rest;
 };
