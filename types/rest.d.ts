@@ -116,6 +116,7 @@ declare namespace RestN {
     current: number;
     estimated: number;
   };
+  type getListenKeyResponseData = string;
   /**
    * 
    * 
@@ -214,5 +215,9 @@ declare namespace RestN {
     getLastPrice(params: getLastPriceParams): Promise<RestResponse<getLastPriceResponseData>>;
     getLiquidation(params: getLiquidationParams): Promise<RestResponse<getLiquidationResponseData>>;
     getFundingRates(params: getFundingRatesParams): Promise<RestResponse<getFundingRatesResponseData>>;
+    /**
+     * CUSTOM EXCHANGE FUNCTIONS
+     */
+    _getListenKey?(): Promise<RestResponse<getListenKeyResponseData>> // binance-coin
   }
 }
