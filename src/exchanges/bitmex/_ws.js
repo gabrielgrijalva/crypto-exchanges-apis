@@ -170,18 +170,18 @@ function Ws(wsOptions) {
       await connectWebSocket(topic, webSocket, wsOptions);
       // Load rest info
       const positionRestParams = { symbol: positionParams.symbol };
-      const positionData = (await rest.getPosition(positionRestParams)).data;
+      const positionRestData = (await rest.getPosition(positionRestParams)).data;
       /** @type {WsN.dataPosition} */
-      const position = Object.assign({}, positionData);
+      const position = Object.assign({}, positionRestData);
       webSocket.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
         if (messageParse.table !== 'position' || !messageParse.data || !messageParse.data[0]) { return };
-        const positionInfo = messageParse.data[0];
-        if (isNaN(+positionInfo.currentQty)) { return };
-        position.pxS = +positionInfo.currentQty < 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : position.pxS) : 0;
-        position.pxB = +positionInfo.currentQty > 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : position.pxB) : 0;
-        position.qtyS = +positionInfo.currentQty < 0 ? Math.abs(+positionInfo.currentQty) : 0;
-        position.qtyB = +positionInfo.currentQty > 0 ? Math.abs(+positionInfo.currentQty) : 0;
+        const positionEvent = messageParse.data[0];
+        if (isNaN(+positionEvent.currentQty)) { return };
+        position.pxS = +positionEvent.currentQty < 0 ? (+positionEvent.avgEntryPrice ? +positionEvent.avgEntryPrice : position.pxS) : 0;
+        position.pxB = +positionEvent.currentQty > 0 ? (+positionEvent.avgEntryPrice ? +positionEvent.avgEntryPrice : position.pxB) : 0;
+        position.qtyS = +positionEvent.currentQty < 0 ? Math.abs(+positionEvent.currentQty) : 0;
+        position.qtyB = +positionEvent.currentQty > 0 ? Math.abs(+positionEvent.currentQty) : 0;
         eventEmitter.emit('update', position);
       });
       webSocket.addOnClose(() => { connectWebSocket(topic, webSocket, wsOptions) });
@@ -212,29 +212,29 @@ function Ws(wsOptions) {
       // Load rest info
       const positionRestParams = { symbol: liquidationParams.symbol };
       const liquidationRestParams = { symbol: liquidationParams.symbol, asset: liquidationParams.asset };
-      const positionData = (await rest.getPosition(positionRestParams)).data;
-      const liquidationData = (await rest.getLiquidation(liquidationRestParams)).data;
+      const positionRestData = (await rest.getPosition(positionRestParams)).data;
+      const liquidationRestData = (await rest.getLiquidation(liquidationRestParams)).data;
       // Liquidation info
       /** @type {WsN.dataLiquidation} */
-      const liquidation = Object.assign({}, positionData, liquidationData);
+      const liquidation = Object.assign({}, positionRestData, liquidationRestData);
       webSocketInstrument.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
         if (messageParse.table !== 'instrument' || !messageParse.data || !messageParse.data[0]) { return };
-        const instrumentInfo = messageParse.data[0];
-        liquidation.markPx = +instrumentInfo.markPrice ? +instrumentInfo.markPrice : liquidation.markPx;
+        const instrumentEvent = messageParse.data[0];
+        liquidation.markPx = +instrumentEvent.markPrice ? +instrumentEvent.markPrice : liquidation.markPx;
         eventEmitter.emit('update', liquidation);
       });
       webSocketPosition.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
         if (messageParse.table !== 'position' || !messageParse.data || !messageParse.data[0]) { return };
-        const positionInfo = messageParse.data[0];
-        if (isNaN(+positionInfo.currentQty)) { return };
-        liquidation.pxS = +positionInfo.currentQty < 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : liquidation.pxS) : 0;
-        liquidation.pxB = +positionInfo.currentQty > 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : liquidation.pxB) : 0;
-        liquidation.qtyS = +positionInfo.currentQty < 0 ? Math.abs(+positionInfo.currentQty) : 0;
-        liquidation.qtyB = +positionInfo.currentQty > 0 ? Math.abs(+positionInfo.currentQty) : 0;
-        liquidation.liqPxS = +positionInfo.currentQty < 0 ? (+positionInfo.liquidationPrice ? +positionInfo.liquidationPrice : liquidation.liqPxS) : 0;
-        liquidation.liqPxB = +positionInfo.currentQty > 0 ? (+positionInfo.liquidationPrice ? +positionInfo.liquidationPrice : liquidation.liqPxB) : 0;
+        const positionEvent = messageParse.data[0];
+        if (isNaN(+positionEvent.currentQty)) { return };
+        liquidation.pxS = +positionEvent.currentQty < 0 ? (+positionEvent.avgEntryPrice ? +positionEvent.avgEntryPrice : liquidation.pxS) : 0;
+        liquidation.pxB = +positionEvent.currentQty > 0 ? (+positionEvent.avgEntryPrice ? +positionEvent.avgEntryPrice : liquidation.pxB) : 0;
+        liquidation.qtyS = +positionEvent.currentQty < 0 ? Math.abs(+positionEvent.currentQty) : 0;
+        liquidation.qtyB = +positionEvent.currentQty > 0 ? Math.abs(+positionEvent.currentQty) : 0;
+        liquidation.liqPxS = +positionEvent.currentQty < 0 ? (+positionEvent.liquidationPrice ? +positionEvent.liquidationPrice : liquidation.liqPxS) : 0;
+        liquidation.liqPxB = +positionEvent.currentQty > 0 ? (+positionEvent.liquidationPrice ? +positionEvent.liquidationPrice : liquidation.liqPxB) : 0;
         eventEmitter.emit('update', liquidation);
       });
       webSocketInstrument.addOnClose(() => connectWebSocket(topicInstrument, webSocketInstrument, wsOptions));
