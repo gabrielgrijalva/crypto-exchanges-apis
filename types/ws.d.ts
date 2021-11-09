@@ -90,12 +90,13 @@ declare namespace WsN {
    * 
    */
   type liquidationParams = {
+    asset: string;
     symbol: string;
   }
   type dataLiquidation = dataPosition & {
     markPx: number;
-    pxLiqS: number;
-    pxLiqB: number;
+    liqPxS: number;
+    liqPxB: number;
   }
   type liquidationEventEmitter = Events.EventEmitter & {
     // Emit 'event' functions

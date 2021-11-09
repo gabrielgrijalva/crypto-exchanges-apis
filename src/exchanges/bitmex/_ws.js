@@ -1,6 +1,8 @@
+const crypto = require('crypto');
 const moment = require('moment');
 const Events = require('events');
-const WebSocket = require('./__websocket');
+const Rest = require('./_rest');
+const WebSocket = require('../../_shared-classes/websocket');
 /**
  * 
  * 
@@ -12,6 +14,10 @@ const WebSocket = require('./__websocket');
  * 
  * 
  */
+/**
+ * 
+ * @param {any} data 
+ */
 function createCreationUpdate(data) {
   const eventData = {};
   eventData.id = data.clOrdID;
@@ -20,6 +26,10 @@ function createCreationUpdate(data) {
   eventData.quantity = +data.orderQty;
   return eventData;
 };
+/**
+ * 
+ * @param {any} data 
+ */
 function createExecution(data) {
   const eventData = {};
   eventData.id = data.clOrdID;
@@ -29,10 +39,55 @@ function createExecution(data) {
   eventData.timestamp = moment(data.timestamp).utc().format('YYYY-MM-DD HH:mm:ss');
   return eventData;
 };
+/**
+ * 
+ * @param {any} data 
+ */
 function createCancelation(data) {
   const eventData = {};
   eventData.id = data.clOrdID;
   return eventData;
+};
+/** 
+ * @param {string | undefined} apiKey
+ * @param {string | undefined} apiSecret
+ */
+function getSignedHeaders(apiKey, apiSecret) {
+  if (!apiKey || !apiSecret) { return {} };
+  const nonce = Date.now() * 1000;
+  const digest = `GET/realtime${nonce}`;
+  const signature = crypto.createHmac('sha256', apiSecret).update(digest).digest('hex');
+  const signedHeaders = {
+    'api-nonce': nonce,
+    'api-key': apiKey,
+    'api-signature': signature,
+  };
+  return signedHeaders;
+};
+/**
+ * 
+ * @param {string} topic
+ * @param {WsN.WebSocket} webSocket 
+ * @param {WsN.wsOptions} wsOptions 
+ * @returns {Promise<void>}
+ */
+function connectWebSocket(topic, webSocket, wsOptions) {
+  return new Promise((resolve) => {
+    const url = wsOptions.url;
+    const apiKey = wsOptions.apiKey;
+    const apiSecret = wsOptions.apiSecret;
+    const signedHeaders = getSignedHeaders(apiKey, apiSecret);
+    const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
+    webSocket.connect(`${url}?subscribe=${topic}`, { headers: signedHeaders });
+    webSocket.addOnMessage(function addOnMessageFunc(message) {
+      const messageParse = JSON.parse(message);
+      if (messageParse.success && messageParse.subscribe === topic) {
+        resolve();
+        clearTimeout(connectTimeout);
+        webSocket.removeOnMessage(addOnMessageFunc);
+      }
+    });
+  });
 };
 /**
  * 
@@ -48,12 +103,13 @@ function createCancelation(data) {
 /**
  * @param {WsN.wsOptions} [wsOptions]
  */
-function Ws(wsOptions) {
+function Ws(wsOptions = {}) {
   // Default wsOptions values
-  wsOptions = wsOptions || {};
   wsOptions.url = wsOptions.url || 'wss://ws.bitmex.com/realtime';
   wsOptions.apiKey = wsOptions.apiKey || '';
   wsOptions.apiSecret = wsOptions.apiSecret || '';
+  // Rest creation
+  const rest = Rest({ apiKey: wsOptions.apiKey, apiSecret: wsOptions.apiSecret });
   // Websocket creation
   /** 
    * 
@@ -76,8 +132,8 @@ function Ws(wsOptions) {
       /** @type {WsN.ordersEventEmitter} */
       const eventEmitter = new Events.EventEmitter();
       const topic = `execution:${ordersParams.symbol}`;
-      const webSocket = WebSocket(topic, wsOptions);
-      await webSocket.connect();
+      const webSocket = WebSocket();
+      await connectWebSocket(topic, webSocket, wsOptions);
       webSocket.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
         if (messageParse.table !== `execution` || messageParse.action !== 'insert') { return };
@@ -106,6 +162,7 @@ function Ws(wsOptions) {
           eventEmitter.emit('cancelations', cancelationOrders);
         }
       });
+      webSocket.addOnClose(() => { connectWebSocket(topic, webSocket, wsOptions) });
       return { events: eventEmitter };
     },
     /**
@@ -121,13 +178,13 @@ function Ws(wsOptions) {
       /** @type {WsN.positionEventEmitter} */
       const eventEmitter = new Events.EventEmitter();
       const topic = `position:${positionParams.symbol}`;
-      const webSocket = WebSocket(topic, wsOptions);
-      await webSocket.connect();
+      const webSocket = WebSocket();
+      await connectWebSocket(topic, webSocket, wsOptions);
+      // Load rest info
+      const positionRestParams = { symbol: positionParams.symbol };
+      const positionData = (await rest.getPosition(positionRestParams)).data;
       /** @type {WsN.dataPosition} */
-      const position = {
-        pxS: 0, pxB: 0,
-        qtyS: 0, qtyB: 0,
-      };
+      const position = Object.assign({}, positionData);
       webSocket.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
         if (messageParse.table !== 'position' || !messageParse.data || !messageParse.data[0]) { return };
@@ -139,6 +196,7 @@ function Ws(wsOptions) {
         position.qtyB = +positionInfo.currentQty > 0 ? Math.abs(+positionInfo.currentQty) : 0;
         eventEmitter.emit('update', position);
       });
+      webSocket.addOnClose(() => { connectWebSocket(topic, webSocket, wsOptions) });
       return { info: position, events: eventEmitter };
     },
     /**
@@ -155,18 +213,22 @@ function Ws(wsOptions) {
       const eventEmitter = new Events.EventEmitter();
       // Instrument websocket
       const topicInstrument = `instrument:${liquidationParams.symbol}`;
-      const webSocketInstrument = WebSocket(topicInstrument, wsOptions);
+      const webSocketInstrument = WebSocket();
       // Position websocket
       const topicPosition = `position:${liquidationParams.symbol}`;
-      const webSocketPosition = WebSocket(topicPosition, wsOptions);
-      await Promise.all([webSocketInstrument.connect(), webSocketPosition.connect()]);
+      const webSocketPosition = WebSocket();
+      await Promise.all([
+        connectWebSocket(topicInstrument, webSocketInstrument, wsOptions),
+        connectWebSocket(topicPosition, webSocketPosition, wsOptions),
+      ]);
+      // Load rest info
+      const positionRestParams = { symbol: liquidationParams.symbol };
+      const liquidationRestParams = { symbol: liquidationParams.symbol, asset: liquidationParams.asset };
+      const positionData = (await rest.getPosition(positionRestParams)).data;
+      const liquidationData = (await rest.getLiquidation(liquidationRestParams)).data;
       // Liquidation info
       /** @type {WsN.dataLiquidation} */
-      const liquidation = {
-        pxS: 0, pxB: 0,
-        qtyS: 0, qtyB: 0,
-        markPx: 0, pxLiqS: 0, pxLiqB: 0,
-      };
+      const liquidation = Object.assign({}, positionData, liquidationData);
       webSocketInstrument.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
         if (messageParse.table !== 'instrument' || !messageParse.data || !messageParse.data[0]) { return };
@@ -183,10 +245,12 @@ function Ws(wsOptions) {
         liquidation.pxB = +positionInfo.currentQty > 0 ? (+positionInfo.avgEntryPrice ? +positionInfo.avgEntryPrice : liquidation.pxB) : 0;
         liquidation.qtyS = +positionInfo.currentQty < 0 ? Math.abs(+positionInfo.currentQty) : 0;
         liquidation.qtyB = +positionInfo.currentQty > 0 ? Math.abs(+positionInfo.currentQty) : 0;
-        liquidation.pxLiqS = +positionInfo.currentQty < 0 ? (+positionInfo.liquidationPrice ? +positionInfo.liquidationPrice : liquidation.pxLiqS) : 0;
-        liquidation.pxLiqB = +positionInfo.currentQty > 0 ? (+positionInfo.liquidationPrice ? +positionInfo.liquidationPrice : liquidation.pxLiqB) : 0;
+        liquidation.liqPxS = +positionInfo.currentQty < 0 ? (+positionInfo.liquidationPrice ? +positionInfo.liquidationPrice : liquidation.liqPxS) : 0;
+        liquidation.liqPxB = +positionInfo.currentQty > 0 ? (+positionInfo.liquidationPrice ? +positionInfo.liquidationPrice : liquidation.liqPxB) : 0;
         eventEmitter.emit('update', liquidation);
       });
+      webSocketInstrument.addOnClose(() => connectWebSocket(topicInstrument, webSocketInstrument, wsOptions));
+      webSocketPosition.addOnClose(() => connectWebSocket(topicPosition, webSocketPosition, wsOptions));
       return { info: liquidation, events: eventEmitter };
     },
   };
