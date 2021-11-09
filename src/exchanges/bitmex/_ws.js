@@ -14,10 +14,6 @@ const WebSocket = require('../../_shared-classes/websocket');
  * 
  * 
  */
-/**
- * 
- * @param {any} data 
- */
 function createCreationUpdate(data) {
   const eventData = {};
   eventData.id = data.clOrdID;
@@ -26,10 +22,6 @@ function createCreationUpdate(data) {
   eventData.quantity = +data.orderQty;
   return eventData;
 };
-/**
- * 
- * @param {any} data 
- */
 function createExecution(data) {
   const eventData = {};
   eventData.id = data.clOrdID;
@@ -39,18 +31,14 @@ function createExecution(data) {
   eventData.timestamp = moment(data.timestamp).utc().format('YYYY-MM-DD HH:mm:ss');
   return eventData;
 };
-/**
- * 
- * @param {any} data 
- */
 function createCancelation(data) {
   const eventData = {};
   eventData.id = data.clOrdID;
   return eventData;
 };
 /** 
- * @param {string | undefined} apiKey
- * @param {string | undefined} apiSecret
+ * @param {string} apiKey
+ * @param {string} apiSecret
  */
 function getSignedHeaders(apiKey, apiSecret) {
   if (!apiKey || !apiSecret) { return {} };
@@ -69,7 +57,6 @@ function getSignedHeaders(apiKey, apiSecret) {
  * @param {string} topic
  * @param {WsN.WebSocket} webSocket 
  * @param {WsN.wsOptions} wsOptions 
- * @returns {Promise<void>}
  */
 function connectWebSocket(topic, webSocket, wsOptions) {
   return new Promise((resolve) => {
@@ -103,8 +90,9 @@ function connectWebSocket(topic, webSocket, wsOptions) {
 /**
  * @param {WsN.wsOptions} [wsOptions]
  */
-function Ws(wsOptions = {}) {
+function Ws(wsOptions) {
   // Default wsOptions values
+  wsOptions = wsOptions || {};
   wsOptions.url = wsOptions.url || 'wss://ws.bitmex.com/realtime';
   wsOptions.apiKey = wsOptions.apiKey || '';
   wsOptions.apiSecret = wsOptions.apiSecret || '';
