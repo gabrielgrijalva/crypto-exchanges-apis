@@ -210,6 +210,7 @@ function Ws(wsOptions) {
           position.qtyB = 0;
           position.qtyS = 0;
         }
+        eventEmitter.emit('update', position);
       });
       webSocket.addOnClose(() => { connectWebSocket(feed, webSocket, wsOptions) });
       return { info: position, events: eventEmitter };
@@ -248,6 +249,7 @@ function Ws(wsOptions) {
         const messageParse = JSON.parse(message);
         if (messageParse.product_id !== liquidationParams.symbol) { return };
         liquidation.markPx = +messageParse.markPrice ? +messageParse.markPrice : 0;
+        eventEmitter.emit('update', liquidation);
       });
       webSocketPosition.addOnMessage((message) => {
         const messageParsed = JSON.parse(message);
@@ -268,6 +270,7 @@ function Ws(wsOptions) {
           liquidation.liqPxS = 0;
           liquidation.liqPxB = 0;
         }
+        eventEmitter.emit('update', liquidation);
       });
       webSocketTicker.addOnClose(() => connectWebSocket(feedTicker, webSocketTicker, wsOptions));
       webSocketPosition.addOnClose(() => connectWebSocket(feedPosition, webSocketPosition, wsOptions));
