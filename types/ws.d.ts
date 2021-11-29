@@ -108,6 +108,40 @@ declare namespace WsN {
    * 
    * 
    * 
+   * WS ORDER BOOK
+   * 
+   * 
+   * 
+   */
+  type orderBookParams = {
+    symbol: string;
+  };
+  /**
+   * 
+   * 
+   * 
+   * ORDER BOOK INTERFACE
+   * 
+   * 
+   * 
+   */
+  type orderBookOrder = { price: number, quantity: number };
+  type dataOrderBook = {
+    // Public data
+    asks: orderBookOrder[];
+    bids: orderBookOrder[];
+    getFirstAsk(): orderBookOrder;
+    getFirstBid(): orderBookOrder;
+    // Private data
+    _updateOrderAsk(update: orderBookOrder): void;
+    _updateOrderBid(update: orderBookOrder): void;
+    _insertSnapshotAsks(snapshot: orderBookOrder[]): void;
+    _insertSnapshotBids(snapshot: orderBookOrder[]): void;
+  };
+  /**
+   * 
+   * 
+   * 
    * WEBSOCKET INTERFACE
    * 
    * 
@@ -145,6 +179,7 @@ declare namespace WsN {
     orders(params: ordersParams): Promise<{ events: ordersEventEmitter }>;
     position(params: positionParams): Promise<{ info: dataPosition, events: positionEventEmitter }>;
     liquidation(params: liquidationParams): Promise<{ info: dataLiquidation, events: liquidationEventEmitter }>;
+    orderBook(params: orderBookParams): Promise<{ info: dataOrderBook, }>;
   }
 
 }
