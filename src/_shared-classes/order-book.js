@@ -85,5 +85,6 @@ function OrderBook() {
     _insertSnapshotAsks: getInsertSnapshotFunction(asks),
     _insertSnapshotBids: getInsertSnapshotFunction(bids),
   };
+  return orderBook;
 };
 module.exports = OrderBook;
