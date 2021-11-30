@@ -125,6 +125,7 @@ declare namespace WsN {
    * 
    * 
    */
+  type flags = { synchronizing: boolean, synchronized: boolean, snapshot: null | { asks: orderBookOrder[], bids: orderBookOrder[], lastUpdateId: number } };
   type orderBookOrder = { price: number, quantity: number };
   type dataOrderBook = {
     // Public data

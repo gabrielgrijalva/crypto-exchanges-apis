@@ -2,6 +2,7 @@ const moment = require('moment');
 const Events = require('events');
 const Rest = require('./_rest');
 const WebSocket = require('../../_shared-classes/websocket');
+const OrderBook = require('../../_shared-classes/order-book');
 /**
  * 
  * 
@@ -52,6 +53,41 @@ function connectWebSocket(stream, webSocket, wsOptions) {
       webSocket.removeOnOpen(connectFunction);
     });
   });
+};
+/**
+ * @param {RestN.Rest} rest
+ * @param {WsN.flags} flags
+ * @param {string} symbol
+ */
+async function getOrderBookSnapshot(rest, flags, symbol) {
+  flags.synchronizing = true;
+  flags.snapshot = (await rest._getOrderBook({ symbol: symbol })).data;
+  flags.synchronizing = false;
+};
+/**
+ * 
+ * @param {WsN.flags} flags
+ * @param {WsN.dataOrderBook} orderBook 
+ */
+function desynchronizeOrderBook(flags, orderBook) {
+  flags.snapshot = null;
+  flags.synchronized = false;
+  flags.synchronizing = false;
+  orderBook.asks.length = 0;
+  orderBook.bids.length = 0;
+};
+/**
+ * 
+ * @param {Object} snapshot 
+ * @param {WsN.dataOrderBook} orderBook 
+ */
+function synchronizeOrderBookSnapshot(snapshot, orderBook) {
+  orderBook._insertSnapshotAsks(snapshot.asks.map(v => {
+    return { price: +v[0], quantity: +v[1] };
+  }));
+  orderBook._insertSnapshotBids(snapshot.bids.map(v => {
+    return { price: +v[0], quantity: +v[1] };
+  }));
 };
 /**
  * 
@@ -202,6 +238,56 @@ function Ws(wsOptions) {
       webSocketMarkPrice.addOnClose(() => connectWebSocket(streamMarkPrice, webSocketMarkPrice, wsOptions));
       webSocketPosition.addOnClose(() => connectWebSocket(streamPosition, webSocketPosition, wsOptions));
       return { info: liquidation, events: eventEmitter };
+    },
+    orderBook: async (orderBookParams) => {
+      // Connect websocket
+      const stream = `${orderBookParams.symbol.toLowerCase()}@depth`;
+      const webSocket = WebSocket();
+      await connectWebSocket(stream, webSocket, wsOptions);
+      // Order book functionality
+      const flags = { synchronized: false, synchronizing: false, snapshot: null };
+      const orderBook = OrderBook();
+      webSocket.addOnMessage((message) => {
+        const messageParse = JSON.parse(message);
+        if (!flags.synchronized) {
+          if (!flags.synchronizing) {
+            if (!flags.snapshot) {
+              getOrderBookSnapshot(rest, flags, orderBookParams.symbol);
+            } else {
+              const snapshot = flags.snapshot;
+              if (snapshot.lastUpdateId < messageParse.U) {
+                flags.snapshot = null;
+                flags.synchronized = false;
+                flags.synchronizing = false;
+              }
+              if (snapshot.lastUpdateId >= messageParse.U && snapshot.lastUpdateId <= messageParse.u) {
+                flags.snapshot = null;
+                flags.synchronized = true;
+                synchronizeOrderBookSnapshot(snapshot, orderBook);
+              }
+            }
+          }
+        }
+        if (!flags.synchronized) { return };
+        const timestamp = Date.now();
+        const orderBookTimestamp = +messageParse.E;
+        if (timestamp - orderBookTimestamp > 5000) {
+          desynchronizeOrderBook(flags, orderBook);
+        }
+        messageParse.a.forEach(v => {
+          const update = { price: +v[0], quantity: +v[1] };
+          orderBook._updateOrderAsk(update);
+        });
+        messageParse.b.forEach(v => {
+          const update = { price: +v[0], quantity: +v[1] };
+          orderBook._updateOrderBid(update);
+        })
+      });
+      webSocket.addOnClose(() => {
+        desynchronizeOrderBook(flags, orderBook);
+        connectWebSocket(stream, webSocket, wsOptions);
+      });
+      return { info: orderBook, };
     },
   };
   return ws;

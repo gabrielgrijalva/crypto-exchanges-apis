@@ -76,8 +76,11 @@ declare namespace RestN {
   type getFundingRatesParams = {
     symbol: string;
   }
+  type getOrderBookParams = {
+    symbol: string;
+  }
   type params = cancelOrderParams | cancelOrdersAllParams | updateOrderParams | getEquityParams | createOrderParams | getPositionParams
-    | getLastPriceParams | getLiquidationParams | getFundingRatesParams | updateOrdersParams | cancelOrdersParams | createOrdersParams | null;
+    | getLastPriceParams | getLiquidationParams | getFundingRatesParams | updateOrdersParams | cancelOrdersParams | createOrdersParams | getOrderBookParams | null;
   /**
    * 
    * 
@@ -117,6 +120,8 @@ declare namespace RestN {
     estimated: number;
   };
   type getListenKeyResponseData = string;
+  type orderBookOrder = { price: number, quantity: number };
+  type getOrderBookResponseData = { asks: orderBookOrder[], bids: orderBookOrder[], lastUpdateId: number, };
   /**
    * 
    * 
@@ -219,5 +224,6 @@ declare namespace RestN {
      * CUSTOM EXCHANGE FUNCTIONS
      */
     _getListenKey?(): Promise<RestResponse<getListenKeyResponseData>> // binance-coin
+    _getOrderBook?(params: getOrderBookParams): Promise<RestResponse<getOrderBookResponseData>> // binance-coint
   }
 }
