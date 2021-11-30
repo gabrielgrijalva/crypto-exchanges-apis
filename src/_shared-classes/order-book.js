@@ -85,6 +85,12 @@ function OrderBook() {
     _insertSnapshotAsks: getInsertSnapshotFunction(asks),
     _insertSnapshotBids: getInsertSnapshotFunction(bids),
   };
+  setInterval(() => {
+    if (!orderBook.asks[0] || !orderBook.bids[0]) { return };
+    if (orderBook.asks[0].price <= orderBook.bids[0].price) {
+      throw { error: { type: 'order-book-price-overlaps', params: null, exchange: null } };
+    }
+  }, 1000);
   return orderBook;
 };
 module.exports = OrderBook;
