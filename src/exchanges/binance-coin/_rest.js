@@ -435,6 +435,29 @@ function Rest(restOptions) {
       }
       const listenKey = response.data.listenKey;
       return { data: listenKey };
+    },
+    /**
+     * 
+     * 
+     * GET ORDER BOOK
+     * 
+     * 
+     */
+    _getOrderBook: async (params) => {
+      const data = {};
+      data.symbol = params.symbol;
+      const response = await request.public('GET', '/dapi/v1/depth', data);
+      if (response.status >= 400) {
+        return handleResponseError(params, response.data);
+      }
+      const lastUpdateId = response.data.lastUpdateId;
+      const asks = response.data.asks.map(v => {
+        return { id: +v[0], price: +v[0], quantity: +v[1] };
+      });
+      const bids = response.data.bids.map(v => {
+        return { id: +v[0], price: +v[0], quantity: +v[1] };
+      });
+      return { data: { asks, bids, lastUpdateId } };
     }
   };
   return rest;
