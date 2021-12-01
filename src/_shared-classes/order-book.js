@@ -126,12 +126,23 @@ function OrderBook() {
     _insertSnapshotAsks: getInsertSnapshotFunction(asks),
     _insertSnapshotBids: getInsertSnapshotFunction(bids),
   };
+  let lastSnapshotAsks = '';
+  let lastSnapshotBids = '';
   setInterval(() => {
     if (!orderBook.asks[0] || !orderBook.bids[0]) { return };
     if (orderBook.asks[0].price <= orderBook.bids[0].price) {
       throw { error: { type: 'order-book-price-overlaps', params: null, exchange: null } };
     }
-  }, 1000);
+  }, 5000);
+  setInterval(() => {
+    const currentSnapshotAsks = JSON.stringify(orderBook.asks.slice(0, 10));
+    const currentSnapshotBids = JSON.stringify(orderBook.bids.slice(0, 10));
+    if (lastSnapshotAsks === currentSnapshotAsks || lastSnapshotBids === currentSnapshotBids) {
+      throw { error: { type: 'order-book-static', params: null, exchange: null } };
+    }
+    lastSnapshotAsks = currentSnapshotAsks;
+    lastSnapshotBids = currentSnapshotBids;
+  }, 60000);
   return orderBook;
 };
 module.exports = OrderBook;
