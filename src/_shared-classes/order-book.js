@@ -135,6 +135,7 @@ function OrderBook() {
     }
   }, 5000);
   setInterval(() => {
+    if (!orderBook.asks[0] || !orderBook.bids[0]) { return };
     const currentSnapshotAsks = JSON.stringify(orderBook.asks.slice(0, 10));
     const currentSnapshotBids = JSON.stringify(orderBook.bids.slice(0, 10));
     if (lastSnapshotAsks === currentSnapshotAsks || lastSnapshotBids === currentSnapshotBids) {
