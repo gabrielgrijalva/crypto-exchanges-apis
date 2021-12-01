@@ -134,8 +134,12 @@ declare namespace WsN {
     getFirstAsk(): orderBookOrder;
     getFirstBid(): orderBookOrder;
     // Private data
-    _updateOrderAsk(update: orderBookOrder): void;
-    _updateOrderBid(update: orderBookOrder): void;
+    _deleteOrderByIdAsk(update: orderBookOrder): void;
+    _deleteOrderByIdBid(update: orderBookOrder): void;
+    _updateOrderByIdAsk(update: orderBookOrder): void;
+    _updateOrderByIdBid(update: orderBookOrder): void;
+    _updateOrderByPriceAsk(update: orderBookOrder): void;
+    _updateOrderByPriceBid(update: orderBookOrder): void;
     _insertSnapshotAsks(snapshot: orderBookOrder[]): void;
     _insertSnapshotBids(snapshot: orderBookOrder[]): void;
   };
