@@ -83,10 +83,10 @@ function desynchronizeOrderBook(flags, orderBook) {
  */
 function synchronizeOrderBookSnapshot(snapshot, orderBook) {
   orderBook._insertSnapshotAsks(snapshot.asks.map(v => {
-    return { price: +v[0], quantity: +v[1] };
+    return { id: +v[0], price: +v[0], quantity: +v[1] };
   }));
   orderBook._insertSnapshotBids(snapshot.bids.map(v => {
-    return { price: +v[0], quantity: +v[1] };
+    return { id: +v[0], price: +v[0], quantity: +v[1] };
   }));
 };
 /**
@@ -239,6 +239,15 @@ function Ws(wsOptions) {
       webSocketPosition.addOnClose(() => connectWebSocket(streamPosition, webSocketPosition, wsOptions));
       return { info: liquidation, events: eventEmitter };
     },
+    /**
+     * 
+     * 
+     * 
+     * WS ORDER BOOK
+     * 
+     * 
+     * 
+     */
     orderBook: async (orderBookParams) => {
       // Connect websocket
       const stream = `${orderBookParams.symbol.toLowerCase()}@depth`;
@@ -272,15 +281,15 @@ function Ws(wsOptions) {
         const timestamp = Date.now();
         const orderBookTimestamp = +messageParse.E;
         if (timestamp - orderBookTimestamp > 5000) {
-          desynchronizeOrderBook(flags, orderBook);
+          webSocket.disconnect();
         }
         messageParse.a.forEach(v => {
-          const update = { price: +v[0], quantity: +v[1] };
-          orderBook._updateOrderAsk(update);
+          const update = { id: +v[0], price: +v[0], quantity: +v[1] };
+          orderBook._updateOrderByPriceAsk(update);
         });
         messageParse.b.forEach(v => {
-          const update = { price: +v[0], quantity: +v[1] };
-          orderBook._updateOrderBid(update);
+          const update = { id: +v[0], price: +v[0], quantity: +v[1] };
+          orderBook._updateOrderByPriceBid(update);
         })
       });
       webSocket.addOnClose(() => {
