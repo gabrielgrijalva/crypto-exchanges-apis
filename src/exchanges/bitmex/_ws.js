@@ -3,6 +3,7 @@ const moment = require('moment');
 const Events = require('events');
 const Rest = require('./_rest');
 const WebSocket = require('../../_shared-classes/websocket');
+const OrderBook = require('../../_shared-classes/order-book');
 /**
  * 
  * 
@@ -75,6 +76,24 @@ function connectWebSocket(topic, webSocket, wsOptions) {
       }
     });
   });
+};
+/**
+ * 
+ * @param {Object} snapshot 
+ * @param {WsN.dataOrderBook} orderBook 
+ */
+function synchronizeOrderBookSnapshot(snapshot, orderBook) {
+  snapshot = snapshot.reduce((a, v) => {
+    if (v.side === 'Sell') {
+      a.asks.unshift({ id: +v.id, price: +v.price, quantity: +v.size });
+    }
+    if (v.side === 'Buy') {
+      a.bids.push({ id: +v.id, price: +v.price, quantity: +v.size });
+    }
+    return a;
+  }, { asks: [], bids: [] });
+  orderBook._insertSnapshotAsks(snapshot.asks);
+  orderBook._insertSnapshotBids(snapshot.bids);
 };
 /**
  * 
@@ -240,6 +259,64 @@ function Ws(wsOptions) {
       webSocketInstrument.addOnClose(() => connectWebSocket(topicInstrument, webSocketInstrument, wsOptions));
       webSocketPosition.addOnClose(() => connectWebSocket(topicPosition, webSocketPosition, wsOptions));
       return { info: liquidation, events: eventEmitter };
+    },
+    /**
+     * 
+     * 
+     * 
+     * WS ORDER BOOK
+     * 
+     * 
+     * 
+     */
+    orderBook: async (orderBookParams) => {
+      // Connect websocket
+      const topic = `orderBookL2:${orderBookParams.symbol}`;
+      const webSocket = WebSocket();
+      await connectWebSocket(topic, webSocket, wsOptions);
+      // Order book functionality
+      const orderBook = OrderBook();
+      webSocket.addOnMessage((message) => {
+        const messageParse = JSON.parse(message);
+        if (messageParse.action === 'partial') {
+          synchronizeOrderBookSnapshot(messageParse.data, orderBook);
+        }
+        if (messageParse.action === 'insert') {
+          messageParse.data.forEach(v => {
+            const update = { id: +v.id, price: +v.price, quantity: +v.size };
+            if (v.side === 'Sell') {
+              orderBook._updateOrderByPriceAsk(update);
+            }
+            if (v.side === 'Buy') {
+              orderBook._updateOrderByPriceBid(update);
+            }
+          });
+        }
+        if (messageParse.action === 'update') {
+          messageParse.data.forEach(v => {
+            const update = { id: +v.id, price: +v.pice, quantity: +v.size };
+            if (v.side === 'Sell') {
+              orderBook._updateOrderByIdAsk(update);
+            }
+            if (v.side === 'Buy') {
+              orderBook._updateOrderByIdBid(update);
+            }
+          });
+        }
+        if (messageParse.action === 'delete') {
+          messageParse.data.forEach(v => {
+            const update = { id: +v.id, price: +v.price, quantity: +v.size };
+            if (v.side === 'Sell') {
+              orderBook._deleteOrderByIdAsk(update);
+            }
+            if (v.side === 'Buy') {
+              orderBook._deleteOrderByIdBid(update);
+            }
+          });
+        }
+      });
+      webSocket.addOnClose(() => connectWebSocket(topic, webSocket, wsOptions));
+      return { info: orderBook, };
     },
   };
   return ws;
