@@ -120,7 +120,7 @@ declare namespace RestN {
     estimated: number;
   };
   type getListenKeyResponseData = string;
-  type orderBookOrder = { price: number, quantity: number };
+  type orderBookOrder = { id: number, price: number, quantity: number };
   type getOrderBookResponseData = { asks: orderBookOrder[], bids: orderBookOrder[], lastUpdateId: number, };
   /**
    * 
