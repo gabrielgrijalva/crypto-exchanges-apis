@@ -9,28 +9,62 @@
   * 
   */
 /**
+ * @param {number} id
+ * @param {WsN.orderBookOrder[]} orders 
+ */
+function findOrderIndexById(id, orders) {
+  return orders.findIndex(v => v.id === id);
+};
+/**
   * @param {number} price
   * @param {WsN.orderBookOrder[]} orders 
   */
-function findOrderUpdateAskIndex(price, orders) {
+function findOrderIndexByPriceAsk(price, orders) {
   return orders.findIndex(v => v.price <= price);
 };
 /**
  * @param {number} price
  * @param {WsN.orderBookOrder[]} orders 
  */
-function findOrderUpdateBidIndex(price, orders) {
+function findOrderIndexByPriceBid(price, orders) {
   return orders.findIndex(v => v.price >= price);
+};
+/**
+ * @param {WsN.orderBookOrder[]} orders
+ * @returns {(update: WsN.orderBookOrder) => void}
+ */
+function getDeleteOrderById(orders) {
+  return function deleteOrderById(update) {
+    const index = findOrderIndexById(update.id, orders);
+    const orderToDelete = orders[index];
+    if (orderToDelete) {
+      orders.splice(index, 1);
+    }
+  };
+};
+/**
+ * @param {WsN.orderBookOrder[]} orders
+ * @returns {(update: WsN.orderBookOrder) => void}
+ */
+function getUpdateOrderById(orders) {
+  return function updateOrderById(update) {
+    const index = findOrderIndexById(update.id, orders);
+    const orderToUpdate = orders[index];
+    if (orderToUpdate) {
+      orderToUpdate.price = update.price;
+      orderToUpdate.quantity = update.quantity;
+    }
+  };
 };
 /**
  * @param {'asks' | 'bids'} side 
  * @param {WsN.orderBookOrder[]} orders
  * @returns {(update: WsN.orderBookOrder) => void}
  */
-function getUpdateOrderFunction(side, orders) {
-  const findOrderUpdateIndex = side === 'asks' ? findOrderUpdateAskIndex : findOrderUpdateBidIndex;
-  return function updateOrderFunction(update) {
-    const index = findOrderUpdateIndex(update.price, orders);
+function getUpdateOrderByPrice(side, orders) {
+  const findOrderIndexByPrice = side === 'asks' ? findOrderIndexByPriceAsk : findOrderIndexByPriceBid;
+  return function updateOrderByPrice(update) {
+    const index = findOrderIndexByPrice(update.price, orders);
     const orderToUpdate = orders[index];
     if (orderToUpdate) {
       if (orderToUpdate.price === update.price) {
@@ -80,8 +114,15 @@ function OrderBook() {
     bids: bids,
     getFirstAsk: () => asks[0],
     getFirstBid: () => bids[0],
-    _updateOrderAsk: getUpdateOrderFunction('asks', asks),
-    _updateOrderBid: getUpdateOrderFunction('bids', bids),
+    // Action by id
+    _deleteOrderByIdAsk: getDeleteOrderById(asks),
+    _deleteOrderByIdBid: getDeleteOrderById(bids),
+    _updateOrderByIdAsk: getUpdateOrderById(asks),
+    _updateOrderByIdBid: getUpdateOrderById(bids),
+    // Action by price
+    _updateOrderByPriceAsk: getUpdateOrderByPrice('asks', asks),
+    _updateOrderByPriceBid: getUpdateOrderByPrice('bids', bids),
+    // Insert snapshot
     _insertSnapshotAsks: getInsertSnapshotFunction(asks),
     _insertSnapshotBids: getInsertSnapshotFunction(bids),
   };
