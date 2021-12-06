@@ -4,6 +4,7 @@ const moment = require('moment');
 const Events = require('events');
 const Rest = require('./_rest');
 const WebSocket = require('../../_shared-classes/websocket');
+const OrderBook = require('../../_shared-classes/order-book');
 /**
  * 
  * 
@@ -110,6 +111,19 @@ function connectWebSocket(channel, method, webSocket, wsOptions) {
     webSocket.addOnOpen(connectOnOpenFunction);
     webSocket.addOnMessage(connectOnMessageFunction);
   });
+};
+/**
+ * 
+ * @param {Object} snapshot 
+ * @param {WsN.dataOrderBook} orderBook 
+ */
+function synchronizeOrderBookSnapshot(snapshot, orderBook) {
+  orderBook._insertSnapshotAsks(snapshot.asks.map(v => {
+    return { id: +v[1], price: +v[1], quantity: +v[2] };
+  }));
+  orderBook._insertSnapshotBids(snapshot.bids.map(v => {
+    return { id: +v[1], price: +v[1], quantity: +v[2] };
+  }));
 };
 /**
  * 
@@ -292,6 +306,50 @@ function Ws(wsOptions) {
       webSocketPosition.addOnClose(() => connectWebSocket(channelPosition, 'private', webSocketPosition, wsOptions));
       webSocketPortfolio.addOnClose(() => connectWebSocket(channelPortfolio, 'private', webSocketPortfolio, wsOptions));
       return { info: liquidation, events: eventEmitter };
+    },
+    /**
+     * 
+     * 
+     * 
+     * WS ORDER BOOK
+     * 
+     * 
+     * 
+     */
+    orderBook: async (orderBookParams) => {
+      // Connect websocket
+      const channel = `book.${orderBookParams.symbol}.100ms`;
+      const webSocket = WebSocket();
+      await connectWebSocket(channel, 'public', webSocket, wsOptions);
+      // Order book functionality
+      let prevChangeId = null;
+      const orderBook = OrderBook();
+      webSocket.addOnMessage(message => {
+        const messageParse = JSON.parse(message);
+        if (!messageParse.params || !messageParse.params.data) { return };
+        if (messageParse.params.data.type === 'snapshot') {
+          return synchronizeOrderBookSnapshot(messageParse.params.data, orderBook);
+        }
+        if (prevChangeId && prevChangeId !== messageParse.params.data.prev_change_id) {
+          return webSocket.disconnect();
+        }
+        prevChangeId = messageParse.params.data.change_id;
+        const timestamp = Date.now();
+        const orderBookTimestamp = +messageParse.params.data.timestamp;
+        if (timestamp - orderBookTimestamp > 5000) {
+          return webSocket.disconnect();
+        }
+        messageParse.params.data.asks.forEach(v => {
+          const update = { id: +v[1], price: +v[1], quantity: +v[2] };
+          orderBook._updateOrderByPriceAsk(update);
+        });
+        messageParse.params.data.bids.forEach(v => {
+          const update = { id: +v[1], price: +v[1], quantity: +v[2] };
+          orderBook._updateOrderByPriceBid(update);
+        });
+      });
+      webSocket.addOnClose(() => { connectWebSocket(channel, 'public', webSocket, wsOptions) });
+      return { info: orderBook, };
     },
   };
   return ws;
