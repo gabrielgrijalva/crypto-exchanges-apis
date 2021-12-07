@@ -96,6 +96,14 @@ function connectWebSocket(feed, symbol, webSocket, wsOptions) {
   });
 };
 /**
+ * 
+ * @param {WsN.dataOrderBook} orderBook 
+ */
+function desynchronizeOrderBook(orderBook) {
+  orderBook.asks.length = 0;
+  orderBook.bids.length = 0;
+};
+/**
  * @param {Object} snapshot 
  * @param {WsN.dataOrderBook} orderBook 
  */
@@ -332,7 +340,10 @@ function Ws(wsOptions) {
           }
         }
       });
-      webSocket.addOnClose(() => connectWebSocket(feed, symbol, webSocket, wsOptions));
+      webSocket.addOnClose(() => {
+        desynchronizeOrderBook(orderBook);
+        connectWebSocket(feed, symbol, webSocket, wsOptions)
+      });
       return { info: orderBook };
     },
   };
