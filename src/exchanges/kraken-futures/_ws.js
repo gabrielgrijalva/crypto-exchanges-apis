@@ -3,6 +3,7 @@ const moment = require('moment');
 const Events = require('events');
 const Rest = require('./_rest');
 const WebSocket = require('../../_shared-classes/websocket');
+const OrderBook = require('../../_shared-classes/order-book');
 /**
  * 
  * 
@@ -36,6 +37,14 @@ function createCancelation(data) {
   eventData.id = data.cli_ord_id;
   return eventData;
 };
+/**
+ * @param {string} feed 
+ * @param {string} symbol 
+ */
+function getRequestParams(feed, symbol) {
+  return symbol ? { feed: feed, event: 'subscribe', }
+    : { feed: feed, event: 'subscribe', product_ids: [symbol] };
+};
 /** 
  * @param {string} challenge
  * @param {string} apiKey
@@ -50,10 +59,11 @@ function getSingatureParams(challenge, apiKey, apiSecret) {
 /**
  * 
  * @param {string} feed
+ * @param {string} symbol
  * @param {WsN.WebSocket} webSocket 
  * @param {WsN.wsOptions} wsOptions 
  */
-function connectWebSocket(feed, webSocket, wsOptions) {
+function connectWebSocket(feed, symbol, webSocket, wsOptions) {
   return new Promise((resolve) => {
     const url = wsOptions.url;
     const apiKey = wsOptions.apiKey;
@@ -64,16 +74,17 @@ function connectWebSocket(feed, webSocket, wsOptions) {
       if (apiKey && apiSecret) {
         webSocket.send(JSON.stringify({ event: 'challenge', api_key: apiKey }));
       } else {
-        webSocket.send(JSON.stringify({ feed: feed, event: 'subscribe' }));
+        webSocket.send(JSON.stringify(getRequestParams(feed, symbol)));
       }
     };
     function connectOnMessageFunction(message) {
       const messageParse = JSON.parse(message);
       if (messageParse.event === 'challenge' && messageParse.message) {
+        const requestParams = getRequestParams(feed, symbol);
         const signatureParams = getSingatureParams(messageParse.message, apiKey, apiSecret);
-        webSocket.send(JSON.stringify(signatureParams));
+        webSocket.send(JSON.stringify(Object.assign({}, requestParams, signatureParams)));
       }
-      if (messageParse.event === 'subscribed' && messageParse.feed === 'open_orders') {
+      if (messageParse.event === 'subscribed' && messageParse.feed === feed) {
         resolve();
         clearTimeout(connectTimeout);
         webSocket.removeOnOpen(connectOnOpenFunction);
@@ -83,6 +94,18 @@ function connectWebSocket(feed, webSocket, wsOptions) {
     webSocket.addOnOpen(connectOnOpenFunction);
     webSocket.addOnMessage(connectOnMessageFunction);
   });
+};
+/**
+ * @param {Object} snapshot 
+ * @param {WsN.dataOrderBook} orderBook 
+ */
+function synchronizeOrderBookSnapshot(snapshot, orderBook) {
+  orderBook._insertSnapshotAsks(snapshot.asks.map(v => {
+    return { id: +v.price, price: +v.price, quantity: +v.qty };
+  }));
+  orderBook._insertSnapshotBids(snapshot.bids.map(v => {
+    return { id: +v.price, price: +v.price, quantity: +v.qty };
+  }));
 };
 /**
  * 
@@ -134,8 +157,8 @@ function Ws(wsOptions) {
       const feedFills = 'fills';
       const webSocketFills = WebSocket();
       await Promise.all([
-        connectWebSocket(feedOpenOrders, webSocketOpenOrders, wsOptions),
-        connectWebSocket(feedFills, webSocketFills, wsOptions),
+        connectWebSocket(feedOpenOrders, null, webSocketOpenOrders, wsOptions),
+        connectWebSocket(feedFills, null, webSocketFills, wsOptions),
       ]);
       webSocketOpenOrders.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
@@ -171,8 +194,8 @@ function Ws(wsOptions) {
         }
       });
 
-      webSocketOpenOrders.addOnClose(() => { connectWebSocket(feedOpenOrders, webSocketOpenOrders, wsOptions) });
-      webSocketFills.addOnClose(() => { connectWebSocket(feedFills, webSocketFills, wsOptions) });
+      webSocketOpenOrders.addOnClose(() => { connectWebSocket(feedOpenOrders, null, webSocketOpenOrders, wsOptions) });
+      webSocketFills.addOnClose(() => { connectWebSocket(feedFills, null, webSocketFills, wsOptions) });
       return { events: eventEmitter };
     },
     /**
@@ -189,7 +212,7 @@ function Ws(wsOptions) {
       const eventEmitter = new Events.EventEmitter();
       const feed = 'open_positions';
       const webSocket = WebSocket();
-      await connectWebSocket(feed, webSocket, wsOptions);
+      await connectWebSocket(feed, null, webSocket, wsOptions);
       // Load rest info
       const positionRestParams = { symbol: positionParams.symbol };
       const positionRestData = (await rest.getPosition(positionRestParams)).data;
@@ -212,7 +235,7 @@ function Ws(wsOptions) {
         }
         eventEmitter.emit('update', position);
       });
-      webSocket.addOnClose(() => { connectWebSocket(feed, webSocket, wsOptions) });
+      webSocket.addOnClose(() => { connectWebSocket(feed, null, webSocket, wsOptions) });
       return { info: position, events: eventEmitter };
     },
     /**
@@ -229,13 +252,14 @@ function Ws(wsOptions) {
       const eventEmitter = new Events.EventEmitter();
       // Ticker websocket
       const feedTicker = 'ticker';
+      const symbolTicker = liquidationParams.symbol;
       const webSocketTicker = WebSocket();
       // Position websocket
       const feedPosition = 'open_position';
       const webSocketPosition = WebSocket();
       await Promise.all([
-        connectWebSocket(feedTicker, webSocketTicker, wsOptions),
-        connectWebSocket(feedPosition, webSocketPosition, wsOptions),
+        connectWebSocket(feedTicker, symbolTicker, webSocketTicker, wsOptions),
+        connectWebSocket(feedPosition, null, webSocketPosition, wsOptions),
       ]);
       // Load rest info
       const positionRestParams = { symbol: liquidationParams.symbol };
@@ -272,9 +296,44 @@ function Ws(wsOptions) {
         }
         eventEmitter.emit('update', liquidation);
       });
-      webSocketTicker.addOnClose(() => connectWebSocket(feedTicker, webSocketTicker, wsOptions));
-      webSocketPosition.addOnClose(() => connectWebSocket(feedPosition, webSocketPosition, wsOptions));
+      webSocketTicker.addOnClose(() => connectWebSocket(feedTicker, symbolTicker, webSocketTicker, wsOptions));
+      webSocketPosition.addOnClose(() => connectWebSocket(feedPosition, null, webSocketPosition, wsOptions));
       return { info: liquidation, events: eventEmitter };
+    },
+    /**
+     * 
+     * 
+     * 
+     * WS ORDER BOOK
+     * 
+     * 
+     * 
+     */
+    orderBook: async (orderBookParams) => {
+      // Connect websocket
+      const feed = 'book';
+      const symbol = orderBookParams.symbol;
+      const webSocket = WebSocket();
+      await connectWebSocket(feed, symbol, webSocket, wsOptions);
+      // Order book functionality
+      const orderBook = OrderBook();
+      webSocket.addOnMessage((message) => {
+        const messageParse = JSON.parse(message);
+        if (messageParse.feed === 'book_snapshot') {
+          return synchronizeOrderBookSnapshot(messageParse, orderBook);
+        }
+        if (messageParse.feed === 'book') {
+          const update = { id: +messageParse.price, price: +messageParse.price, quantity: +messageParse.qty };
+          if (messageParse.side === 'sell') {
+            orderBook._updateOrderByPriceAsk(update);
+          }
+          if (messageParse.side === 'buy') {
+            orderBook._updateOrderByPriceBid(update);
+          }
+        }
+      });
+      webSocket.addOnClose(() => connectWebSocket(feed, symbol, webSocket, wsOptions));
+      return { info: orderBook };
     },
   };
   return ws;
