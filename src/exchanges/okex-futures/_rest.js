@@ -21,22 +21,24 @@ const Request = require('../../_shared-classes/request');
 function handleResponseError(params, responseData) {
   /** @type {RestN.restErrorResponseDataType} */
   let type = 'unknown';
-  if (responseData.error_code) {
-    const errorCode = responseData.error_code;
-    if (errorCode === '32003') {
-      type = 'order-not-found';
-    }
-    if (errorCode === '30014' || errorCode === '30026') {
+  if (responseData.code || responseData.sCode) {
+    const errorCode = responseData.code || responseData.sCode;
+    if (errorCode === '50011') {
       type = 'api-rate-limit';
     }
-    if (errorCode === '30008' || errorCode === '30009' || errorCode === '32012'
-      || errorCode === '30030' || errorCode === '32030' || errorCode === '32047'
-      || errorCode === '32055' || errorCode === '32095') {
+    if (errorCode === '50102') {
+      type = 'request-timeout';
+    }
+    if (errorCode === '50001' || errorCode === '50013' || errorCode === '50026') {
       type = 'request-not-accepted';
     }
-    if (errorCode === '32067' || errorCode === '32069' || errorCode === '32072'
-      || errorCode === '32077' || errorCode === '32099') {
+    if (errorCode === '51008' || errorCode === '51127' || errorCode === '51131' || errorCode === '51502'
+      || errorCode === '59200' || errorCode === '59303') {
       type = 'insufficient-funds';
+    }
+    if (errorCode === '51400' || errorCode === '51401' || errorCode === '51402' || errorCode === '51405'
+      || errorCode === '51410' || errorCode === '51509' || errorCode === '51510' || errorCode === '51603') {
+      type = 'order-not-found';
     }
   }
   if (responseData.code === 'ETIMEDOUT' || responseData.code === 'ESOCKETTIMEDOUT') {
@@ -55,7 +57,17 @@ function handleResponseError(params, responseData) {
  * @returns {string | number}
  */
 function getCandleResolution(interval) {
-  return (interval / 1000).toString();
+  if (interval === 60000) { return '1m' };
+  if (interval === 180000) { return '3m' };
+  if (interval === 300000) { return '5m' };
+  if (interval === 900000) { return '15m' };
+  if (interval === 1800000) { return '30m' };
+  if (interval === 3600000) { return '1Hutc' };
+  if (interval === 7200000) { return '2Hutc' };
+  if (interval === 14400000) { return '4Hutc' };
+  if (interval === 21600000) { return '6Hutc' };
+  if (interval === 43200000) { return '12Hutc' };
+  if (interval === 86400000) { return '1Dutc' };
 };
 /**
  * 
@@ -157,21 +169,21 @@ function Rest(restOptions) {
      */
     createOrder: async (params) => {
       const data = {};
-      data.client_oid = params.id;
-      data.instrument_id = params.symbol;
-      data.size = `${params.quantity}`;
-      data.type = params.direction === 'open'
-        ? (params.side === 'sell' ? '2' : '1')
-        : (params.side === 'sell' ? '3' : '4');
+      data.instId = params.symbol;
+      data.tdMode = 'cross';
+      data.clOrdId = params.id;
+      data.side = params.side;
+      data.posSide = 'net';
+      data.sz = `${params.quantity}`;
       if (params.type === 'market') {
-        data.order_type = '4';
+        data.ordType = 'market';
       }
       if (params.type === 'limit') {
-        data.price = `${params.price}`;
-        data.order_type = '1';
+        data.ordType = 'post-only';
+        data.px = `${params.price}`;
       }
-      const response = await request.private('POST', '/api/futures/v3/order', data);
-      if (response.status >= 400) {
+      const response = await request.private('POST', '/api/v5/trade/order', data);
+      if (response.data.code !== '0') {
         return handleResponseError(params, response.data);
       }
       return { data: params };
@@ -184,30 +196,28 @@ function Rest(restOptions) {
      * 
      */
     createOrders: async (params) => {
-      const data = {};
-      data.instrument_id = params[0].symbol;
-      data.orders_data = params.map(v => {
+      const data = params.map(v => {
         const orderData = {};
-        orderData.client_oid = v.id;
-        orderData.instrument_id = v.symbol;
-        orderData.size = `${v.quantity}`;
-        orderData.type = v.direction === 'open'
-          ? (v.side === 'sell' ? '2' : '1')
-          : (v.side === 'sell' ? '3' : '4');
+        orderData.instId = v.symbol;
+        orderData.tdMode = 'cross';
+        orderData.clOrdId = v.id;
+        orderData.side = v.side;
+        orderData.posSide = 'net';
+        orderData.sz = `${v.quantity}`;
         if (v.type === 'market') {
-          orderData.order_type = '4';
+          orderData.ordType = 'market';
         }
         if (v.type === 'limit') {
-          orderData.price = `${v.price}`;
-          orderData.order_type = '1';
+          orderData.ordType = 'post-only';
+          orderData.px = `${v.price}`;
         }
       });
-      const response = await request.private('POST', '/api/futures/v3/orders', data);
-      if (response.status >= 400) {
+      const response = await request.private('POST', '/api/v5/trade/batch-orders', data);
+      if (response.data.code !== '0') {
         return params.map(v => handleResponseError(v, response.data));
       }
-      return response.data.order_info.map((v, i) => {
-        if (v.error_code !== '0') {
+      return response.data.data.map((v, i) => {
+        if (v.sCode !== '0') {
           return handleResponseError(params[i], v);
         }
         return { data: params[i] };
@@ -222,8 +232,10 @@ function Rest(restOptions) {
      */
     cancelOrder: async (params) => {
       const data = {};
-      const response = await request.private('POST', `/api/futures/v3/cancel_order/${params.symbol}/${params.id}`, data);
-      if (response.status >= 400) {
+      data.instId = params.symbol;
+      data.clOrdId = params.id;
+      const response = await request.private('POST', '/api/v5/trade/cancel-order', data);
+      if (response.data.code !== '0') {
         return handleResponseError(params, response.data);
       }
       return { data: params };
@@ -236,14 +248,15 @@ function Rest(restOptions) {
      * 
      */
     cancelOrders: async (params) => {
-      const data = {};
-      data.client_oids = params.map(v => v.id);
-      const response = await request.private('POST', `/api/futures/v3/cancel_batch_orders/${params[0].symbol}`, data);
-      if (response.status >= 400) {
+      const data = params.map(v => {
+        return { instId: v.symbol, clOrdId: v.id }
+      });
+      const response = await request.private('POST', '/api/v5/trade/cancel-batch-orders', data);
+      if (response.data.code !== '0') {
         return params.map(v => handleResponseError(v, response.data));
       }
-      return response.data.order_info.map((v, i) => {
-        if (v.error_code !== '0') {
+      return response.data.data.map((v, i) => {
+        if (v.sCode !== '0') {
           return handleResponseError(params[i], v);
         }
         return { data: params[i] };
@@ -259,19 +272,20 @@ function Rest(restOptions) {
     cancelOrdersAll: async (params) => {
       // Get open orders
       const ordersData = {};
-      ordersData.state = '6';
-      const ordersResponse = await request.private('GET', `/api/futures/v3/orders/${params.symbol}`, ordersData);
-      if (ordersResponse.status >= 400) {
+      ordersData.instId = params.symbol;
+      const ordersResponse = await request.private('GET', '/api/v5/trade/orders-pending', ordersData);
+      if (ordersResponse.data.code !== '0') {
         return handleResponseError(params, ordersResponse.data);
       }
-      if (!ordersResponse.data.order_info.length) {
+      if (!ordersResponse.data.data.length) {
         return { data: params }
       };
       // Cancel open orders
-      const cancelData = {};
-      cancelData.order_ids = ordersResponse.data.order_info.map(v => v.order_id);
-      const cancelResponse = await request.private('POST', `/api/futures/v3/cancel_batch_orders/${params.symbol}`, cancelData);
-      if (cancelResponse.status >= 400) {
+      const cancelData = ordersResponse.data.data.map(v => {
+        return { instId: params.symbol, ordId: v.ordId };
+      });
+      const cancelResponse = await request.private('POST', '/api/v5/trade/cancel-batch-orders', cancelData);
+      if (cancelResponse.data.code !== '0') {
         return handleResponseError(params, cancelResponse.data);
       }
       return { data: params };
@@ -285,11 +299,17 @@ function Rest(restOptions) {
      */
     updateOrder: async (params) => {
       const data = {};
-      data.client_oid = params.id;
-      data.new_size = `${params.quantity}`;
-      data.new_price = `${params.price}`;
-      const response = await request.private('POST', `/api/futures/v3/amend_order/${params.symbol}`, data);
-      if (response.status >= 400) {
+      data.instId = params.id;
+      data.cxlOnFail = true;
+      data.clOrdId = params.id;
+      if (params.price) {
+        data.newPx = `${params.price}`;
+      }
+      if (params.quantity) {
+        data.newSz = `${params.quantity}`;
+      }
+      const response = await request.private('POST', '/api/v5/trade/amend-order', data);
+      if (response.data.code !== '0') {
         return handleResponseError(params, response.data);
       }
       return { data: params };
@@ -302,20 +322,24 @@ function Rest(restOptions) {
      * 
      */
     updateOrders: async (params) => {
-      const data = {};
-      data.amend_data = params.map(v => {
+      const data = params.map(v => {
         const orderData = {};
-        orderData.client_oid = v.id;
-        orderData.new_size = v.quantity;
-        orderData.new_price = v.price;
-        return orderData;
+        orderData.instId = v.symbol;
+        orderData.cxlOnFail = true;
+        orderData.clOrdId = v.id;
+        if (v.price) {
+          orderData.newPx = `${v.price}`;
+        }
+        if (v.quantity) {
+          orderData.newSz = `${v.quantity}`;
+        }
       });
-      const response = await request.private('POST', `/api/futures/v3/amend_batch_orders/${params[0].symbol}`, data);
-      if (response.status >= 400) {
+      const response = await request.private('POST', '/api/v5/trade/amend-order', data);
+      if (response.data.code !== '0') {
         return params.map(v => handleResponseError(v, response.data));
       }
-      return response.data.map((v, i) => {
-        if (v.error_code !== '0') {
+      return response.data.data.map((v, i) => {
+        if (v.sCode !== '0') {
           return handleResponseError(params[i], v);
         }
         return { data: params[i] };
@@ -330,11 +354,13 @@ function Rest(restOptions) {
      */
     getEquity: async (params) => {
       const data = {};
-      const response = await request.private('GET', `/api/futures/v3/accounts/${params.symbol}`, data);
-      if (response.status >= 400) {
+      data.ccy = params.asset;
+      const response = await request.private('GET', '/api/v5/account/balance', data);
+      if (response.data.code !== '0') {
         return handleResponseError(params, response.data);
       }
-      const equity = +response.data.equity;
+      const asset = response.data[0].details.find(v => v.ccy === params.asset);
+      const equity = asset ? +asset.eq : 0;
       return { data: equity };
     },
     /**
@@ -346,15 +372,15 @@ function Rest(restOptions) {
      */
     getCandles: async (params) => {
       const data = {};
-      data.instrument_id = params.symbol;
-      data.end = moment.utc(params.start).format();
-      data.granularity = getCandleResolution(params.interval);
-      data.limit = '300';
-      const response = await request.public('GET', `/api/futures/v3/instruments/${params.symbol}/history/candles`, data);
-      if (response.status >= 400) {
+      data.instId = params.symbol;
+      data.bar = getCandleResolution(params.interval);
+      data.limit = '100';
+      data.before = moment.utc(params.start).valueOf();
+      const response = await request.public('GET', '/api/v5/market/history-candles', data);
+      if (response.data.code !== '0') {
         return handleResponseError(params, response.data);
       }
-      const candles = response.data.map(v => {
+      const candles = response.data.data.reverse.map(v => {
         const candle = {};
         candle.timestamp = moment(v[0]).utc().format('YYYY-MM-DD HH:mm:ss');
         candle.open = +v[1];
@@ -375,15 +401,16 @@ function Rest(restOptions) {
      */
     getPosition: async (params) => {
       const data = {};
-      const response = await request.private('GET', `/api/futures/v3/${params.symbol}/position`, data);
-      if (response.status >= 400) {
+      data.instId = params.symbol;
+      const response = await request.private('GET', '/api/v5/account/positions', data);
+      if (response.data.code !== '0') {
         return handleResponseError(params, response.data);
       }
-      const positionHolding = response.data.holding[0];
-      const qtyS = +positionHolding.short_qty;
-      const qtyB = +positionHolding.long_qty;
-      const pxS = +positionHolding.short_qty ? +positionHolding.short_avg_cost : 0;
-      const pxB = +positionHolding.long_qty ? +positionHolding.long_avg_cost : 0;
+      const positionData = response.data.data.find(v => v.instId === params.symbol);
+      const qtyS = positionData.posSide === 'short' ? +positionData.pos : 0;
+      const qtyB = positionData.posSide === 'long' ? +positionData.pos : 0;
+      const pxS = positionData.posSide === 'short' ? +positionData.avgPx : 0;
+      const pxB = positionData.posSide === 'long' ? +positionData.avgPx : 0;
       const position = { qtyS, qtyB, pxS, pxB };
       return { data: position };
     },
@@ -396,11 +423,13 @@ function Rest(restOptions) {
      */
     getLastPrice: async (params) => {
       const data = {};
-      const response = await request.public('GET', `/api/futures/v3/instruments/${params.symbol}/ticker`, data);
-      if (response.status >= 400) {
+      data.instId = params.symbol;
+      const response = await request.public('GET', '/api/v5/market/ticker', data);
+      if (response.data.code !== '0') {
         return handleResponseError(params, response.data);
       }
-      const price = +response.data.ticker;
+      const ticker = response.data.data.find(v => v.instId === params.symbol);
+      const price = +ticker.last;
       return { data: price };
     },
     /**
@@ -413,21 +442,24 @@ function Rest(restOptions) {
     getLiquidation: async (params) => {
       // Get mark price 
       const markData = {};
-      const markResponse = await request.public('GET', `/api/futures/v3/instruments/${params.symbol}`, markData);
-      if (markResponse.status >= 400) {
+      markData.instId = params.symbol;
+      const markResponse = await request.public('GET', '/api/v5/public/mark-price', markData);
+      if (markResponse.data.code !== '0') {
         return handleResponseError(params, markResponse.data);
       }
       // Get position
       const positionData = {};
-      const positionResponse = await request.private('GET', `/api/futures/v3/${params.symbol}/position`, positionData);
-      if (positionResponse.status >= 400) {
+      positionData.instId = params.symbol;
+      const positionResponse = await request.private('GET', '/api/v5/account/positions', positionData);
+      if (positionResponse.data.code !== '0') {
         return handleResponseError(params, positionResponse.data);
       }
       // Calculate liquidation
-      const positionHolding = positionResponse.data.holding[0];
-      const markPx = +markResponse.data.mark_price;
-      const liqPxS = +positionHolding.short_qty ? +positionHolding.liquidation_price : 0;
-      const liqPxB = +positionHolding.long_qty ? +positionHolding.liquidation_price : 0;
+      const markResponseData = markResponse.data.data.find(v => v.instId === params.symbol);
+      const positionResponseData = positionResponse.data.data.find(v => v.instId === params.symbol);
+      const markPx = +markResponseData.markPx;
+      const liqPxS = positionResponseData && positionResponseData.posSide === 'short' ? +positionResponseData.liqPx : 0;
+      const liqPxB = positionResponseData && positionResponseData.posSide === 'long' ? +positionResponseData.liqPx : 0;
       const liquidation = { markPx, liqPxS, liqPxB, };
       return { data: liquidation };
     },
