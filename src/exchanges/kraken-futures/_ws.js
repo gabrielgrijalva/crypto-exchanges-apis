@@ -330,6 +330,11 @@ function Ws(wsOptions) {
         if (messageParse.feed === 'book_snapshot') {
           return synchronizeOrderBookSnapshot(messageParse, orderBook);
         }
+        const timestamp = Date.now();
+        const orderBookTimestamp = +messageParse.timestamp;
+        if (timestamp - orderBookTimestamp > 5000) {
+          return webSocket.disconnect();
+        }
         if (messageParse.feed === 'book') {
           const update = { id: +messageParse.price, price: +messageParse.price, quantity: +messageParse.qty };
           if (messageParse.side === 'sell') {
