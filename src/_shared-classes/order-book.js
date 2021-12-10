@@ -20,14 +20,14 @@ function findOrderIndexById(id, orders) {
   * @param {WsN.orderBookOrder[]} orders 
   */
 function findOrderIndexByPriceAsk(price, orders) {
-  return orders.findIndex(v => v.price <= price);
+  return orders.findIndex(v => v.price >= price);
 };
 /**
  * @param {number} price
  * @param {WsN.orderBookOrder[]} orders 
  */
 function findOrderIndexByPriceBid(price, orders) {
-  return orders.findIndex(v => v.price >= price);
+  return orders.findIndex(v => v.price <= price);
 };
 /**
  * @param {WsN.orderBookOrder[]} orders
