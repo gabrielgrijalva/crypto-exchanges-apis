@@ -83,10 +83,10 @@ function desynchronizeOrderBook(flags, orderBook) {
  */
 function synchronizeOrderBookSnapshot(snapshot, orderBook) {
   orderBook._insertSnapshotAsks(snapshot.asks.map(v => {
-    return { id: +v[0], price: +v[0], quantity: +v[1] };
+    return { id: +v.id, price: +v.price, quantity: +v.quantity };
   }));
   orderBook._insertSnapshotBids(snapshot.bids.map(v => {
-    return { id: +v[0], price: +v[0], quantity: +v[1] };
+    return { id: +v.id, price: +v.price, quantity: +v.quantity };
   }));
 };
 /**
