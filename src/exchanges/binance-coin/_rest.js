@@ -14,7 +14,7 @@ const Request = require('../../_shared-classes/request');
  * 
  */
 /**
- * @param {RestN.params} params
+ * @param {RestN.params | null} params
  * @param {Object | string} responseData 
  * @returns {{ error: RestN.RestErrorResponseData }}
  */
@@ -206,12 +206,12 @@ function Rest(restOptions) {
         }
         return `${!a ? '' : `${a},`}${JSON.stringify(orderData)}`;
       }, '')}]`;
-      const response = await request.private('POST', '/dapi/v1/batchOrders');
+      const response = await request.private('POST', '/dapi/v1/batchOrders', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
       return response.data.map((v, i) => {
-        if (v.code !== 200) {
+        if (v.code && v.code < 0) {
           return handleResponseError(params[i], v);
         }
         return { data: params[i] };
@@ -250,7 +250,7 @@ function Rest(restOptions) {
         return handleResponseError(params, response.data);
       }
       return response.data.map((v, i) => {
-        if (v.code !== 200) {
+        if (v.code && v.code < 0) {
           return handleResponseError(params[i], v);
         }
         return { data: params[i] };
@@ -313,10 +313,15 @@ function Rest(restOptions) {
      * 
      */
     getCandles: async (params) => {
+      const timestamp = moment.utc().startOf('minute').valueOf();
       const data = {};
       data.symbol = params.symbol;
       data.interval = getCandleResolution(params.interval);
       data.startTime = moment.utc(params.start).valueOf();
+      data.endTime = moment.utc(params.start).add(params.interval * 1499, 'milliseconds').valueOf();
+      data.endTime = (data.endTime - data.startTime) < 17193600000 ? data.endTime
+        : moment.utc(params.start).add(17193600000, 'milliseconds').valueOf();
+      data.endTime = data.endTime < timestamp ? data.endTime : timestamp;
       data.limit = 1500;
       const response = await request.public('GET', '/dapi/v1/klines', data);
       if (response.status >= 400) {
@@ -369,7 +374,7 @@ function Rest(restOptions) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      const price = +response.data[0].price;
+      const price = +response.data[response.data.length - 1].price;
       return { data: price };
     },
     /**
@@ -396,8 +401,8 @@ function Rest(restOptions) {
       // Calculate liquidation
       const position = positionResponse.data.find(v => v.symbol === params.symbol);
       const markPx = +premiumIndexResponse.data[0].markPrice;
-      const liqPxS = +position.positionAmt < 0 ? +positionData.liquidationPrice : 0;
-      const liqPxB = +position.positionAmt > 0 ? +positionData.liquidationPrice : 0;
+      const liqPxS = +position.positionAmt < 0 ? +position.liquidationPrice : 0;
+      const liqPxB = +position.positionAmt > 0 ? +position.liquidationPrice : 0;
       const liquidation = { markPx, liqPxS, liqPxB, };
       return { data: liquidation };
     },
@@ -415,8 +420,9 @@ function Rest(restOptions) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      const current = +response.data[0].lastFundingRate;
-      const estimated = +response.data[0].lastFundingRate;
+      const responseData = response.data[0];
+      const current = responseData ? +responseData.lastFundingRate : 0;
+      const estimated = responseData ? +responseData.lastFundingRate : 0;
       const fundings = { current, estimated, };
       return { data: fundings };
     },
@@ -427,11 +433,11 @@ function Rest(restOptions) {
      * 
      * 
      */
-    _getListenKey: async (params) => {
+    _getListenKey: async () => {
       const data = {};
       const response = await request.private('POST', '/dapi/v1/listenKey', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(null, response.data);
       }
       const listenKey = response.data.listenKey;
       return { data: listenKey };
