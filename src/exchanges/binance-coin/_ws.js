@@ -233,8 +233,17 @@ function Ws(wsOptions) {
         liquidation.pxB = +positionEvent.pa > 0 ? +positionEvent.ep : 0;
         liquidation.qtyS = +positionEvent.pa < 0 ? Math.abs(+positionEvent.pa) : 0;
         liquidation.qtyB = +positionEvent.pa > 0 ? Math.abs(+positionEvent.pa) : 0;
+        liquidation.liqPxS = +positionEvent.pa < 0 ? liquidation.liqPxS : 0;
+        liquidation.liqPxB = +positionEvent.pa > 0 ? liquidation.liqPxB : 0;
         eventEmitter.emit('update', liquidation);
       });
+      setInterval(async () => {
+        if (!liquidation.qtyS && !liquidation.qtyB) { return };
+        const liquidationInfo = await rest.getLiquidation(liquidationParams);
+        liquidation.markPx = liquidationInfo.data.markPx;
+        liquidation.liqPxS = liquidationInfo.data.liqPxS;
+        liquidation.liqPxB = liquidationInfo.data.liqPxB;
+      }, 2000);
       webSocketMarkPrice.addOnClose(() => connectWebSocket(streamMarkPrice, webSocketMarkPrice, wsOptions));
       webSocketPosition.addOnClose(() => connectWebSocket(streamPosition, webSocketPosition, wsOptions));
       return { info: liquidation, events: eventEmitter };
