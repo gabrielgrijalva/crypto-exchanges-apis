@@ -13,9 +13,9 @@ declare namespace PopulatorN {
     port?: number,
     host?: string,
     user?: string,
-    exchange?: string,
-    timezone?: string,
+    database?: string,
     password?: string,
+    timezone?: string,
   }
   /**
    * 
@@ -30,8 +30,8 @@ declare namespace PopulatorN {
     table: string,
     symbol: string,
     interval: number,
-    start: string, 
-    finish: string, 
+    start: string,
+    finish: string,
     waitRequest: number;
   };
   type candlesCronParams = {

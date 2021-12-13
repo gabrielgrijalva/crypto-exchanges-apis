@@ -53,6 +53,7 @@ function Populator(rest) {
     populatorOptions.port = populatorOptions.port || 3306;
     populatorOptions.host = populatorOptions.host || 'localhost';
     populatorOptions.user = populatorOptions.user || 'root';
+    populatorOptions.database = populatorOptions.database || '';
     populatorOptions.password = populatorOptions.password || '';
     populatorOptions.timezone = populatorOptions.timezone || 'Z';
     // Create database connection
