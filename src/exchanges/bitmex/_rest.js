@@ -173,32 +173,7 @@ function Rest(restOptions) {
      * 
      * 
      */
-    createOrders: async (params) => {
-      const data = {};
-      data.orders = params.map(v => {
-        const orderData = {};
-        orderData.side = v.side === 'sell' ? 'Sell' : 'Buy';
-        orderData.symbol = v.symbol;
-        orderData.clOrdID = v.id;
-        orderData.ordType = v.type === 'limit' ? 'Limit' : 'Market';
-        orderData.orderQty = v.quantity;
-        if (v.type === 'limit') {
-          orderData.price = v.price;
-          orderData.execInst = 'ParticipateDoNotInitiate';
-        }
-        return orderData;
-      });
-      const response = await request.private('POST', '/api/v1/order/bulk', data);
-      if (response.status >= 400) {
-        return params.map(v => handleResponseError(v, response.data));
-      }
-      return response.data.map((v, i) => {
-        if (v.error) {
-          return handleResponseError(params[i], v);
-        }
-        return { data: params[i] };
-      });
-    },
+    createOrders: (params) => Promise.all(params.map(v => rest.createOrder(v))),
     /**
      * 
      * 
@@ -281,30 +256,7 @@ function Rest(restOptions) {
      * 
      * 
      */
-    updateOrders: async (params) => {
-      const data = {};
-      data.orders = params.map(v => {
-        const orderData = {};
-        orderData.origClOrdID = v.id;
-        if (v.price) {
-          orderData.price = v.price;
-        }
-        if (v.quantity) {
-          orderData.orderQty = v.quantity;
-        }
-        return orderData;
-      });
-      const response = await request.private('PUT', '/api/v1/order/bulk', data);
-      if (response.status >= 400) {
-        return params.map(v => handleResponseError(v, response.data));
-      }
-      return response.data.map((v, i) => {
-        if (v.error) {
-          return handleResponseError(params[i], v);
-        }
-        return { data: params[i] };
-      });
-    },
+    updateOrders: (params) => Promise.all(params.map(v => rest.updateOrder(v))),
     /**
      * 
      * 
