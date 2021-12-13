@@ -79,6 +79,12 @@ function Populator(rest) {
             interval: interval,
           })).data;
           if (candles.length) {
+            console.log(candles[0].timestamp);
+            const finishIndex = candles.findIndex(v => v.timestamp
+              === finish.format('YYYY-MM-DD HH:mm:ss'));
+            if (finishIndex !== -1) {
+              candles.splice(finishIndex + 1);
+            }
             await saveCandles(connection, candles, table);
             start = moment.utc(candles[candles.length - 1].timestamp);
           } else {
@@ -92,10 +98,11 @@ function Populator(rest) {
         const symbol = params.symbol;
         const interval = params.interval;
         new CronJob('00 * * * * *', async () => {
-          const timestamp = moment.utc().startOf('second').valueOf();
-          if (timestamp % interval !== 0) { return };
+          const timestamp = moment.utc().startOf('second');
+          if ((timestamp.valueOf() % interval) !== 0) { return };
+          console.log(timestamp.format('YYYY-MM-DD HH:mm:ss'));
           let candle = null
-          const start = moment(timestamp).utc().subtract(interval, 'millisecond').format('YYYY-MM-DD HH:mm:ss');
+          const start = timestamp.clone().subtract(interval, 'millisecond').format('YYYY-MM-DD HH:mm:ss');
           for (let i = 0; i < 15 && !candle; i += 1) {
             candle = (await rest.getCandles({
               start: start,
@@ -106,7 +113,7 @@ function Populator(rest) {
               await saveCandles(connection, [candle], table);
             }
           }
-        });
+        }, () => { }, true);
       },
     };
     return populator;
