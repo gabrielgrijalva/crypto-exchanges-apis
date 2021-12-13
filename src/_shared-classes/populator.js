@@ -44,6 +44,9 @@ function saveCandles(connection, candles, table) {
  * @param {RestN.Rest} rest 
  */
 function Populator(rest) {
+  /**
+   * @param {PopulatorN.populatorOptions} populatorOptions 
+   */
   function PopulatorFunc(populatorOptions) {
     // Default populatorOptions values
     populatorOptions = populatorOptions || {};
