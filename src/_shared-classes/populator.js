@@ -98,17 +98,17 @@ function Populator(rest) {
         const symbol = params.symbol;
         const interval = params.interval;
         new CronJob('00 * * * * *', async () => {
-          const timestamp = moment.utc().startOf('second');
+          const timestamp = moment.utc().startOf('second').subtract(interval, 'milliseconds');
           if ((timestamp.valueOf() % interval) !== 0) { return };
           console.log(timestamp.format('YYYY-MM-DD HH:mm:ss'));
           let candle = null
-          const start = timestamp.clone().subtract(interval * 5, 'millisecond').format('YYYY-MM-DD HH:mm:ss');
           for (let i = 0; i < 15 && !candle; i += 1) {
+            const start = timestamp.clone().subtract(interval * 5, 'milliseconds').format('YYYY-MM-DD HH:mm:ss');
             candle = (await rest.getCandles({
               start: start,
               symbol: symbol,
               interval: interval,
-            })).data.find(v => v.timestamp === start);
+            })).data.find(v => v.timestamp === timestamp.format('YYYY-MM-DD HH:mm:ss'));
             if (candle) {
               await saveCandles(connection, [candle], table);
             }
