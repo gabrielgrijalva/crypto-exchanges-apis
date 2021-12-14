@@ -355,14 +355,14 @@ function Rest(restOptions) {
       const tickersData = {};
       tickersData.symbol = params.symbol;
       const tickersResponse = await request.public('GET', '/v2/public/tickers', tickersData);
-      if (tickersResponse.status >= 400) {
+      if (tickersResponse.data.ret_code !== 0 || tickersResponse.status >= 400) {
         return handleResponseError(params, tickersResponse.data);
       }
       // Get position
       const positionData = {};
       positionData.symbol = params.symbol;
       const positionResponse = await request.private('GET', '/v2/private/position/list', positionData);
-      if (positionResponse.status >= 400) {
+      if (positionResponse.data.ret_code !== 0 || positionResponse.status >= 400) {
         return handleResponseError(params, positionResponse.data);
       }
       // Calculate liquidation
