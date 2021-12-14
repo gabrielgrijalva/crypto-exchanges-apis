@@ -302,7 +302,7 @@ function Ws(wsOptions) {
         }
         if (messageParse.action === 'update') {
           messageParse.data.forEach(v => {
-            const update = { id: +v.id, price: +v.pice, quantity: +v.size };
+            const update = { id: +v.id, price: null, quantity: +v.size };
             if (v.side === 'Sell') {
               orderBook._updateOrderByIdAsk(update);
             }
@@ -313,7 +313,7 @@ function Ws(wsOptions) {
         }
         if (messageParse.action === 'delete') {
           messageParse.data.forEach(v => {
-            const update = { id: +v.id, price: +v.price, quantity: +v.size };
+            const update = { id: +v.id, price: null, quantity: null };
             if (v.side === 'Sell') {
               orderBook._deleteOrderByIdAsk(update);
             }
