@@ -173,7 +173,7 @@ function Rest(restOptions) {
         data.time_in_force = 'ImmediateOrCancel';
       }
       const response = await request.private('POST', '/futures/private/order/create', data);
-      if (response.status >= 400) {
+      if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
       return { data: params };
@@ -198,7 +198,7 @@ function Rest(restOptions) {
       data.symbol = params.symbol;
       data.order_link_id = params.id;
       const response = await request.private('POST', '/futures/private/order/cancel', data);
-      if (response.status >= 400) {
+      if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
       return { data: params };
@@ -222,7 +222,7 @@ function Rest(restOptions) {
       const data = {};
       data.symbol = params.symbol;
       const response = await request.private('POST', '/futures/private/order/cancelAll', data);
-      if (response.status >= 400) {
+      if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
       return { data: params };
@@ -245,7 +245,7 @@ function Rest(restOptions) {
         data.p_r_qty = params.quantity;
       }
       const response = await request.private('POST', '/futures/private/order/replace', data);
-      if (response.status >= 400) {
+      if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
       return { data: params };
@@ -269,7 +269,7 @@ function Rest(restOptions) {
       const data = {};
       data.currency = params.asset;
       const response = await request.private('GET', '/v2/private/wallet/balance', data);
-      if (response.status >= 400) {
+      if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
       const equity = response.data.result[params.asset].equity;
@@ -289,7 +289,7 @@ function Rest(restOptions) {
       data.from = moment.utc(params.start).unix();
       data.limit = 200;
       const response = await request.public('GET', '/v2/public/kline/list', data);
-      if (response.status >= 400) {
+      if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
       const candles = response.data.result.map(v => {
@@ -315,7 +315,7 @@ function Rest(restOptions) {
       const data = {};
       data.symbol = params.symbol;
       const response = await request.private('GET', '/futures/private/position/list', data);
-      if (response.status >= 400) {
+      if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
       const positionResult = response.data.result;
@@ -337,7 +337,7 @@ function Rest(restOptions) {
       const data = {};
       data.symbol = params.symbol;
       const response = await request.public('GET', '/v2/public/tickers', data);
-      if (response.status >= 400) {
+      if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
       const price = +response.data.result[0].last_price;
