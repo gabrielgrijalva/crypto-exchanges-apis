@@ -102,7 +102,7 @@ function Populator(rest) {
           if ((timestamp.valueOf() % interval) !== 0) { return };
           console.log(timestamp.format('YYYY-MM-DD HH:mm:ss'));
           let candle = null
-          const start = timestamp.clone().subtract(interval, 'millisecond').format('YYYY-MM-DD HH:mm:ss');
+          const start = timestamp.clone().subtract(interval * 5, 'millisecond').format('YYYY-MM-DD HH:mm:ss');
           for (let i = 0; i < 15 && !candle; i += 1) {
             candle = (await rest.getCandles({
               start: start,
