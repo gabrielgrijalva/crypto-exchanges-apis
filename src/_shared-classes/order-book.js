@@ -51,8 +51,12 @@ function getUpdateOrderById(orders) {
     const index = findOrderIndexById(update.id, orders);
     const orderToUpdate = orders[index];
     if (orderToUpdate) {
-      orderToUpdate.price = update.price;
-      orderToUpdate.quantity = update.quantity;
+      if (update.price) {
+        orderToUpdate.price = update.price;
+      }
+      if (update.quantity) {
+        orderToUpdate.quantity = update.quantity;
+      }
     }
   };
 };
