@@ -155,10 +155,10 @@ function Ws(wsOptions) {
       /** @type {WsN.ordersEventEmitter} */
       const eventEmitter = new Events.EventEmitter();
       // Orders websocket
-      const topicOrders = `order.${ordersParams.symbol}`;
+      const topicOrders = 'order';
       const webSocketOrders = WebSocket();
       // Executions websocket
-      const topicExecutions = `execution.${ordersParams.symbol}`;
+      const topicExecutions = 'execution';
       const webSocketExecutions = WebSocket();
       await Promise.all([
         connectWebSocket(topicOrders, webSocketOrders, wsOptions),
@@ -171,11 +171,13 @@ function Ws(wsOptions) {
         const cancelationOrders = [];
         for (let i = 0; messageParse.data[i]; i += 1) {
           const order = messageParse.data[i];
-          if (order.order_status === 'New' || order.order_status === 'PartiallyFilled') {
-            creationOrders.push(createCreationUpdate(order));
-          }
-          if (order.order_status === 'Cancelled' || order.order_status === 'Rejected') {
-            cancelationOrders.push(createCancelation(order));
+          if (order.symbol === ordersParams.symbol) {
+            if (order.order_status === 'New' || order.order_status === 'PartiallyFilled') {
+              creationOrders.push(createCreationUpdate(order));
+            }
+            if (order.order_status === 'Cancelled' || order.order_status === 'Rejected') {
+              cancelationOrders.push(createCancelation(order));
+            }
           }
         }
         if (creationOrders.length) {
@@ -191,8 +193,10 @@ function Ws(wsOptions) {
         const executionOrders = [];
         for (let i = 0; messageParse.data[i]; i += 1) {
           const order = messageParse.data[i];
-          if (order.exec_type === 'Trade') {
-            executionOrders.push(createExecution(order));
+          if (order.symbol === ordersParams.symbol) {
+            if (order.exec_type === 'Trade') {
+              executionOrders.push(createExecution(order));
+            }
           }
         }
         if (executionOrders.length) {
@@ -215,7 +219,7 @@ function Ws(wsOptions) {
     position: async (positionParams) => {
       /** @type {WsN.positionEventEmitter} */
       const eventEmitter = new Events.EventEmitter();
-      const topic = `position.${positionParams.symbol}`;
+      const topic = 'position';
       const webSocket = WebSocket();
       await connectWebSocket(topic, webSocket, wsOptions);
       // Load rest info
@@ -253,7 +257,7 @@ function Ws(wsOptions) {
       const topicInstrument = `instrument_info.100ms.${liquidationParams.symbol}`;
       const webSocketInstrument = WebSocket();
       // Position websocket
-      const topicPosition = `position.${liquidationParams.symbol}`;
+      const topicPosition = 'position';
       const webSocketPosition = WebSocket();
       await Promise.all([
         connectWebSocket(topicInstrument, webSocketInstrument, wsOptions),
