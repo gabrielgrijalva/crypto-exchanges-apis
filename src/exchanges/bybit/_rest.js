@@ -62,8 +62,17 @@ function orderAndStringifyData(params) {
  * @returns {string | number}
  */
 function getCandleResolution(interval) {
+  if (interval === 60000) { return 1 };
+  if (interval === 180000) { return 3 };
+  if (interval === 300000) { return 5 };
+  if (interval === 900000) { return 15 };
+  if (interval === 1800000) { return 30 };
+  if (interval === 3600000) { return 60 };
+  if (interval === 7200000) { return 120 };
+  if (interval === 14400000) { return 240 };
+  if (interval === 21600000) { return 360 };
+  if (interval === 43200000) { return 720 };
   if (interval === 86400000) { return 'D' };
-  return interval / 1000;
 };
 /**
  * 
