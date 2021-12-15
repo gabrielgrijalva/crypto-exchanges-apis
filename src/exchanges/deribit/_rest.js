@@ -92,7 +92,7 @@ function private(method, path, data) {
   const signature = crypto.createHmac('sha256', this.restOptions.apiSecret).update(digest).digest('hex');
   const authHeaderStr = `deri-hmac-sha256 id=${this.restOptions.apiKey},ts=${timestamp},nonce=${nonce},sig=${signature}`;
   const requestSendParams = {
-    url: `${this.restOptions.url}${path}?${dataStringified}`,
+    url: `${this.restOptions.url}${path}${dataStringified}`,
     method: method,
     headers: { 'Authorization': authHeaderStr },
   };
