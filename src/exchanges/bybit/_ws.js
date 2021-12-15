@@ -289,6 +289,8 @@ function Ws(wsOptions) {
         liquidation.pxB = positionEvent.side === 'Buy' ? +positionEvent.entry_price : 0;
         liquidation.qtyS = positionEvent.side === 'Sell' ? +positionEvent.size : 0;
         liquidation.qtyB = positionEvent.side === 'Buy' ? +positionEvent.size : 0;
+        liquidation.liqPxS = positionEvent.side === 'Sell' ? +positionEvent.liq_price : 0;
+        liquidation.liqPxB = positionEvent.side === 'Buy' ? +positionEvent.liq_price : 0;
         eventEmitter.emit('update', liquidation);
       });
       webSocketInstrument.addOnClose(() => connectWebSocket(topicInstrument, webSocketInstrument, wsOptions));
