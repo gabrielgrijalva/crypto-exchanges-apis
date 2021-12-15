@@ -55,7 +55,7 @@ function handleResponseError(params, responseData) {
  */
 function getCandleResolution(interval) {
   if (interval === 86400000) { return '1D' };
-  return interval / 60000;
+  return (interval / 60000).toString();
 };
 /**
  * 
@@ -75,7 +75,7 @@ function getCandleResolution(interval) {
 function public(method, path, data) {
   const dataStringified = data ? `?${qs.stringify(data)}` : '';
   const requestSendParams = {
-    url: `${this.restOptions.url}${path}?${dataStringified}`,
+    url: `${this.restOptions.url}${path}${dataStringified}`,
     method: method,
   };
   return this.send(requestSendParams);
@@ -287,7 +287,7 @@ function Rest(restOptions) {
       const candlesResult = response.data.result;
       const candles = candlesResult.ticks.map((v, i) => {
         const candle = {};
-        candle.timestamp = moment.unix(candlesResult.ticks[i]).utc().format('YYYY-MM-DD HH:mm:ss');
+        candle.timestamp = moment(candlesResult.ticks[i]).utc().format('YYYY-MM-DD HH:mm:ss');
         candle.open = +candlesResult.open[i];
         candle.high = +candlesResult.high[i];
         candle.low = +candlesResult.low[i];
