@@ -318,7 +318,7 @@ function Rest(restOptions) {
       if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      const positionResult = response.data.result;
+      const positionResult = response.data.result.find(v => v.data.symbol === params.symbol).data;
       const qtyS = positionResult.side === 'Sell' ? +positionResult.size : 0;
       const qtyB = positionResult.side === 'Buy' ? +positionResult.size : 0;
       const pxS = positionResult.side === 'Sell' ? +positionResult.entry_price : 0;
@@ -367,7 +367,7 @@ function Rest(restOptions) {
       }
       // Calculate liquidation
       const tickersResult = tickersResponse.data.result;
-      const positionResult = positionResponse.data.result;
+      const positionResult = positionResponse.data.result.find(v => v.data.symbol === params.symbol).data;
       const markPx = +tickersResult[0].mark_price;
       const liqPxS = positionResult.side === 'Sell' ? +positionResult.liq_price : 0;
       const liqPxB = positionResult.side === 'Buy' ? +positionResult.liq_price : 0;
