@@ -263,7 +263,7 @@ function Ws(wsOptions) {
       const symbolTicker = liquidationParams.symbol;
       const webSocketTicker = WebSocket();
       // Position websocket
-      const feedPosition = 'open_position';
+      const feedPosition = 'open_positions';
       const webSocketPosition = WebSocket();
       await Promise.all([
         connectWebSocket(feedTicker, symbolTicker, webSocketTicker, wsOptions),
