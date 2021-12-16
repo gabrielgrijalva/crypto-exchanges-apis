@@ -42,7 +42,7 @@ function createCancelation(data) {
  * @param {string} symbol 
  */
 function getRequestParams(feed, symbol) {
-  return symbol ? { feed: feed, event: 'subscribe', }
+  return !symbol ? { feed: feed, event: 'subscribe', }
     : { feed: feed, event: 'subscribe', product_ids: [symbol] };
 };
 /** 
