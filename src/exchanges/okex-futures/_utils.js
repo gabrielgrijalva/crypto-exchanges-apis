@@ -26,7 +26,7 @@ function Utils(utilsOptions) {
    * 
    */
   const utils = {
-    getOrderId: () => uuid(),
+    getOrderId: () => uuid().replace(/-/g, ''),
   };
   return utils;
 };

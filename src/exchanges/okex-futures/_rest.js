@@ -179,7 +179,7 @@ function Rest(restOptions) {
         data.ordType = 'market';
       }
       if (params.type === 'limit') {
-        data.ordType = 'post-only';
+        data.ordType = 'post_only';
         data.px = `${params.price}`;
       }
       const response = await request.private('POST', '/api/v5/trade/order', data);
@@ -208,7 +208,7 @@ function Rest(restOptions) {
           orderData.ordType = 'market';
         }
         if (v.type === 'limit') {
-          orderData.ordType = 'post-only';
+          orderData.ordType = 'post_only';
           orderData.px = `${v.price}`;
         }
       });
