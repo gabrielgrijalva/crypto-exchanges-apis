@@ -32,7 +32,7 @@ function handleResponseError(params, responseData) {
     }
   }
   if (responseData.status || responseData.sendStatus || responseData.editStatus || responseData.cancelStatus) {
-    const status = responseData.status || responseData.sendStatus.status || responseData.editStatus.status || responseData.cancelStatus.status;
+    const status = responseData.status || (responseData.sendStatus || responseData.editStatus || responseData.cancelStatus).status;
     if (status === 'postWouldExecute') {
       type = 'post-only-reject';
     }
@@ -86,7 +86,7 @@ function getCandleResolution(interval) {
 function public(method, path, data) {
   const dataStringified = qs.stringify(data);
   const requestSendParams = {
-    url: `https://futures.kraken.com${path}?${dataStringified}`,
+    url: `${path}?${dataStringified}`,
     method: method,
   };
   return this.send(requestSendParams);
@@ -329,6 +329,7 @@ function Rest(restOptions) {
       const data = {};
       data.batchOrder = params.map(v => {
         const orderData = {};
+        orderData.order = 'edit';
         orderData.cliOrdId = v.id;
         if (v.price) {
           orderData.limitPrice = v.price;
@@ -381,7 +382,7 @@ function Rest(restOptions) {
       const interval = getCandleResolution(params.interval);
       data.from = moment.utc(params.start).unix();
       data.to = moment.utc(params.start).add(5000 * params.interval, 'milliseconds').unix();
-      const response = await request.public('GET', `/api/charts/v1/trade/${symbol}/${interval}`, data);
+      const response = await request.public('GET', `https://futures.kraken.com/api/charts/v1/trade/${symbol}/${interval}`, data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -428,7 +429,7 @@ function Rest(restOptions) {
      */
     getLastPrice: async (params) => {
       const data = {};
-      const response = await request.public('GET', '/api/v3/tickers', data);
+      const response = await request.public('GET', `${restOptions.url}/api/v3/tickers`, data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -445,7 +446,7 @@ function Rest(restOptions) {
     getLiquidation: async (params) => {
       // Get tickers 
       const tickersData = {};
-      const tickersResponse = await request.public('GET', '/api/v3/tickers', tickersData);
+      const tickersResponse = await request.public('GET', `${restOptions.url}/api/v3/tickers`, tickersData);
       if (tickersResponse.status >= 400) {
         return handleResponseError(params, tickersResponse.data);
       }
@@ -481,7 +482,7 @@ function Rest(restOptions) {
      */
     getFundingRates: async (params) => {
       const data = {};
-      const response = await request.public('GET', '/api/v3/tickers', data);
+      const response = await request.public('GET', `${restOptions.url}/api/v3/tickers`, data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
