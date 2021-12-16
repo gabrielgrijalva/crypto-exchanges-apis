@@ -377,11 +377,13 @@ function Rest(restOptions) {
      * 
      */
     getCandles: async (params) => {
+      const timestamp = moment.utc().startOf('minute').unix();
       const data = {};
       const symbol = params.symbol;
       const interval = getCandleResolution(params.interval);
       data.from = moment.utc(params.start).unix();
       data.to = moment.utc(params.start).add(5000 * params.interval, 'milliseconds').unix();
+      data.to = data.to < timestamp ? data.to : timestamp;
       const response = await request.public('GET', `https://futures.kraken.com/api/charts/v1/trade/${symbol}/${interval}`, data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
