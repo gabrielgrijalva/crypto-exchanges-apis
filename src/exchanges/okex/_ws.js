@@ -1,4 +1,3 @@
-const zlib = require('zlib');
 const crypto = require('crypto');
 const moment = require('moment');
 const Events = require('events');
