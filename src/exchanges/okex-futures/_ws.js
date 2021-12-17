@@ -72,14 +72,16 @@ function connectWebSocket(type, symbol, channel, webSocket, wsOptions) {
         const signedRequest = getSignedRequest(apiKey, apiSecret, apiPassphrase);
         webSocket.send(JSON.stringify(signedRequest));
       } else {
-        const request = { op: 'subscribe', args: [{ channel: channel, instType: 'FUTURES', instId: symbol, }], };
+        const instType = symbol.includes('SWAP') ? 'SWAP' : 'FUTURES';
+        const request = { op: 'subscribe', args: [{ channel: channel, instType: instType, instId: symbol, }], };
         webSocket.send(JSON.stringify(request));
       }
     };
     function connectOnMessageFunction(message) {
       const messageParse = JSON.parse(zlib.inflateRawSync(message).toString());
       if (messageParse.event === 'login' && messageParse.code === '0') {
-        const request = { op: 'subscribe', args: [{ channel: channel, instType: 'FUTURES', instId: symbol, }], };
+        const instType = symbol.includes('SWAP') ? 'SWAP' : 'FUTURES';
+        const request = { op: 'subscribe', args: [{ channel: channel, instType: instType, instId: symbol, }], };
         webSocket.send(JSON.stringify(request));
       }
       if (messageParse.event === 'subscribe' && messageParse.arg.channel === channel) {
