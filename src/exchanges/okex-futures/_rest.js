@@ -211,6 +211,7 @@ function Rest(restOptions) {
           orderData.ordType = 'post_only';
           orderData.px = `${v.price}`;
         }
+        return orderData;
       });
       const response = await request.private('POST', '/api/v5/trade/batch-orders', data);
       if (response.data.code !== '0') {
@@ -273,7 +274,7 @@ function Rest(restOptions) {
       // Get open orders
       const ordersData = {};
       ordersData.instId = params.symbol;
-      const ordersResponse = await request.private('GET', '/api/v5/trade/orders-pending', ordersData);
+      const ordersResponse = await request.private('GET', '/api/v5/trade/orders-pending', null, ordersData);
       if (ordersResponse.data.code !== '0') {
         return handleResponseError(params, ordersResponse.data);
       }
@@ -299,7 +300,7 @@ function Rest(restOptions) {
      */
     updateOrder: async (params) => {
       const data = {};
-      data.instId = params.id;
+      data.instId = params.symbol;
       data.cxlOnFail = true;
       data.clOrdId = params.id;
       if (params.price) {
@@ -333,8 +334,9 @@ function Rest(restOptions) {
         if (v.quantity) {
           orderData.newSz = `${v.quantity}`;
         }
+        return orderData;
       });
-      const response = await request.private('POST', '/api/v5/trade/amend-order', data);
+      const response = await request.private('POST', '/api/v5/trade/amend-batch-orders', data);
       if (response.data.code !== '0') {
         return params.map(v => handleResponseError(v, response.data));
       }
@@ -355,11 +357,11 @@ function Rest(restOptions) {
     getEquity: async (params) => {
       const data = {};
       data.ccy = params.asset;
-      const response = await request.private('GET', '/api/v5/account/balance', data);
+      const response = await request.private('GET', '/api/v5/account/balance', null, data);
       if (response.data.code !== '0') {
         return handleResponseError(params, response.data);
       }
-      const asset = response.data[0].details.find(v => v.ccy === params.asset);
+      const asset = response.data.data[0].details.find(v => v.ccy === params.asset);
       const equity = asset ? +asset.eq : 0;
       return { data: equity };
     },
@@ -375,14 +377,14 @@ function Rest(restOptions) {
       data.instId = params.symbol;
       data.bar = getCandleResolution(params.interval);
       data.limit = '100';
-      data.before = moment.utc(params.start).valueOf();
+      data.after = `${moment.utc(params.start).add(params.interval * 100, 'milliseconds').valueOf()}`;
       const response = await request.public('GET', '/api/v5/market/history-candles', data);
       if (response.data.code !== '0') {
         return handleResponseError(params, response.data);
       }
-      const candles = response.data.data.reverse.map(v => {
+      const candles = response.data.data.reverse().map(v => {
         const candle = {};
-        candle.timestamp = moment(v[0]).utc().format('YYYY-MM-DD HH:mm:ss');
+        candle.timestamp = moment(+v[0]).utc().format('YYYY-MM-DD HH:mm:ss');
         candle.open = +v[1];
         candle.high = +v[2];
         candle.low = +v[3];
@@ -402,15 +404,15 @@ function Rest(restOptions) {
     getPosition: async (params) => {
       const data = {};
       data.instId = params.symbol;
-      const response = await request.private('GET', '/api/v5/account/positions', data);
+      const response = await request.private('GET', '/api/v5/account/positions', null, data);
       if (response.data.code !== '0') {
         return handleResponseError(params, response.data);
       }
       const positionData = response.data.data.find(v => v.instId === params.symbol);
-      const qtyS = positionData.posSide === 'short' ? +positionData.pos : 0;
-      const qtyB = positionData.posSide === 'long' ? +positionData.pos : 0;
-      const pxS = positionData.posSide === 'short' ? +positionData.avgPx : 0;
-      const pxB = positionData.posSide === 'long' ? +positionData.avgPx : 0;
+      const qtyS = positionData && +positionData.pos < 0 ? Math.abs(+positionData.pos) : 0;
+      const qtyB = positionData && +positionData.pos > 0 ? Math.abs(+positionData.pos) : 0;
+      const pxS = positionData && +positionData.pos < 0 ? +positionData.avgPx : 0;
+      const pxB = positionData && +positionData.pos > 0 ? +positionData.avgPx : 0;
       const position = { qtyS, qtyB, pxS, pxB };
       return { data: position };
     },
@@ -450,7 +452,7 @@ function Rest(restOptions) {
       // Get position
       const positionData = {};
       positionData.instId = params.symbol;
-      const positionResponse = await request.private('GET', '/api/v5/account/positions', positionData);
+      const positionResponse = await request.private('GET', '/api/v5/account/positions', null, positionData);
       if (positionResponse.data.code !== '0') {
         return handleResponseError(params, positionResponse.data);
       }
@@ -458,8 +460,8 @@ function Rest(restOptions) {
       const markResponseData = markResponse.data.data.find(v => v.instId === params.symbol);
       const positionResponseData = positionResponse.data.data.find(v => v.instId === params.symbol);
       const markPx = +markResponseData.markPx;
-      const liqPxS = positionResponseData && positionResponseData.posSide === 'short' ? +positionResponseData.liqPx : 0;
-      const liqPxB = positionResponseData && positionResponseData.posSide === 'long' ? +positionResponseData.liqPx : 0;
+      const liqPxS = positionResponseData && +positionResponseData.pos < 0 ? +positionResponseData.liqPx : 0;
+      const liqPxB = positionResponseData && +positionResponseData.pos > 0 ? +positionResponseData.liqPx : 0;
       const liquidation = { markPx, liqPxS, liqPxB, };
       return { data: liquidation };
     },
@@ -471,7 +473,20 @@ function Rest(restOptions) {
      * 
      */
     getFundingRates: async (params) => {
-      const fundings = { current: 0, estimated: 0 };
+      if (!params.symbol.includes('SWAP')) {
+        const fundings = { current: 0, estimated: 0 };
+        return { data: fundings };
+      }
+      const data = {};
+      data.instId = params.symbol;
+      const response = await request.public('GET', '/api/v5/public/funding-rate', data);
+      if (response.data.code !== '0') {
+        return handleResponseError(params, response.data);
+      }
+      const fundingRate = response.data.data.find(v => v.instId === params.symbol);
+      const current = fundingRate ? +fundingRate.fundingRate : 0;
+      const estimated = fundingRate ? +fundingRate.nextFundingRate : 0;
+      const fundings = { current, estimated };
       return { data: fundings };
     },
   };
