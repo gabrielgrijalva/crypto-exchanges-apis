@@ -48,8 +48,9 @@ function getSignedRequest(apiKey, apiSecret, apiPassphrase) {
   const method = 'GET';
   const timestamp = Date.now() / 1000;
   const digest = `${timestamp}${method}${path}`;
-  const signature = crypto.createHmac('sha256', apiSecret).update(digest).digest('base64');
-  return { op: 'login', args: [apiKey, apiPassphrase, timestamp, signature] };
+  const sign = crypto.createHmac('sha256', apiSecret).update(digest).digest('base64');
+  const passphrase = apiPassphrase;
+  return { op: 'login', args: [{ apiKey, passphrase, timestamp, sign }] };
 };
 /**
  * 
@@ -66,7 +67,7 @@ function connectWebSocket(type, symbol, channel, webSocket, wsOptions) {
     const apiSecret = wsOptions.apiSecret;
     const apiPassphrase = wsOptions.apiPassphrase;
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
-    webSocket.connect(`${url}${type}`);
+    webSocket.connect(`${url}/${type}`);
     function connnectOnOpenFunction() {
       if (type === 'private') {
         const signedRequest = getSignedRequest(apiKey, apiSecret, apiPassphrase);
@@ -78,7 +79,7 @@ function connectWebSocket(type, symbol, channel, webSocket, wsOptions) {
       }
     };
     function connectOnMessageFunction(message) {
-      const messageParse = JSON.parse(zlib.inflateRawSync(message).toString());
+      const messageParse = JSON.parse(message.toString());
       if (messageParse.event === 'login' && messageParse.code === '0') {
         const instType = symbol.includes('SWAP') ? 'SWAP' : 'FUTURES';
         const request = { op: 'subscribe', args: [{ channel: channel, instType: instType, instId: symbol, }], };
@@ -139,10 +140,10 @@ function desynchronizeOrderBook(orderBook) {
  * @param {WsN.dataOrderBook} orderBook 
  */
 function synchronizeOrderBookSnapshot(snapshot, orderBook) {
-  orderBook._insertSnapshotAsks(snapshot.data.asks.map(v => {
+  orderBook._insertSnapshotAsks(snapshot.data[0].asks.map(v => {
     return { id: +v[0], price: +v[0], quantity: +v[1] };
   }));
-  orderBook._insertSnapshotBids(snapshot.data.bids.map(v => {
+  orderBook._insertSnapshotBids(snapshot.data[0].bids.map(v => {
     return { id: +v[0], price: +v[0], quantity: +v[1] };
   }));
 };
@@ -193,18 +194,18 @@ function Ws(wsOptions) {
       const openOrders = [];
       // Orders websocket
       const symbol = ordersParams.symbol;
-      const channel = 'order';
+      const channel = 'orders';
       const webSocket = WebSocket();
       await connectWebSocket('private', symbol, channel, webSocket, wsOptions);
       webSocket.addOnMessage((message) => {
-        const messageParse = JSON.parse(zlib.inflateRawSync(message).toString());
+        const messageParse = JSON.parse(message.toString());
         if (messageParse.arg.channel !== channel) { return };
         const creationOrders = [];
         const executionOrders = [];
         const cancelationOrders = [];
         for (let i = 0; messageParse.data[i]; i += 1) {
           const order = messageParse.data[i];
-          if (order.instrument_id === ordersParams.symbol) {
+          if (order.instId === ordersParams.symbol) {
             if (order.state === 'live') {
               if (order.amendResult === '-1') {
                 removeOpenOrders(openOrders, order);
@@ -219,7 +220,7 @@ function Ws(wsOptions) {
                 removeOpenOrders(openOrders, order);
                 cancelationOrders.push(createCancelation(order));
               } else {
-                const fillAndUpdate = getFillAndUpdateOpenOrders(order);
+                const fillAndUpdate = getFillAndUpdateOpenOrders(openOrders, order);
                 if (fillAndUpdate.update) {
                   creationOrders.push(createCreationUpdate(order));
                 }
@@ -269,14 +270,14 @@ function Ws(wsOptions) {
       /** @type {WsN.dataPosition} */
       const position = Object.assign({}, positionRestData);
       webSocket.addOnMessage((message) => {
-        const messageParse = JSON.parse(zlib.inflateRawSync(message).toString());
+        const messageParse = JSON.parse(message.toString());
         if (messageParse.arg.channel !== channel) { return };
         const positionEvent = messageParse.data.find(v => v.instId === symbol);
         if (!positionEvent) { return };
-        position.pxS = positionEvent && positionEvent.posSide === 'short' ? +positionEvent.avgPx : 0;
-        position.pxB = positionEvent && positionEvent.posSide === 'long' ? +positionEvent.avgPx : 0;
-        position.qtyS = positionEvent && positionEvent.posSide === 'short' ? +positionEvent.pos : 0;
-        position.qtyB = positionEvent && positionEvent.posSide === 'long' ? +positionEvent.pos : 0;
+        position.pxS = positionEvent && +positionEvent.pos < 0 ? +positionEvent.avgPx : 0;
+        position.pxB = positionEvent && +positionEvent.pos > 0 ? +positionEvent.avgPx : 0;
+        position.qtyS = positionEvent && +positionEvent.pos < 0 ? Math.abs(+positionEvent.pos) : 0;
+        position.qtyB = positionEvent && +positionEvent.pos > 0 ? Math.abs(+positionEvent.pos) : 0;
         eventEmitter.emit('update', position);
       });
       webSocket.addOnClose(() => connectWebSocket('private', symbol, channel, webSocket, wsOptions));
@@ -299,7 +300,7 @@ function Ws(wsOptions) {
       const channelMark = 'mark-price';
       const webSocketMark = WebSocket();
       // Position websocket
-      const channelPosition = 'position';
+      const channelPosition = 'positions';
       const webSocketPosition = WebSocket();
       await Promise.all([
         connectWebSocket('public', symbol, channelMark, webSocketMark, wsOptions),
@@ -314,7 +315,7 @@ function Ws(wsOptions) {
       /** @type {WsN.dataLiquidation} */
       const liquidation = Object.assign({}, positionRestData, liquidationRestData);
       webSocketMark.addOnMessage((message) => {
-        const messageParse = JSON.parse(zlib.inflateRawSync(message).toString());
+        const messageParse = JSON.parse(message.toString());
         if (messageParse.arg.channel !== channelMark) { return };
         const instrumentEvent = messageParse.data.find(v => v.instId === symbol);
         if (!instrumentEvent) { return };
@@ -322,16 +323,16 @@ function Ws(wsOptions) {
         eventEmitter.emit('update', liquidation);
       });
       webSocketPosition.addOnMessage((message) => {
-        const messageParse = JSON.parse(zlib.inflateRawSync(message).toString());
+        const messageParse = JSON.parse(message.toString());
         if (messageParse.arg.channel !== channelPosition) { return };
         const positionEvent = messageParse.data.find(v => v.instId === symbol);
         if (!positionEvent) { return };
-        liquidation.pxS = positionEvent && positionEvent.posSide === 'short' ? +positionEvent.avgPx : 0;
-        liquidation.pxB = positionEvent && positionEvent.posSide === 'long' ? +positionEvent.avgPx : 0;
-        liquidation.qtyS = positionEvent && positionEvent.posSide === 'short' ? +positionEvent.pos : 0;
-        liquidation.qtyB = positionEvent && positionEvent.posSide === 'long' ? +positionEvent.pos : 0;
-        liquidation.liqPxS = positionEvent && positionEvent.posSide === 'short' ? +positionEvent.liqPx : 0;
-        liquidation.liqPxB = positionEvent && positionEvent.posSide === 'long' ? +positionEvent.liqPx : 0;
+        liquidation.pxS = positionEvent && +positionEvent.pos < 0 ? +positionEvent.avgPx : 0;
+        liquidation.pxB = positionEvent && +positionEvent.pos > 0 ? +positionEvent.avgPx : 0;
+        liquidation.qtyS = positionEvent && +positionEvent.pos < 0 ? Math.abs(+positionEvent.pos) : 0;
+        liquidation.qtyB = positionEvent && +positionEvent.pos > 0 ? Math.abs(+positionEvent.pos) : 0;
+        liquidation.liqPxS = positionEvent && +positionEvent.pos < 0 ? +positionEvent.liqPx : 0;
+        liquidation.liqPxB = positionEvent && +positionEvent.pos > 0 ? +positionEvent.liqPx : 0;
         eventEmitter.emit('update', liquidation);
       });
       webSocketMark.addOnClose(() => connectWebSocket('public', symbol, channelMark, webSocketMark, wsOptions));
@@ -356,7 +357,7 @@ function Ws(wsOptions) {
       // Order book functionality
       const orderBook = OrderBook();
       webSocket.addOnMessage((message) => {
-        const messageParse = JSON.parse(zlib.inflateRawSync(message).toString());
+        const messageParse = JSON.parse(message.toString());
         if (messageParse.arg.channel !== channel) { return };
         if (messageParse.action === 'snapshot') {
           return synchronizeOrderBookSnapshot(messageParse, orderBook);
