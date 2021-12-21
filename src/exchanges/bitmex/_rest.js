@@ -24,20 +24,20 @@ function handleResponseError(params, responseData) {
   let type = 'unknown';
   if (responseData.error) {
     const errorMessage = responseData.error.message || responseData.error;
-    if (errorMessage === 'Not Found'
-      || errorMessage === 'Invalid ordStatus'
-      || errorMessage === 'Invalid origClOrdID'
-      || errorMessage === 'Invalid amend: orderQty, leavesQty, price, stopPx unchanged'
-      || errorMessage === 'Unable to cancel order'
-      || errorMessage === 'Unable to cancel order due to existing state: Filled'
-      || errorMessage === 'Unable to cancel order due to existing state: Canceled'
-      || errorMessage === 'Unable to cancel order: Not found or not owned by user') {
+    if (errorMessage.includes('Not Found')
+      || errorMessage.includes('Invalid ordStatus')
+      || errorMessage.includes('Invalid origClOrdID')
+      || errorMessage.includes('Invalid amend: orderQty, leavesQty, price, stopPx unchanged')
+      || errorMessage.includes('Unable to cancel order')
+      || errorMessage.includes('Unable to cancel order due to existing state: Filled')
+      || errorMessage.includes('Unable to cancel order due to existing state: Canceled')
+      || errorMessage.includes('Unable to cancel order: Not found or not owned by user')) {
       type = 'order-not-found';
     }
-    if (errorMessage === 'Rate limit exceeded, retry in 1 seconds.') {
+    if (errorMessage.includes('Rate limit exceeded, retry in 1 seconds.')) {
       type = 'api-rate-limit';
     }
-    if (errorMessage === 'The system is currently overloaded. Please try again later.') {
+    if (errorMessage.includes('The system is currently overloaded. Please try again later.')) {
       type = 'request-not-accepted';
     }
     if (errorMessage.includes('Account has insufficient Available Balance')) {
