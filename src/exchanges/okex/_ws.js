@@ -198,7 +198,7 @@ function Ws(wsOptions) {
       await connectWebSocket('private', symbol, channel, webSocket, wsOptions);
       webSocket.addOnMessage((message) => {
         const messageParse = JSON.parse(message.toString());
-        if (messageParse.arg.channel !== channel) { return };
+        if (!messageParse.arg || messageParse.arg.channel !== channel) { return };
         const creationOrders = [];
         const executionOrders = [];
         const cancelationOrders = [];
@@ -270,7 +270,7 @@ function Ws(wsOptions) {
       const position = Object.assign({}, positionRestData);
       webSocket.addOnMessage((message) => {
         const messageParse = JSON.parse(message.toString());
-        if (messageParse.arg.channel !== channel) { return };
+        if (!messageParse.arg || messageParse.arg.channel !== channel) { return };
         const positionEvent = messageParse.data.find(v => v.instId === symbol);
         if (!positionEvent) { return };
         position.pxS = positionEvent && +positionEvent.pos < 0 ? +positionEvent.avgPx : 0;
@@ -315,7 +315,7 @@ function Ws(wsOptions) {
       const liquidation = Object.assign({}, positionRestData, liquidationRestData);
       webSocketMark.addOnMessage((message) => {
         const messageParse = JSON.parse(message.toString());
-        if (messageParse.arg.channel !== channelMark) { return };
+        if (!messageParse.arg || messageParse.arg.channel !== channelMark) { return };
         const instrumentEvent = messageParse.data.find(v => v.instId === symbol);
         if (!instrumentEvent) { return };
         liquidation.markPx = +instrumentEvent.markPx;
@@ -323,7 +323,7 @@ function Ws(wsOptions) {
       });
       webSocketPosition.addOnMessage((message) => {
         const messageParse = JSON.parse(message.toString());
-        if (messageParse.arg.channel !== channelPosition) { return };
+        if (!messageParse.arg || messageParse.arg.channel !== channelPosition) { return };
         const positionEvent = messageParse.data.find(v => v.instId === symbol);
         if (!positionEvent) { return };
         liquidation.pxS = positionEvent && +positionEvent.pos < 0 ? +positionEvent.avgPx : 0;
@@ -357,7 +357,7 @@ function Ws(wsOptions) {
       const orderBook = OrderBook();
       webSocket.addOnMessage((message) => {
         const messageParse = JSON.parse(message.toString());
-        if (messageParse.arg.channel !== channel) { return };
+        if (!messageParse.arg || messageParse.arg.channel !== channel) { return };
         if (messageParse.action === 'snapshot') {
           return synchronizeOrderBookSnapshot(messageParse, orderBook);
         }
