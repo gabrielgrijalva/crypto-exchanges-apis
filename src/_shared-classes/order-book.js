@@ -1,4 +1,4 @@
-
+const WebSocket = require('ws');
 /**
   * 
   * 
@@ -99,6 +99,46 @@ function getInsertSnapshotFunction(orders) {
     snapshot.forEach(v => orders.push(v));
   };
 };
+/**
+ * 
+ * @param {WsN.orderBookOrder[]} asks 
+ * @param {WsN.orderBookOrder[]} bids 
+ * @returns 
+ */
+function getCreateOrder(asks, bids) {
+  /**
+   * @param {WsN.serverParams} serverParams 
+   */
+  function createOrder(serverParams) {
+    const wss = new WebSocket.Server({
+      port: serverParams.port,
+      host: serverParams.host,
+      clientTracking: true,
+    });
+    wss.on('listening', function listening() {
+      console.log(`Order Book Server listening on: ${serverParams.port}.`);
+    });
+    wss.on('connection', function connection(ws) {
+      ws.on('ping', () => { ws.pong() });
+    });
+    wss.on('error', function error() {
+      throw new Error('Websocket server connection error...');
+    });
+    wss.on('close', function close() {
+      throw new Error('Websocket server connection closed...');
+    });
+    setInterval(() => {
+      wss.clients.forEach((client) => {
+        client.send(JSON.stringify({
+          asks: asks.slice(0, 100),
+          bids: bids.slice(0, 100),
+          timestamp: Date.now(),
+        }))
+      });
+    }, serverParams.broadcast);
+  };
+  return createOrder;
+};
 function OrderBook() {
   /** @type {WsN.orderBookOrder[]} */
   const asks = [];
@@ -118,6 +158,7 @@ function OrderBook() {
     bids: bids,
     getFirstAsk: () => asks[0],
     getFirstBid: () => bids[0],
+    createServer: getCreateOrder(asks, bids),
     // Action by id
     _deleteOrderByIdAsk: getDeleteOrderById(asks),
     _deleteOrderByIdBid: getDeleteOrderById(bids),

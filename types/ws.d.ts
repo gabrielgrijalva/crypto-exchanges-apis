@@ -120,6 +120,20 @@ declare namespace WsN {
    * 
    * 
    * 
+   * WS SERVER
+   * 
+   * 
+   * 
+   */
+  type serverParams = {
+    port: number, 
+    host: string, 
+    broadcast: number,
+  };
+  /**
+   * 
+   * 
+   * 
    * ORDER BOOK INTERFACE
    * 
    * 
@@ -133,6 +147,7 @@ declare namespace WsN {
     bids: orderBookOrder[];
     getFirstAsk(): orderBookOrder;
     getFirstBid(): orderBookOrder;
+    createServer(params: serverParams): void;
     // Private data
     _deleteOrderByIdAsk(update: orderBookOrder): void;
     _deleteOrderByIdBid(update: orderBookOrder): void;
