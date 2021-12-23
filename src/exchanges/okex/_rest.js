@@ -84,19 +84,22 @@ function getCandleResolution(interval) {
  * @this {RestN.Request} 
  * @returns {Promise<RestN.requestSendReturn>}
  */
-function public(method, path, data) {
+async function public(method, path, data) {
   const dataStringified = qs.stringify(data);
   const requestSendParams = {
     url: `${this.restOptions.url}${path}?${dataStringified}`,
     method: method,
   };
-  return this.send(requestSendParams);
+  console.log(requestSendParams);
+  const response = await this.send(requestSendParams);
+  console.log(response);
+  return response;
 };
 /** 
  * @this {RestN.Request} 
  * @returns {Promise<RestN.requestSendReturn>}
  */
-function private(method, path, data, query) {
+async function private(method, path, data, query) {
   const timestamp = moment.utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]');
   const dataStringified = data ? JSON.stringify(data) : '';
   const queryStrigified = query ? `?${qs.stringify(query)}` : '';
@@ -114,7 +117,10 @@ function private(method, path, data, query) {
       'OK-ACCESS-PASSPHRASE': this.restOptions.apiPassphrase,
     },
   };
-  return this.send(requestSendParams);
+  console.log(requestSendParams);
+  const response = await this.send(requestSendParams);
+  console.log(response);
+  return response;
 };
 /**
  * 

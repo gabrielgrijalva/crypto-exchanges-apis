@@ -80,7 +80,7 @@ function getCandleResolution(interval) {
  * @this {RestN.Request} 
  * @returns {Promise<RestN.requestSendReturn>}
  */
-function private(method, path, data) {
+async function private(method, path, data) {
   const headers = {};
   const dataStringified = qs.stringify(data);
   if (this.restOptions.apiKey && this.restOptions.apiSecret) {
@@ -96,7 +96,10 @@ function private(method, path, data) {
     method: method,
     headers: headers,
   };
-  return this.send(requestSendParams);
+  console.log(requestSendParams);
+  const response = await this.send(requestSendParams);
+  console.log(response);
+  return response;
 };
 /**
  * 

@@ -83,19 +83,22 @@ function getCandleResolution(interval) {
  * @this {RestN.Request} 
  * @returns {Promise<RestN.requestSendReturn>}
  */
-function public(method, path, data) {
+async function public(method, path, data) {
   const dataStringified = qs.stringify(data);
   const requestSendParams = {
     url: `${path}?${dataStringified}`,
     method: method,
   };
-  return this.send(requestSendParams);
+  console.log(requestSendParams);
+  const response = await this.send(requestSendParams);
+  console.log(response);
+  return response;
 };
 /** 
  * @this {RestN.Request} 
  * @returns {Promise<RestN.requestSendReturn>}
  */
-function private(method, path, data) {
+async function private(method, path, data) {
   const seconds = Math.floor(Date.now() / 1000).toString();
   const microseconds = Math.floor(process.hrtime()[1] / 1000).toString();
   const micLeadingZeros = '0'.repeat(6 - microseconds.length);
@@ -110,7 +113,10 @@ function private(method, path, data) {
     method: method,
     headers: { 'Accept': 'application/json', 'APIKey': this.restOptions.apiKey, 'Nonce': nonce, 'Authent': authent },
   };
-  return this.send(requestSendParams);
+  console.log(requestSendParams);
+  const response = await this.send(requestSendParams);
+  console.log(response);
+  return response;
 };
 /**
  * 
