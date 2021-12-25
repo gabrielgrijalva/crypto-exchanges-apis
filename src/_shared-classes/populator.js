@@ -100,7 +100,6 @@ function Populator(rest) {
         new CronJob('00 * * * * *', async () => {
           const timestamp = moment.utc().startOf('second').subtract(interval, 'milliseconds');
           if ((timestamp.valueOf() % interval) !== 0) { return };
-          console.log(timestamp.format('YYYY-MM-DD HH:mm:ss'));
           let candle = null
           for (let i = 0; i < 15 && !candle; i += 1) {
             const start = timestamp.clone().subtract(interval * 5, 'milliseconds').format('YYYY-MM-DD HH:mm:ss');
@@ -110,6 +109,7 @@ function Populator(rest) {
               interval: interval,
             })).data.find(v => v.timestamp === timestamp.format('YYYY-MM-DD HH:mm:ss'));
             if (candle) {
+              console.log(candle.timestamp);
               await saveCandles(connection, [candle], table);
             }
           }
