@@ -60,6 +60,7 @@ function getSignedRequest(apiKey, apiSecret, apiPassphrase) {
  * @param {WsN.wsOptions} wsOptions 
  */
 function connectWebSocket(type, symbol, channel, webSocket, wsOptions) {
+  console.log(`Connecting websocket: ${wsOptions.url}`);
   return new Promise((resolve) => {
     const url = wsOptions.url;
     const apiKey = wsOptions.apiKey;
@@ -85,6 +86,7 @@ function connectWebSocket(type, symbol, channel, webSocket, wsOptions) {
         webSocket.send(JSON.stringify(request));
       }
       if (messageParse.event === 'subscribe' && messageParse.arg.channel === channel) {
+        console.log('Connected websocket');
         resolve();
         clearTimeout(connectTimeout);
         webSocket.removeOnOpen(connnectOnOpenFunction);
@@ -198,6 +200,7 @@ function Ws(wsOptions) {
       await connectWebSocket('private', symbol, channel, webSocket, wsOptions);
       webSocket.addOnMessage((message) => {
         const messageParse = JSON.parse(message.toString());
+        console.log(messageParse);
         if (!messageParse.arg || messageParse.arg.channel !== channel) { return };
         const creationOrders = [];
         const executionOrders = [];
@@ -244,6 +247,8 @@ function Ws(wsOptions) {
           eventEmitter.emit('cancelations', cancelationOrders);
         }
       });
+      webSocket.addOnError(() => console.log('Websocket connection error.'));
+      webSocket.addOnClose(() => console.log('Websocket connection closed.'));
       webSocket.addOnClose(() => connectWebSocket('private', symbol, channel, webSocket, wsOptions));
       return { events: eventEmitter };
     },
@@ -270,6 +275,7 @@ function Ws(wsOptions) {
       const position = Object.assign({}, positionRestData);
       webSocket.addOnMessage((message) => {
         const messageParse = JSON.parse(message.toString());
+        console.log(messageParse);
         if (!messageParse.arg || messageParse.arg.channel !== channel) { return };
         const positionEvent = messageParse.data.find(v => v.instId === symbol);
         if (!positionEvent) { return };
@@ -279,6 +285,8 @@ function Ws(wsOptions) {
         position.qtyB = positionEvent && +positionEvent.pos > 0 ? Math.abs(+positionEvent.pos) : 0;
         eventEmitter.emit('update', position);
       });
+      webSocket.addOnError(() => console.log('Websocket connection error.'));
+      webSocket.addOnClose(() => console.log('Websocket connection closed.'));
       webSocket.addOnClose(() => connectWebSocket('private', symbol, channel, webSocket, wsOptions));
       return { info: position, events: eventEmitter };
     },
@@ -315,6 +323,7 @@ function Ws(wsOptions) {
       const liquidation = Object.assign({}, positionRestData, liquidationRestData);
       webSocketMark.addOnMessage((message) => {
         const messageParse = JSON.parse(message.toString());
+        console.log(messageParse);
         if (!messageParse.arg || messageParse.arg.channel !== channelMark) { return };
         const instrumentEvent = messageParse.data.find(v => v.instId === symbol);
         if (!instrumentEvent) { return };
@@ -323,6 +332,7 @@ function Ws(wsOptions) {
       });
       webSocketPosition.addOnMessage((message) => {
         const messageParse = JSON.parse(message.toString());
+        console.log(messageParse);
         if (!messageParse.arg || messageParse.arg.channel !== channelPosition) { return };
         const positionEvent = messageParse.data.find(v => v.instId === symbol);
         if (!positionEvent) { return };
@@ -334,7 +344,11 @@ function Ws(wsOptions) {
         liquidation.liqPxB = positionEvent && +positionEvent.pos > 0 ? +positionEvent.liqPx : 0;
         eventEmitter.emit('update', liquidation);
       });
+      webSocketMark.addOnError(() => console.log('Websocket connection error.'));
+      webSocketMark.addOnClose(() => console.log('Websocket connection closed.'));
       webSocketMark.addOnClose(() => connectWebSocket('public', symbol, channelMark, webSocketMark, wsOptions));
+      webSocketPosition.addOnError(() => console.log('Websocket connection error.'));
+      webSocketPosition.addOnClose(() => console.log('Websocket connection closed.'));
       webSocketPosition.addOnClose(() => connectWebSocket('private', symbol, channelPosition, webSocketPosition, wsOptions));
       return { info: liquidation, events: eventEmitter };
     },
@@ -375,6 +389,8 @@ function Ws(wsOptions) {
           });
         }
       });
+      webSocket.addOnError(() => console.log('Websocket connection error.'));
+      webSocket.addOnClose(() => console.log('Websocket connection closed.'));
       webSocket.addOnClose(() => {
         desynchronizeOrderBook(orderBook);
         connectWebSocket('public', symbol, channel, webSocket, wsOptions);

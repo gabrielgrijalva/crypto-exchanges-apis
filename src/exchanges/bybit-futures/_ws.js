@@ -54,6 +54,7 @@ function getSignedRequest(apiKey, apiSecret) {
  * @param {WsN.wsOptions} wsOptions 
  */
 function connectWebSocket(topic, webSocket, wsOptions) {
+  console.log(`Connecting websocket: ${wsOptions.url}`);
   return new Promise((resolve) => {
     const url = wsOptions.url;
     const apiKey = wsOptions.apiKey;
@@ -75,6 +76,7 @@ function connectWebSocket(topic, webSocket, wsOptions) {
           webSocket.send(JSON.stringify({ op: 'subscribe', args: [topic] }));
         }
         if (messageParse.request.args[0] === topic) {
+          console.log('Connected websocket');
           resolve();
           clearTimeout(connectTimeout);
           webSocket.removeOnOpen(connnectOnOpenFunction);
@@ -166,6 +168,7 @@ function Ws(wsOptions) {
       ]);
       webSocketOrders.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
+        console.log(messageParse);
         if (messageParse.topic !== topicOrders) { return };
         const creationOrders = [];
         const cancelationOrders = [];
@@ -189,6 +192,7 @@ function Ws(wsOptions) {
       });
       webSocketExecutions.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
+        console.log(messageParse);
         if (messageParse.topic !== topicExecutions) { return };
         const executionOrders = [];
         for (let i = 0; messageParse.data[i]; i += 1) {
@@ -203,7 +207,11 @@ function Ws(wsOptions) {
           eventEmitter.emit('executions', executionOrders);
         }
       });
+      webSocketOrders.addOnError(() => console.log('Websocket connection error.'));
+      webSocketOrders.addOnClose(() => console.log('Websocket connection closed.'));
       webSocketOrders.addOnClose(() => { connectWebSocket(topicOrders, webSocketOrders, wsOptions) });
+      webSocketExecutions.addOnError(() => console.log('Websocket connection error.'));
+      webSocketExecutions.addOnClose(() => console.log('Websocket connection closed.'));
       webSocketExecutions.addOnClose(() => { connectWebSocket(topicExecutions, webSocketExecutions, wsOptions) });
       return { events: eventEmitter };
     },
@@ -229,6 +237,7 @@ function Ws(wsOptions) {
       const position = Object.assign({}, positionRestData);
       webSocket.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
+        console.log(messageParse);
         if (messageParse.topic !== topic) { return };
         const positionEvent = messageParse.data.find(v => v.symbol === positionParams.symbol);
         if (!positionEvent) { return };
@@ -238,6 +247,8 @@ function Ws(wsOptions) {
         position.qtyB = positionEvent.side === 'Buy' ? +positionEvent.size : 0;
         eventEmitter.emit('update', position);
       });
+      webSocket.addOnError(() => console.log('Websocket connection error.'));
+      webSocket.addOnClose(() => console.log('Websocket connection closed.'));
       webSocket.addOnClose(() => { connectWebSocket(topic, webSocket, wsOptions) });
       return { info: position, events: eventEmitter };
     },
@@ -273,6 +284,7 @@ function Ws(wsOptions) {
       const liquidation = Object.assign({}, positionRestData, liquidationRestData);
       webSocketInstrument.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
+        console.log(messageParse);
         if (messageParse.topic !== topicInstrument) { return };
         if (!messageParse.data || !messageParse.data.update) { return };
         const instrumentEvent = messageParse.data.update[0];
@@ -282,6 +294,7 @@ function Ws(wsOptions) {
       });
       webSocketPosition.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
+        console.log(messageParse);
         if (messageParse.topic !== topicPosition) { return };
         const positionEvent = messageParse.data.find(v => v.symbol === liquidationParams.symbol);
         if (!positionEvent) { return };
@@ -293,7 +306,11 @@ function Ws(wsOptions) {
         liquidation.liqPxB = positionEvent.side === 'Buy' ? +positionEvent.liq_price : 0;
         eventEmitter.emit('update', liquidation);
       });
+      webSocketInstrument.addOnError(() => console.log('Websocket connection error.'));
+      webSocketInstrument.addOnClose(() => console.log('Websocket connection closed.'));
       webSocketInstrument.addOnClose(() => connectWebSocket(topicInstrument, webSocketInstrument, wsOptions));
+      webSocketPosition.addOnError(() => console.log('Websocket connection error.'));
+      webSocketPosition.addOnClose(() => console.log('Websocket connection closed.'));
       webSocketPosition.addOnClose(() => connectWebSocket(topicPosition, webSocketPosition, wsOptions));
       return { info: liquidation, events: eventEmitter };
     },
@@ -334,6 +351,8 @@ function Ws(wsOptions) {
           messageParse.data.delete.forEach(updateFunction);
         }
       });
+      webSocket.addOnError(() => console.log('Websocket connection error.'));
+      webSocket.addOnClose(() => console.log('Websocket connection closed.'));
       webSocket.addOnClose(() => {
         desynchronizeOrderBook(orderBook);
         connectWebSocket(topic, webSocket, wsOptions)

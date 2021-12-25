@@ -43,11 +43,13 @@ function createCancelation(data) {
  * @param {WsN.wsOptions} wsOptions 
  */
 function connectWebSocket(stream, webSocket, wsOptions) {
+  console.log(`Connecting websocket: ${wsOptions.url}`);
   return new Promise((resolve) => {
     const url = wsOptions.url;
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
     webSocket.connect(`${url}/ws/${stream}`);
     webSocket.addOnOpen(function connectFunction() {
+      console.log('Connected websocket');
       resolve();
       clearTimeout(connectTimeout);
       webSocket.removeOnOpen(connectFunction);
@@ -138,6 +140,7 @@ function Ws(wsOptions) {
       await connectWebSocket(stream, webSocket, wsOptions);
       webSocket.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
+        console.log(messageParse);
         if (messageParse.e !== 'ORDER_TRADE_UPDATE' || messageParse.o.s !== ordersParams.symbol) { return };
         if (messageParse.o.x === 'NEW') {
           eventEmitter.emit('creations-updates', [createCreationUpdate(messageParse)]);
@@ -149,6 +152,8 @@ function Ws(wsOptions) {
           eventEmitter.emit('cancelations', [createCancelation(messageParse)]);
         }
       });
+      webSocket.addOnError(() => console.log('Websocket connection error.'));
+      webSocket.addOnClose(() => console.log('Websocket connection closed.'));
       webSocket.addOnClose(() => { connectWebSocket(stream, webSocket, wsOptions) });
       return { events: eventEmitter };
     },
@@ -175,6 +180,7 @@ function Ws(wsOptions) {
       const position = Object.assign({}, positionRestData);
       webSocket.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
+        console.log(messageParse);
         if (messageParse.e !== 'ACCOUNT_UPDATE') { return };
         const positionEvent = messageParse.a.P.find(v => v.s === positionParams.symbol);
         if (!positionEvent) { return };
@@ -184,6 +190,8 @@ function Ws(wsOptions) {
         position.qtyB = +positionEvent.pa > 0 ? Math.abs(+positionEvent.pa) : 0;
         eventEmitter.emit('update', position);
       });
+      webSocket.addOnError(() => console.log('Websocket connection error.'));
+      webSocket.addOnClose(() => console.log('Websocket connection closed.'));
       webSocket.addOnClose(() => { connectWebSocket(stream, webSocket, wsOptions) });
       return { info: position, events: eventEmitter };
     },
@@ -220,12 +228,14 @@ function Ws(wsOptions) {
       const liquidation = Object.assign({}, positionRestData, liquidationRestData);
       webSocketMarkPrice.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
+        console.log(messageParse);
         if (messageParse.e !== 'markPriceUpdate') { return };
         liquidation.markPx = +messageParse.p;
         eventEmitter.emit('update', liquidation);
       });
       webSocketPosition.addOnMessage((message) => {
         const messageParsed = JSON.parse(message);
+        console.log(messageParsed);
         if (messageParsed.e !== 'ACCOUNT_UPDATE') { return };
         const positionEvent = messageParsed.a.P.find(v => v.s === liquidationParams.symbol);
         if (!positionEvent) { return };
@@ -244,7 +254,11 @@ function Ws(wsOptions) {
         liquidation.liqPxS = liquidationInfo.data.liqPxS;
         liquidation.liqPxB = liquidationInfo.data.liqPxB;
       }, 2000);
+      webSocketMarkPrice.addOnError(() => console.log('Websocket connection error.'));
+      webSocketMarkPrice.addOnClose(() => console.log('Websocket connection closed.'));
       webSocketMarkPrice.addOnClose(() => connectWebSocket(streamMarkPrice, webSocketMarkPrice, wsOptions));
+      webSocketPosition.addOnError(() => console.log('Websocket connection error.'));
+      webSocketPosition.addOnClose(() => console.log('Websocket connection closed.'));
       webSocketPosition.addOnClose(() => connectWebSocket(streamPosition, webSocketPosition, wsOptions));
       return { info: liquidation, events: eventEmitter };
     },
@@ -301,6 +315,8 @@ function Ws(wsOptions) {
           orderBook._updateOrderByPriceBid(update);
         })
       });
+      webSocket.addOnError(() => console.log('Websocket connection error.'));
+      webSocket.addOnClose(() => console.log('Websocket connection closed.'));
       webSocket.addOnClose(() => {
         desynchronizeOrderBook(flags, orderBook);
         connectWebSocket(stream, webSocket, wsOptions);

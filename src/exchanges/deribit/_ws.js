@@ -85,6 +85,7 @@ function getSignatureParams(apiKey, apiSecret) {
  * @param {WsN.wsOptions} wsOptions 
  */
 function connectWebSocket(channel, method, webSocket, wsOptions) {
+  console.log(`Connecting websocket: ${wsOptions.url}`);
   return new Promise((resolve) => {
     const url = wsOptions.url;
     const apiKey = wsOptions.apiKey;
@@ -102,6 +103,7 @@ function connectWebSocket(channel, method, webSocket, wsOptions) {
     function connectOnMessageFunction(message) {
       const messageParse = JSON.parse(message);
       if (messageParse.id && messageParse.result[0] === channel) {
+        console.log('Connected websocket');
         resolve();
         clearTimeout(connectTimeout);
         webSocket.removeOnOpen(connectOnOpenFunction);
@@ -188,6 +190,7 @@ function Ws(wsOptions) {
       ]);
       webSocketOpenOrders.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
+        console.log(messageParse);
         if (!messageParse.params || messageParse.params.channel !== channelOpenOrders) { return };
         if (!messageParse.params.data) { return };
         const order = messageParse.params.data;
@@ -200,6 +203,7 @@ function Ws(wsOptions) {
       });
       webSocketExecutions.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
+        console.log(messageParse);
         if (!messageParse.params || messageParse.params.channel !== channelExecutions) { return };
         if (!messageParse.params.data.length) { return };
         const executionOrders = [];
@@ -211,7 +215,11 @@ function Ws(wsOptions) {
           eventEmitter.emit('executions', executionOrders);
         }
       });
+      webSocketOpenOrders.addOnError(() => console.log('Websocket connection error.'));
+      webSocketOpenOrders.addOnClose(() => console.log('Websocket connection closed.'));
       webSocketOpenOrders.addOnClose(() => { connectWebSocket(channelOpenOrders, 'private', webSocketOpenOrders, wsOptions) });
+      webSocketExecutions.addOnError(() => console.log('Websocket connection error.'));
+      webSocketExecutions.addOnClose(() => console.log('Websocket connection closed.'));
       webSocketExecutions.addOnClose(() => { connectWebSocket(channelExecutions, 'private', webSocketExecutions, wsOptions) });
       return { events: eventEmitter };
     },
@@ -237,6 +245,7 @@ function Ws(wsOptions) {
       const position = Object.assign({}, positionRestData);
       webSocket.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
+        console.log(messageParse);
         if (!messageParse.params || messageParse.params.channel !== channel) { return };
         const positionEvent = messageParse.params.data.positions[0];
         if (!positionEvent) { return };
@@ -246,6 +255,8 @@ function Ws(wsOptions) {
         position.qtyB = positionEvent.direction === 'buy' ? Math.abs(+positionEvent.size) : 0;
         eventEmitter.emit('update', position);
       });
+      webSocket.addOnError(() => console.log('Websocket connection error.'));
+      webSocket.addOnClose(() => console.log('Websocket connection closed.'));
       webSocket.addOnClose(() => { connectWebSocket(channel, 'private', webSocket, wsOptions) });
       return { info: position, events: eventEmitter };
     },
@@ -285,6 +296,7 @@ function Ws(wsOptions) {
       const liquidation = Object.assign({}, positionRestData, liquidationRestData);
       webSocketInstrument.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
+        console.log(messageParse);
         if (!messageParse.params || messageParse.params.channel !== channelInstrument) { return };
         const instrumentEvent = messageParse.params.data;
         if (!instrumentEvent) { return };
@@ -293,6 +305,7 @@ function Ws(wsOptions) {
       });
       webSocketPosition.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
+        console.log(messageParse);
         if (!messageParse.params || messageParse.params.channel !== channelPosition) { return };
         const positionEvent = messageParse.params.data.positions[0];
         if (!positionEvent) { return };
@@ -304,14 +317,21 @@ function Ws(wsOptions) {
       });
       webSocketPortfolio.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
+        console.log(messageParse);
         if (!messageParse.params || messageParse.params.channel !== channelPortfolio.toLowerCase()) { return };
         const portfolioEvent = messageParse.params.data;
         if (!portfolioEvent) { return };
         liquidation.liqPxS = liquidation.qtyS ? +portfolioEvent.estimated_liquidation_ratio * liquidation.markPx : 0;
         liquidation.liqPxB = liquidation.qtyB ? +portfolioEvent.estimated_liquidation_ratio * liquidation.markPx : 0;
       });
+      webSocketInstrument.addOnError(() => console.log('Websocket connection error.'));
+      webSocketInstrument.addOnClose(() => console.log('Websocket connection closed.'));
       webSocketInstrument.addOnClose(() => connectWebSocket(channelInstrument, 'public', webSocketInstrument, wsOptions));
+      webSocketPosition.addOnError(() => console.log('Websocket connection error.'));
+      webSocketPosition.addOnClose(() => console.log('Websocket connection closed.'));
       webSocketPosition.addOnClose(() => connectWebSocket(channelPosition, 'private', webSocketPosition, wsOptions));
+      webSocketPortfolio.addOnError(() => console.log('Websocket connection error.'));
+      webSocketPortfolio.addOnClose(() => console.log('Websocket connection closed.'));
       webSocketPortfolio.addOnClose(() => connectWebSocket(channelPortfolio, 'private', webSocketPortfolio, wsOptions));
       return { info: liquidation, events: eventEmitter };
     },
@@ -356,6 +376,8 @@ function Ws(wsOptions) {
           orderBook._updateOrderByPriceBid(update);
         });
       });
+      webSocket.addOnError(() => console.log('Websocket connection error.'));
+      webSocket.addOnClose(() => console.log('Websocket connection closed.'));
       webSocket.addOnClose(() => {
         desynchronizeOrderBook(orderBook);
         connectWebSocket(channel, 'public', webSocket, wsOptions)
