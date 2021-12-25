@@ -105,11 +105,11 @@ function getInsertSnapshotFunction(orders) {
  * @param {WsN.orderBookOrder[]} bids 
  * @returns 
  */
-function getCreateOrder(asks, bids) {
+function getCreateServer(asks, bids) {
   /**
    * @param {WsN.serverParams} serverParams 
    */
-  function createOrder(serverParams) {
+  function createServer(serverParams) {
     const wss = new WebSocket.Server({
       port: serverParams.port,
       host: serverParams.host,
@@ -137,7 +137,7 @@ function getCreateOrder(asks, bids) {
       });
     }, serverParams.broadcast);
   };
-  return createOrder;
+  return createServer;
 };
 function OrderBook() {
   /** @type {WsN.orderBookOrder[]} */
@@ -158,7 +158,7 @@ function OrderBook() {
     bids: bids,
     getFirstAsk: () => asks[0],
     getFirstBid: () => bids[0],
-    createServer: getCreateOrder(asks, bids),
+    createServer: getCreateServer(asks, bids),
     // Action by id
     _deleteOrderByIdAsk: getDeleteOrderById(asks),
     _deleteOrderByIdBid: getDeleteOrderById(bids),
