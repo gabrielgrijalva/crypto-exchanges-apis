@@ -2,6 +2,7 @@ const mysql = require('mysql');
 const moment = require('moment');
 const CronJob = require('cron').CronJob;
 const wait = require('../_utils/wait');
+const { PopulatorN } = require('../../typings');
 /**
  * 
  * 
@@ -16,7 +17,7 @@ const wait = require('../_utils/wait');
 /**
  * 
  * @param {mysql.Connection} connection 
- * @param {RestN.getCandlesResponseData} candles 
+ * @param {import('../../typings').RestN.getCandlesResponseData} candles 
  */
 function saveCandles(connection, candles, table) {
   return new Promise((resolve) => {
@@ -41,7 +42,7 @@ function saveCandles(connection, candles, table) {
  * 
  */
 /**
- * @param {RestN.Rest} rest 
+ * @param {import('../../typings').RestN.Rest} rest 
  */
 function Populator(rest) {
   /**

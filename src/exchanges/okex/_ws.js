@@ -56,8 +56,8 @@ function getSignedRequest(apiKey, apiSecret, apiPassphrase) {
  * @param {string} type
  * @param {string} symbol
  * @param {string} channel
- * @param {WsN.WebSocket} webSocket 
- * @param {WsN.wsOptions} wsOptions 
+ * @param {import('../../../typings').WsN.WebSocket} webSocket 
+ * @param {import('../../../typings').WsN.wsOptions} wsOptions 
  */
 function connectWebSocket(type, symbol, channel, webSocket, wsOptions) {
   console.log(`Connecting websocket: ${wsOptions.url}`);
@@ -130,7 +130,7 @@ function getFillAndUpdateOpenOrders(openOrders, order) {
   return { fill, update };
 };
 /**
- * @param {WsN.dataOrderBook} orderBook 
+ * @param {import('../../../typings').WsN.dataOrderBook} orderBook 
  */
 function desynchronizeOrderBook(orderBook) {
   orderBook.asks.length = 0;
@@ -138,7 +138,7 @@ function desynchronizeOrderBook(orderBook) {
 };
 /** 
  * @param {Object} snapshot 
- * @param {WsN.dataOrderBook} orderBook 
+ * @param {import('../../../typings').WsN.dataOrderBook} orderBook 
  */
 function synchronizeOrderBookSnapshot(snapshot, orderBook) {
   orderBook._insertSnapshotAsks(snapshot.data[0].asks.map(v => {
@@ -160,7 +160,7 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  * 
  */
 /**
- * @param {WsN.wsOptions} [wsOptions]
+ * @param {import('../../../typings').WsN.wsOptions} [wsOptions]
  */
 function Ws(wsOptions) {
   // Default wsOptions values
@@ -175,7 +175,7 @@ function Ws(wsOptions) {
   /** 
    * 
    * 
-   * @type {WsN.Ws} 
+   * @type {import('../../../typings').WsN.Ws} 
    * 
    * 
    */
@@ -190,7 +190,7 @@ function Ws(wsOptions) {
      * 
      */
     orders: async (ordersParams) => {
-      /** @type {WsN.ordersEventEmitter} */
+      /** @type {import('../../../typings').WsN.ordersEventEmitter} */
       const eventEmitter = new Events.EventEmitter();
       const openOrders = [];
       // Orders websocket
@@ -262,7 +262,7 @@ function Ws(wsOptions) {
      * 
      */
     position: async (positionParams) => {
-      /** @type {WsN.positionEventEmitter} */
+      /** @type {import('../../../typings').WsN.positionEventEmitter} */
       const eventEmitter = new Events.EventEmitter();
       const symbol = positionParams.symbol;
       const channel = 'positions';
@@ -271,7 +271,7 @@ function Ws(wsOptions) {
       // Load rest info
       const positionRestParams = { symbol: symbol };
       const positionRestData = (await rest.getPosition(positionRestParams)).data;
-      /** @type {WsN.dataPosition} */
+      /** @type {import('../../../typings').WsN.dataPosition} */
       const position = Object.assign({}, positionRestData);
       webSocket.addOnMessage((message) => {
         const messageParse = JSON.parse(message.toString());
@@ -300,7 +300,7 @@ function Ws(wsOptions) {
      * 
      */
     liquidation: async (liquidationParams) => {
-      /** @type {WsN.liquidationEventEmitter} */
+      /** @type {import('../../../typings').WsN.liquidationEventEmitter} */
       const eventEmitter = new Events.EventEmitter();
       const symbol = liquidationParams.symbol;
       // Instrument websocket
@@ -319,7 +319,7 @@ function Ws(wsOptions) {
       const positionRestData = (await rest.getPosition(positionRestParams)).data;
       const liquidationRestData = (await rest.getLiquidation(liquidationRestParams)).data;
       // Liquidation info
-      /** @type {WsN.dataLiquidation} */
+      /** @type {import('../../../typings').WsN.dataLiquidation} */
       const liquidation = Object.assign({}, positionRestData, liquidationRestData);
       webSocketMark.addOnMessage((message) => {
         const messageParse = JSON.parse(message.toString());

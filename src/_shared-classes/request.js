@@ -1,8 +1,8 @@
 const https = require('https');
 const round = require('../_utils/round');
 /**
- * @param {RestN.Request} request 
- * @param {RestN.restOptions} restOptions
+ * @param {import('../../typings').RestN.Request} request 
+ * @param {import('../../typings').RestN.restOptions} restOptions
  * @returns {void}
  */
 function createRefillSetInterval(request, restOptions) {
@@ -24,13 +24,13 @@ function createRefillSetInterval(request, restOptions) {
   }, timeoutMilliseconds);
 };
 /** 
- * @param {RestN.requestOptions} requestOptions 
- * @returns {RestN.Request}
+ * @param {import('../../typings').RestN.requestOptions} requestOptions 
+ * @returns {import('../../typings').RestN.Request}
  */
 function Request(requestOptions) {
   const restOptions = requestOptions.restOptions;
   /** 
-   * @type {RestN.Request} 
+   * @type {import('../../typings').RestN.Request} 
    */
   const request = {
     // Variables
