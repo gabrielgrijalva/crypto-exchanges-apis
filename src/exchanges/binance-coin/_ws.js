@@ -39,8 +39,8 @@ function createCancelation(data) {
 /**
  * 
  * @param {string} stream
- * @param {WsN.WebSocket} webSocket 
- * @param {WsN.wsOptions} wsOptions 
+ * @param {import('../../../typings').WsN.WebSocket} webSocket 
+ * @param {import('../../../typings').WsN.wsOptions} wsOptions 
  */
 function connectWebSocket(stream, webSocket, wsOptions) {
   console.log(`Connecting websocket: ${wsOptions.url}`);
@@ -57,8 +57,8 @@ function connectWebSocket(stream, webSocket, wsOptions) {
   });
 };
 /**
- * @param {RestN.Rest} rest
- * @param {WsN.flags} flags
+ * @param {import('../../../typings').RestN.Rest} rest
+ * @param {import('../../../typings').WsN.flags} flags
  * @param {string} symbol
  */
 async function getOrderBookSnapshot(rest, flags, symbol) {
@@ -68,8 +68,8 @@ async function getOrderBookSnapshot(rest, flags, symbol) {
 };
 /**
  * 
- * @param {WsN.flags} flags
- * @param {WsN.dataOrderBook} orderBook 
+ * @param {import('../../../typings').WsN.flags} flags
+ * @param {import('../../../typings').WsN.dataOrderBook} orderBook 
  */
 function desynchronizeOrderBook(flags, orderBook) {
   flags.snapshot = null;
@@ -81,7 +81,7 @@ function desynchronizeOrderBook(flags, orderBook) {
 /**
  * 
  * @param {Object} snapshot 
- * @param {WsN.dataOrderBook} orderBook 
+ * @param {import('../../../typings').WsN.dataOrderBook} orderBook 
  */
 function synchronizeOrderBookSnapshot(snapshot, orderBook) {
   orderBook._insertSnapshotAsks(snapshot.asks.map(v => {
@@ -103,7 +103,7 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  * 
  */
 /**
- * @param {WsN.wsOptions} [wsOptions]
+ * @param {import('../../../typings').WsN.wsOptions} [wsOptions]
  */
 function Ws(wsOptions) {
   // Default wsOptions values
@@ -117,7 +117,7 @@ function Ws(wsOptions) {
   /** 
    * 
    * 
-   * @type {WsN.Ws} 
+   * @type {import('../../../typings').WsN.Ws} 
    * 
    * 
    */
@@ -132,7 +132,7 @@ function Ws(wsOptions) {
      * 
      */
     orders: async (ordersParams) => {
-      /** @type {WsN.ordersEventEmitter} */
+      /** @type {import('../../../typings').WsN.ordersEventEmitter} */
       const eventEmitter = new Events.EventEmitter();
       const stream = (await rest._getListenKey()).data;
       const webSocket = WebSocket();
@@ -167,7 +167,7 @@ function Ws(wsOptions) {
      * 
      */
     position: async (positionParams) => {
-      /** @type {WsN.positionEventEmitter} */
+      /** @type {import('../../../typings').WsN.positionEventEmitter} */
       const eventEmitter = new Events.EventEmitter();
       const stream = (await rest._getListenKey()).data;
       const webSocket = WebSocket();
@@ -176,7 +176,7 @@ function Ws(wsOptions) {
       // Load rest info
       const positionRestParams = { symbol: positionParams.symbol };
       const positionRestData = (await rest.getPosition(positionRestParams)).data;
-      /** @type {WsN.dataPosition} */
+      /** @type {import('../../../typings').WsN.dataPosition} */
       const position = Object.assign({}, positionRestData);
       webSocket.addOnMessage((message) => {
         const messageParse = JSON.parse(message);
@@ -205,7 +205,7 @@ function Ws(wsOptions) {
      * 
      */
     liquidation: async (liquidationParams) => {
-      /** @type {WsN.liquidationEventEmitter} */
+      /** @type {import('../../../typings').WsN.liquidationEventEmitter} */
       const eventEmitter = new Events.EventEmitter();
       // Mark price websocket
       const streamMarkPrice = `${liquidationParams.symbol.toLowerCase()}@markPrice@1s`;
@@ -224,7 +224,7 @@ function Ws(wsOptions) {
       const positionRestData = (await rest.getPosition(positionRestParams)).data;
       const liquidationRestData = (await rest.getLiquidation(liquidationRestParams)).data;
       // Liquidation info
-      /** @type {WsN.dataLiquidation} */
+      /** @type {import('../../../typings').WsN.dataLiquidation} */
       const liquidation = Object.assign({}, positionRestData, liquidationRestData);
       webSocketMarkPrice.addOnMessage((message) => {
         const messageParse = JSON.parse(message);

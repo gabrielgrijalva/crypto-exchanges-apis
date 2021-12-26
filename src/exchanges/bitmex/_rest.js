@@ -15,12 +15,12 @@ const Request = require('../../_shared-classes/request');
  * 
  */
 /**
- * @param {RestN.params} params
+ * @param {import('../../../typings').RestN.params} params
  * @param {Object | string} responseData 
- * @returns {{ error: RestN.RestErrorResponseData }}
+ * @returns {{ error: import('../../../typings').RestN.RestErrorResponseData }}
  */
 function handleResponseError(params, responseData) {
-  /** @type {RestN.restErrorResponseDataType} */
+  /** @type {import('../../../typings').RestN.restErrorResponseDataType} */
   let type = 'unknown';
   if (responseData.error) {
     const errorMessage = responseData.error.message || responseData.error;
@@ -77,8 +77,8 @@ function getCandleResolution(interval) {
  * 
  */
 /** 
- * @this {RestN.Request} 
- * @returns {Promise<RestN.requestSendReturn>}
+ * @this {import('../../../typings').RestN.Request} 
+ * @returns {Promise<import('../../../typings').RestN.requestSendReturn>}
  */
 async function private(method, path, data) {
   const headers = {};
@@ -113,7 +113,7 @@ async function private(method, path, data) {
  * 
  */
 /** 
- * @param {RestN.restOptions} [restOptions] 
+ * @param {import('../../../typings').RestN.restOptions} [restOptions] 
  */
 function Rest(restOptions) {
   // Default restOptions values
@@ -132,7 +132,7 @@ function Rest(restOptions) {
   /** 
    * 
    * 
-   * @type {RestN.Rest} 
+   * @type {import('../../../typings').RestN.Rest} 
    * 
    * 
    */

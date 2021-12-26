@@ -43,7 +43,7 @@ function WebSocket() {
    * 
    * 
    * 
-   * @type {WsN.WebSocket}
+   * @type {import('../../typings').WsN.WebSocket}
    * 
    * 
    * 
