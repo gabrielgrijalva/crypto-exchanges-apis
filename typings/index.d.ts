@@ -441,11 +441,14 @@ declare namespace WsN {
    * 
    * 
    */
+  type wsReturnPromise<I, E, P> = {
+    info: T, events: E, connect(params: P): Promise<void>,
+  }
   interface Ws {
-    orders(params: ordersParams): Promise<{ events: ordersEventEmitter }>;
-    position(params: positionParams): Promise<{ info: dataPosition, events: positionEventEmitter }>;
-    liquidation(params: liquidationParams): Promise<{ info: dataLiquidation, events: liquidationEventEmitter }>;
-    orderBook(params: orderBookParams): Promise<{ info: dataOrderBook, }>;
+    orders: wsReturnPromise<null, ordersEventEmitter, ordersParams>;
+    position: wsReturnPromise<dataPosition, positionEventEmitter, positionParams>;
+    liquidation: wsReturnPromise<dataLiquidation, liquidationEventEmitter, liquidationParams>;
+    orderBook: wsReturnPromise<dataOrderBook, null, orderBookParams>;
   }
 }
 /**
