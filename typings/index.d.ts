@@ -442,7 +442,7 @@ declare namespace WsN {
    * 
    */
   type wsReturnPromise<I, E, P> = {
-    info: T, events: E, connect(params: P): Promise<void>,
+    info: I, events: E, connect(params: P): Promise<void>,
   }
   interface Ws {
     orders: wsReturnPromise<null, ordersEventEmitter, ordersParams>;
