@@ -175,53 +175,56 @@ function Ws(wsOptions) {
      * 
      * 
      */
-    orders: async (ordersParams) => {
-      /** @type {import('../../../typings').WsN.ordersEventEmitter} */
-      const eventEmitter = new Events.EventEmitter();
-      // Open orders websocket
-      const channelOpenOrders = `user.orders.${ordersParams.symbol}.raw`;
-      const webSocketOpenOrders = WebSocket();
-      // Executions websocket
-      const channelExecutions = `user.trades.${ordersParams.symbol}.raw`;
-      const webSocketExecutions = WebSocket();
-      await Promise.all([
-        connectWebSocket(channelOpenOrders, 'private', webSocketOpenOrders, wsOptions),
-        connectWebSocket(channelExecutions, 'private', webSocketExecutions, wsOptions),
-      ]);
-      webSocketOpenOrders.addOnMessage((message) => {
-        const messageParse = JSON.parse(message);
-        console.log(messageParse);
-        if (!messageParse.params || messageParse.params.channel !== channelOpenOrders) { return };
-        if (!messageParse.params.data) { return };
-        const order = messageParse.params.data;
-        if (order.order_state === 'open') {
-          eventEmitter.emit('creations-updates', [createCreationUpdate(order)]);
-        }
-        if (order.order_state === 'rejected' || order.order_state === 'cancelled') {
-          eventEmitter.emit('cancelations', [createCancelation(order)]);
-        }
-      });
-      webSocketExecutions.addOnMessage((message) => {
-        const messageParse = JSON.parse(message);
-        console.log(messageParse);
-        if (!messageParse.params || messageParse.params.channel !== channelExecutions) { return };
-        if (!messageParse.params.data.length) { return };
-        const executionOrders = [];
-        for (let i = 0; messageParse.params.data[i]; i += 1) {
-          const order = messageParse.params.data[i];
-          executionOrders.push(createExecution(order))
-        }
-        if (executionOrders.length) {
-          eventEmitter.emit('executions', executionOrders);
-        }
-      });
-      webSocketOpenOrders.addOnError(() => console.log('Websocket connection error.'));
-      webSocketOpenOrders.addOnClose(() => console.log('Websocket connection closed.'));
-      webSocketOpenOrders.addOnClose(() => { connectWebSocket(channelOpenOrders, 'private', webSocketOpenOrders, wsOptions) });
-      webSocketExecutions.addOnError(() => console.log('Websocket connection error.'));
-      webSocketExecutions.addOnClose(() => console.log('Websocket connection closed.'));
-      webSocketExecutions.addOnClose(() => { connectWebSocket(channelExecutions, 'private', webSocketExecutions, wsOptions) });
-      return { events: eventEmitter };
+    orders: {
+      info: null,
+      events: null,
+      connect: async (ordersParams) => {
+        /** @type {import('../../../typings').WsN.ordersEventEmitter} */
+        ws.orders.events = new Events.EventEmitter();
+        // Open orders websocket
+        const channelOpenOrders = `user.orders.${ordersParams.symbol}.raw`;
+        const webSocketOpenOrders = WebSocket();
+        // Executions websocket
+        const channelExecutions = `user.trades.${ordersParams.symbol}.raw`;
+        const webSocketExecutions = WebSocket();
+        await Promise.all([
+          connectWebSocket(channelOpenOrders, 'private', webSocketOpenOrders, wsOptions),
+          connectWebSocket(channelExecutions, 'private', webSocketExecutions, wsOptions),
+        ]);
+        webSocketOpenOrders.addOnMessage((message) => {
+          const messageParse = JSON.parse(message);
+          console.log(messageParse);
+          if (!messageParse.params || messageParse.params.channel !== channelOpenOrders) { return };
+          if (!messageParse.params.data) { return };
+          const order = messageParse.params.data;
+          if (order.order_state === 'open') {
+            ws.orders.events.emit('creations-updates', [createCreationUpdate(order)]);
+          }
+          if (order.order_state === 'rejected' || order.order_state === 'cancelled') {
+            ws.orders.events.emit('cancelations', [createCancelation(order)]);
+          }
+        });
+        webSocketExecutions.addOnMessage((message) => {
+          const messageParse = JSON.parse(message);
+          console.log(messageParse);
+          if (!messageParse.params || messageParse.params.channel !== channelExecutions) { return };
+          if (!messageParse.params.data.length) { return };
+          const executionOrders = [];
+          for (let i = 0; messageParse.params.data[i]; i += 1) {
+            const order = messageParse.params.data[i];
+            executionOrders.push(createExecution(order))
+          }
+          if (executionOrders.length) {
+            ws.orders.events.emit('executions', executionOrders);
+          }
+        });
+        webSocketOpenOrders.addOnError(() => console.log('Websocket connection error.'));
+        webSocketOpenOrders.addOnClose(() => console.log('Websocket connection closed.'));
+        webSocketOpenOrders.addOnClose(() => { connectWebSocket(channelOpenOrders, 'private', webSocketOpenOrders, wsOptions) });
+        webSocketExecutions.addOnError(() => console.log('Websocket connection error.'));
+        webSocketExecutions.addOnClose(() => console.log('Websocket connection closed.'));
+        webSocketExecutions.addOnClose(() => { connectWebSocket(channelExecutions, 'private', webSocketExecutions, wsOptions) });
+      }
     },
     /**
      * 
@@ -232,33 +235,36 @@ function Ws(wsOptions) {
      * 
      * 
      */
-    position: async (positionParams) => {
-      /** @type {import('../../../typings').WsN.positionEventEmitter} */
-      const eventEmitter = new Events.EventEmitter();
-      const channel = `user.changes.${positionParams.symbol}.raw`;
-      const webSocket = WebSocket();
-      await connectWebSocket(channel, 'private', webSocket, wsOptions);
-      // Load rest info
-      const positionRestParams = { symbol: positionParams.symbol };
-      const positionRestData = (await rest.getPosition(positionRestParams)).data;
-      /** @type {import('../../../typings').WsN.dataPosition} */
-      const position = Object.assign({}, positionRestData);
-      webSocket.addOnMessage((message) => {
-        const messageParse = JSON.parse(message);
-        console.log(messageParse);
-        if (!messageParse.params || messageParse.params.channel !== channel) { return };
-        const positionEvent = messageParse.params.data.positions[0];
-        if (!positionEvent) { return };
-        position.pxS = positionEvent.direction === 'sell' ? +positionEvent.average_price : 0;
-        position.pxB = positionEvent.direction === 'buy' ? +positionEvent.average_price : 0;
-        position.qtyS = positionEvent.direction === 'sell' ? Math.abs(+positionEvent.size) : 0;
-        position.qtyB = positionEvent.direction === 'buy' ? Math.abs(+positionEvent.size) : 0;
-        eventEmitter.emit('update', position);
-      });
-      webSocket.addOnError(() => console.log('Websocket connection error.'));
-      webSocket.addOnClose(() => console.log('Websocket connection closed.'));
-      webSocket.addOnClose(() => { connectWebSocket(channel, 'private', webSocket, wsOptions) });
-      return { info: position, events: eventEmitter };
+    position: {
+      info: null,
+      events: null,
+      connect: async (positionParams) => {
+        /** @type {import('../../../typings').WsN.positionEventEmitter} */
+        ws.position.events = new Events.EventEmitter();
+        const channel = `user.changes.${positionParams.symbol}.raw`;
+        const webSocket = WebSocket();
+        await connectWebSocket(channel, 'private', webSocket, wsOptions);
+        // Load rest info
+        const positionRestParams = { symbol: positionParams.symbol };
+        const positionRestData = (await rest.getPosition(positionRestParams)).data;
+        /** @type {import('../../../typings').WsN.dataPosition} */
+        ws.position.info = Object.assign({}, positionRestData);
+        webSocket.addOnMessage((message) => {
+          const messageParse = JSON.parse(message);
+          console.log(messageParse);
+          if (!messageParse.params || messageParse.params.channel !== channel) { return };
+          const positionEvent = messageParse.params.data.positions[0];
+          if (!positionEvent) { return };
+          ws.position.info.pxS = positionEvent.direction === 'sell' ? +positionEvent.average_price : 0;
+          ws.position.info.pxB = positionEvent.direction === 'buy' ? +positionEvent.average_price : 0;
+          ws.position.info.qtyS = positionEvent.direction === 'sell' ? Math.abs(+positionEvent.size) : 0;
+          ws.position.info.qtyB = positionEvent.direction === 'buy' ? Math.abs(+positionEvent.size) : 0;
+          ws.position.events.emit('update', ws.position.info);
+        });
+        webSocket.addOnError(() => console.log('Websocket connection error.'));
+        webSocket.addOnClose(() => console.log('Websocket connection closed.'));
+        webSocket.addOnClose(() => { connectWebSocket(channel, 'private', webSocket, wsOptions) });
+      }
     },
     /**
      * 
@@ -269,71 +275,74 @@ function Ws(wsOptions) {
      * 
      * 
      */
-    liquidation: async (liquidationParams) => {
-      /** @type {import('../../../typings').WsN.liquidationEventEmitter} */
-      const eventEmitter = new Events.EventEmitter();
-      // Instrument websocket
-      const channelInstrument = `ticker.${liquidationParams.symbol}.raw`;
-      const webSocketInstrument = WebSocket();
-      // Position websocket
-      const channelPosition = `user.changes.${liquidationParams.symbol}.raw`;
-      const webSocketPosition = WebSocket();
-      // Portfolio websocket
-      const channelPortfolio = `user.portfolio.${liquidationParams.asset}`;
-      const webSocketPortfolio = WebSocket();
-      await Promise.all([
-        connectWebSocket(channelInstrument, 'public', webSocketInstrument, wsOptions),
-        connectWebSocket(channelPosition, 'private', webSocketPosition, wsOptions),
-        connectWebSocket(channelPortfolio, 'private', webSocketPortfolio, wsOptions),
-      ]);
-      // Load rest info
-      const positionRestParams = { symbol: liquidationParams.symbol };
-      const liquidationRestParams = { symbol: liquidationParams.symbol, asset: liquidationParams.asset };
-      const positionRestData = (await rest.getPosition(positionRestParams)).data;
-      const liquidationRestData = (await rest.getLiquidation(liquidationRestParams)).data;
-      // Liquidation info
-      /** @type {import('../../../typings').WsN.dataLiquidation} */
-      const liquidation = Object.assign({}, positionRestData, liquidationRestData);
-      webSocketInstrument.addOnMessage((message) => {
-        const messageParse = JSON.parse(message);
-        console.log(messageParse);
-        if (!messageParse.params || messageParse.params.channel !== channelInstrument) { return };
-        const instrumentEvent = messageParse.params.data;
-        if (!instrumentEvent) { return };
-        liquidation.markPx = +instrumentEvent.mark_price ? +instrumentEvent.mark_price : liquidation.markPx;
-        eventEmitter.emit('update', liquidation);
-      });
-      webSocketPosition.addOnMessage((message) => {
-        const messageParse = JSON.parse(message);
-        console.log(messageParse);
-        if (!messageParse.params || messageParse.params.channel !== channelPosition) { return };
-        const positionEvent = messageParse.params.data.positions[0];
-        if (!positionEvent) { return };
-        liquidation.pxS = positionEvent.direction === 'sell' ? +positionEvent.average_price : 0;
-        liquidation.pxB = positionEvent.direction === 'buy' ? +positionEvent.average_price : 0;
-        liquidation.qtyS = positionEvent.direction === 'sell' ? Math.abs(+positionEvent.size) : 0;
-        liquidation.qtyB = positionEvent.direction === 'buy' ? Math.abs(+positionEvent.size) : 0;
-        eventEmitter.emit('update', liquidation);
-      });
-      webSocketPortfolio.addOnMessage((message) => {
-        const messageParse = JSON.parse(message);
-        console.log(messageParse);
-        if (!messageParse.params || messageParse.params.channel !== channelPortfolio.toLowerCase()) { return };
-        const portfolioEvent = messageParse.params.data;
-        if (!portfolioEvent) { return };
-        liquidation.liqPxS = liquidation.qtyS ? +portfolioEvent.estimated_liquidation_ratio * liquidation.markPx : 0;
-        liquidation.liqPxB = liquidation.qtyB ? +portfolioEvent.estimated_liquidation_ratio * liquidation.markPx : 0;
-      });
-      webSocketInstrument.addOnError(() => console.log('Websocket connection error.'));
-      webSocketInstrument.addOnClose(() => console.log('Websocket connection closed.'));
-      webSocketInstrument.addOnClose(() => connectWebSocket(channelInstrument, 'public', webSocketInstrument, wsOptions));
-      webSocketPosition.addOnError(() => console.log('Websocket connection error.'));
-      webSocketPosition.addOnClose(() => console.log('Websocket connection closed.'));
-      webSocketPosition.addOnClose(() => connectWebSocket(channelPosition, 'private', webSocketPosition, wsOptions));
-      webSocketPortfolio.addOnError(() => console.log('Websocket connection error.'));
-      webSocketPortfolio.addOnClose(() => console.log('Websocket connection closed.'));
-      webSocketPortfolio.addOnClose(() => connectWebSocket(channelPortfolio, 'private', webSocketPortfolio, wsOptions));
-      return { info: liquidation, events: eventEmitter };
+    liquidation: {
+      info: null,
+      events: null,
+      connect: async (liquidationParams) => {
+        /** @type {import('../../../typings').WsN.liquidationEventEmitter} */
+        ws.liquidation.events = new Events.EventEmitter();
+        // Instrument websocket
+        const channelInstrument = `ticker.${liquidationParams.symbol}.raw`;
+        const webSocketInstrument = WebSocket();
+        // Position websocket
+        const channelPosition = `user.changes.${liquidationParams.symbol}.raw`;
+        const webSocketPosition = WebSocket();
+        // Portfolio websocket
+        const channelPortfolio = `user.portfolio.${liquidationParams.asset}`;
+        const webSocketPortfolio = WebSocket();
+        await Promise.all([
+          connectWebSocket(channelInstrument, 'public', webSocketInstrument, wsOptions),
+          connectWebSocket(channelPosition, 'private', webSocketPosition, wsOptions),
+          connectWebSocket(channelPortfolio, 'private', webSocketPortfolio, wsOptions),
+        ]);
+        // Load rest info
+        const positionRestParams = { symbol: liquidationParams.symbol };
+        const liquidationRestParams = { symbol: liquidationParams.symbol, asset: liquidationParams.asset };
+        const positionRestData = (await rest.getPosition(positionRestParams)).data;
+        const liquidationRestData = (await rest.getLiquidation(liquidationRestParams)).data;
+        // Liquidation info
+        /** @type {import('../../../typings').WsN.dataLiquidation} */
+        ws.liquidation.info = Object.assign({}, positionRestData, liquidationRestData);
+        webSocketInstrument.addOnMessage((message) => {
+          const messageParse = JSON.parse(message);
+          console.log(messageParse);
+          if (!messageParse.params || messageParse.params.channel !== channelInstrument) { return };
+          const instrumentEvent = messageParse.params.data;
+          if (!instrumentEvent) { return };
+          ws.liquidation.info.markPx = +instrumentEvent.mark_price ? +instrumentEvent.mark_price : ws.liquidation.info.markPx;
+          ws.liquidation.events.emit('update', ws.liquidation.info);
+        });
+        webSocketPosition.addOnMessage((message) => {
+          const messageParse = JSON.parse(message);
+          console.log(messageParse);
+          if (!messageParse.params || messageParse.params.channel !== channelPosition) { return };
+          const positionEvent = messageParse.params.data.positions[0];
+          if (!positionEvent) { return };
+          ws.liquidation.info.pxS = positionEvent.direction === 'sell' ? +positionEvent.average_price : 0;
+          ws.liquidation.info.pxB = positionEvent.direction === 'buy' ? +positionEvent.average_price : 0;
+          ws.liquidation.info.qtyS = positionEvent.direction === 'sell' ? Math.abs(+positionEvent.size) : 0;
+          ws.liquidation.info.qtyB = positionEvent.direction === 'buy' ? Math.abs(+positionEvent.size) : 0;
+          ws.liquidation.events.emit('update', ws.liquidation.info);
+        });
+        webSocketPortfolio.addOnMessage((message) => {
+          const messageParse = JSON.parse(message);
+          console.log(messageParse);
+          if (!messageParse.params || messageParse.params.channel !== channelPortfolio.toLowerCase()) { return };
+          const portfolioEvent = messageParse.params.data;
+          if (!portfolioEvent) { return };
+          ws.liquidation.info.liqPxS = ws.liquidation.info.qtyS ? +portfolioEvent.estimated_liquidation_ratio * ws.liquidation.info.markPx : 0;
+          ws.liquidation.info.liqPxB = ws.liquidation.info.qtyB ? +portfolioEvent.estimated_liquidation_ratio * ws.liquidation.info.markPx : 0;
+        });
+        webSocketInstrument.addOnError(() => console.log('Websocket connection error.'));
+        webSocketInstrument.addOnClose(() => console.log('Websocket connection closed.'));
+        webSocketInstrument.addOnClose(() => connectWebSocket(channelInstrument, 'public', webSocketInstrument, wsOptions));
+        webSocketPosition.addOnError(() => console.log('Websocket connection error.'));
+        webSocketPosition.addOnClose(() => console.log('Websocket connection closed.'));
+        webSocketPosition.addOnClose(() => connectWebSocket(channelPosition, 'private', webSocketPosition, wsOptions));
+        webSocketPortfolio.addOnError(() => console.log('Websocket connection error.'));
+        webSocketPortfolio.addOnClose(() => console.log('Websocket connection closed.'));
+        webSocketPortfolio.addOnClose(() => connectWebSocket(channelPortfolio, 'private', webSocketPortfolio, wsOptions));
+      }
     },
     /**
      * 
@@ -344,45 +353,48 @@ function Ws(wsOptions) {
      * 
      * 
      */
-    orderBook: async (orderBookParams) => {
-      // Connect websocket
-      const channel = `book.${orderBookParams.symbol}.100ms`;
-      const webSocket = WebSocket();
-      await connectWebSocket(channel, 'public', webSocket, wsOptions);
-      // Order book functionality
-      let prevChangeId = null;
-      const orderBook = OrderBook();
-      webSocket.addOnMessage(message => {
-        const messageParse = JSON.parse(message);
-        if (!messageParse.params || !messageParse.params.data) { return };
-        if (messageParse.params.data.type === 'snapshot') {
-          return synchronizeOrderBookSnapshot(messageParse.params.data, orderBook);
-        }
-        if (prevChangeId && prevChangeId !== messageParse.params.data.prev_change_id) {
-          return webSocket.disconnect();
-        }
-        prevChangeId = messageParse.params.data.change_id;
-        const timestamp = Date.now();
-        const orderBookTimestamp = +messageParse.params.data.timestamp;
-        if (timestamp - orderBookTimestamp > 5000) {
-          return webSocket.disconnect();
-        }
-        messageParse.params.data.asks.forEach(v => {
-          const update = { id: +v[1], price: +v[1], quantity: +v[2] };
-          orderBook._updateOrderByPriceAsk(update);
+    orderBook: {
+      info: null,
+      events: null,
+      connect: async (orderBookParams) => {
+        // Connect websocket
+        const channel = `book.${orderBookParams.symbol}.100ms`;
+        const webSocket = WebSocket();
+        await connectWebSocket(channel, 'public', webSocket, wsOptions);
+        // Order book functionality
+        let prevChangeId = null;
+        ws.orderBook.info = OrderBook();
+        webSocket.addOnMessage(message => {
+          const messageParse = JSON.parse(message);
+          if (!messageParse.params || !messageParse.params.data) { return };
+          if (messageParse.params.data.type === 'snapshot') {
+            return synchronizeOrderBookSnapshot(messageParse.params.data, ws.orderBook.info);
+          }
+          if (prevChangeId && prevChangeId !== messageParse.params.data.prev_change_id) {
+            return webSocket.disconnect();
+          }
+          prevChangeId = messageParse.params.data.change_id;
+          const timestamp = Date.now();
+          const orderBookTimestamp = +messageParse.params.data.timestamp;
+          if (timestamp - orderBookTimestamp > 5000) {
+            return webSocket.disconnect();
+          }
+          messageParse.params.data.asks.forEach(v => {
+            const update = { id: +v[1], price: +v[1], quantity: +v[2] };
+            ws.orderBook.info._updateOrderByPriceAsk(update);
+          });
+          messageParse.params.data.bids.forEach(v => {
+            const update = { id: +v[1], price: +v[1], quantity: +v[2] };
+            ws.orderBook.info._updateOrderByPriceBid(update);
+          });
         });
-        messageParse.params.data.bids.forEach(v => {
-          const update = { id: +v[1], price: +v[1], quantity: +v[2] };
-          orderBook._updateOrderByPriceBid(update);
+        webSocket.addOnError(() => console.log('Websocket connection error.'));
+        webSocket.addOnClose(() => console.log('Websocket connection closed.'));
+        webSocket.addOnClose(() => {
+          desynchronizeOrderBook(ws.orderBook.info);
+          connectWebSocket(channel, 'public', webSocket, wsOptions)
         });
-      });
-      webSocket.addOnError(() => console.log('Websocket connection error.'));
-      webSocket.addOnClose(() => console.log('Websocket connection closed.'));
-      webSocket.addOnClose(() => {
-        desynchronizeOrderBook(orderBook);
-        connectWebSocket(channel, 'public', webSocket, wsOptions)
-      });
-      return { info: orderBook, };
+      }
     },
   };
   return ws;
