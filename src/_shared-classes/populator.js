@@ -2,7 +2,6 @@ const mysql = require('mysql');
 const moment = require('moment');
 const CronJob = require('cron').CronJob;
 const wait = require('../_utils/wait');
-const { PopulatorN } = require('../../typings');
 /**
  * 
  * 
@@ -46,7 +45,7 @@ function saveCandles(connection, candles, table) {
  */
 function Populator(rest) {
   /**
-   * @param {PopulatorN.populatorOptions} populatorOptions 
+   * @param {import('../../typings').PopulatorN.populatorOptions} populatorOptions 
    */
   function PopulatorFunc(populatorOptions) {
     // Default populatorOptions values
@@ -62,7 +61,7 @@ function Populator(rest) {
     /**
      * 
      * 
-     * @type {PopulatorN.Populator}
+     * @type {import('../../typings').PopulatorN.Populator}
      * 
      * 
      */

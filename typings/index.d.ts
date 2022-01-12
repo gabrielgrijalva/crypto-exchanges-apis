@@ -441,11 +441,14 @@ declare namespace WsN {
    * 
    * 
    */
+  type wsReturnPromise<I, E, P> = {
+    info: I, events: E, connect(params: P): Promise<void>,
+  }
   interface Ws {
-    orders(params: ordersParams): Promise<{ events: ordersEventEmitter }>;
-    position(params: positionParams): Promise<{ info: dataPosition, events: positionEventEmitter }>;
-    liquidation(params: liquidationParams): Promise<{ info: dataLiquidation, events: liquidationEventEmitter }>;
-    orderBook(params: orderBookParams): Promise<{ info: dataOrderBook, }>;
+    orders: wsReturnPromise<null, ordersEventEmitter, ordersParams>;
+    position: wsReturnPromise<dataPosition, positionEventEmitter, positionParams>;
+    liquidation: wsReturnPromise<dataLiquidation, liquidationEventEmitter, liquidationParams>;
+    orderBook: wsReturnPromise<dataOrderBook, null, orderBookParams>;
   }
 }
 /**
@@ -556,6 +559,7 @@ declare namespace UtilsN {
  * 
  */
 declare namespace ExchangeN {
+  type exchanges = 'binance-coin' | 'bitmex' | 'bybit' | 'bybit-futures' | 'deribit' | 'kraken-futures' | 'okex';
   interface Exchange {
     Populator(options: PopulatorN.populatorOptions): PopulatorN.Populator;
     Rest(options: RestN.restOptions): RestN.Rest;
