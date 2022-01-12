@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.1.1] - 2022-01-12
+- Corrected error in exports declaration in typings.
 ## [1.1.0] - 2022-01-12
 - Changed main export exchanges module.
 ## [1.0.4] - 2021-12-26
