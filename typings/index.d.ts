@@ -559,7 +559,6 @@ declare namespace UtilsN {
  * 
  */
 declare namespace ExchangeN {
-  type exchanges = 'binance-coin' | 'bitmex' | 'bybit' | 'bybit-futures' | 'deribit' | 'kraken-futures' | 'okex';
   interface Exchange {
     Populator(options: PopulatorN.populatorOptions): PopulatorN.Populator;
     Rest(options: RestN.restOptions): RestN.Rest;
@@ -576,10 +575,6 @@ declare namespace ExchangeN {
  * 
  * 
  */
-export const BinanceCoin: ExchangeN.Exchange;
-export const Bitmex: ExchangeN.Exchange;
-export const Bybit: ExchangeN.Exchange;
-export const BybitFutures: ExchangeN.Exchange;
-export const Deribit: ExchangeN.Exchange;
-export const KrakenFutures: ExchangeN.Exchange;
-export const Okex: ExchangeN.Exchange;
+type exchanges = 'binance-coin' | 'bitmex' | 'bybit' | 'bybit-futures' | 'deribit' | 'kraken-futures' | 'okex';
+declare function CryptoExchangesApi(exchange: exchanges): ExchangeN.Exchange;
+export = CryptoExchangesApi;
