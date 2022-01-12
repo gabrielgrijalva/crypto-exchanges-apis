@@ -559,6 +559,7 @@ declare namespace UtilsN {
  * 
  */
 declare namespace ExchangeN {
+  type exchanges = 'binance-coin' | 'bitmex' | 'bybit' | 'bybit-futures' | 'deribit' | 'kraken-futures' | 'okex';
   interface Exchange {
     Populator(options: PopulatorN.populatorOptions): PopulatorN.Populator;
     Rest(options: RestN.restOptions): RestN.Rest;
