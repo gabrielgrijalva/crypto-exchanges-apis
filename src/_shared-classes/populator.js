@@ -16,7 +16,7 @@ const wait = require('../_utils/wait');
 /**
  * 
  * @param {mysql.Connection} connection 
- * @param {import('../../typings').RestN.getCandlesResponseData} candles 
+ * @param {import('../../typings/_rest').getCandlesResponseData} candles 
  */
 function saveCandles(connection, candles, table) {
   return new Promise((resolve) => {
@@ -41,11 +41,11 @@ function saveCandles(connection, candles, table) {
  * 
  */
 /**
- * @param {import('../../typings').RestN.Rest} rest 
+ * @param {import('../../typings/_rest').Rest} rest 
  */
 function Populator(rest) {
   /**
-   * @param {import('../../typings').PopulatorN.populatorOptions} populatorOptions 
+   * @param {import('../../typings/_populator').populatorOptions} populatorOptions 
    */
   function PopulatorFunc(populatorOptions) {
     // Default populatorOptions values
@@ -61,7 +61,7 @@ function Populator(rest) {
     /**
      * 
      * 
-     * @type {import('../../typings').PopulatorN.Populator}
+     * @type {import('../../typings/_populator').Populator}
      * 
      * 
      */

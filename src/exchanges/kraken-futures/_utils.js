@@ -11,7 +11,7 @@ const uuid = require('uuid').v4;
  * 
  */
 /**
- * @param {import('../../../typings').UtilsN.utilsOptions} [utilsOptions]
+ * @param {import('../../../typings/_utils').utilsOptions} [utilsOptions]
  */
 function Utils(utilsOptions) {
   // Default utilsOptions values
@@ -21,7 +21,7 @@ function Utils(utilsOptions) {
    * 
    * 
    * 
-   * @type {import('../../../typings').UtilsN.Utils}
+   * @type {import('../../../typings/_utils').Utils}
    * 
    * 
    */

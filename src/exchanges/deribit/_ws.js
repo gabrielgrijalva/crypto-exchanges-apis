@@ -81,8 +81,8 @@ function getSignatureParams(apiKey, apiSecret) {
  * 
  * @param {string} channel
  * @param {string} method
- * @param {import('../../../typings').WsN.WebSocket} webSocket 
- * @param {import('../../../typings').WsN.wsOptions} wsOptions 
+ * @param {import('../../../typings/_ws').WebSocket} webSocket 
+ * @param {import('../../../typings/_ws').wsOptions} wsOptions 
  */
 function connectWebSocket(channel, method, webSocket, wsOptions) {
   console.log(`Connecting websocket: ${wsOptions.url}`);
@@ -116,7 +116,7 @@ function connectWebSocket(channel, method, webSocket, wsOptions) {
 };
 /**
  * 
- * @param {import('../../../typings').WsN.dataOrderBook} orderBook 
+ * @param {import('../../../typings/_ws').dataOrderBook} orderBook 
  */
 function desynchronizeOrderBook(orderBook) {
   orderBook.asks.length = 0;
@@ -125,7 +125,7 @@ function desynchronizeOrderBook(orderBook) {
 /**
  * 
  * @param {Object} snapshot 
- * @param {import('../../../typings').WsN.dataOrderBook} orderBook 
+ * @param {import('../../../typings/_ws').dataOrderBook} orderBook 
  */
 function synchronizeOrderBookSnapshot(snapshot, orderBook) {
   orderBook._insertSnapshotAsks(snapshot.asks.map(v => {
@@ -147,7 +147,7 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  * 
  */
 /**
- * @param {import('../../../typings').WsN.wsOptions} [wsOptions]
+ * @param {import('../../../typings/_ws').wsOptions} [wsOptions]
  */
 function Ws(wsOptions) {
   // Default wsOptions values
@@ -161,7 +161,7 @@ function Ws(wsOptions) {
   /** 
    * 
    * 
-   * @type {import('../../../typings').WsN.Ws} 
+   * @type {import('../../../typings/_ws').Ws} 
    * 
    * 
    */
@@ -179,7 +179,7 @@ function Ws(wsOptions) {
       info: null,
       events: null,
       connect: async (ordersParams) => {
-        /** @type {import('../../../typings').WsN.ordersEventEmitter} */
+        /** @type {import('../../../typings/_ws').ordersEventEmitter} */
         ws.orders.events = new Events.EventEmitter();
         // Open orders websocket
         const channelOpenOrders = `user.orders.${ordersParams.symbol}.raw`;
@@ -239,7 +239,7 @@ function Ws(wsOptions) {
       info: null,
       events: null,
       connect: async (positionParams) => {
-        /** @type {import('../../../typings').WsN.positionEventEmitter} */
+        /** @type {import('../../../typings/_ws').positionEventEmitter} */
         ws.position.events = new Events.EventEmitter();
         const channel = `user.changes.${positionParams.symbol}.raw`;
         const webSocket = WebSocket();
@@ -247,7 +247,7 @@ function Ws(wsOptions) {
         // Load rest info
         const positionRestParams = { symbol: positionParams.symbol };
         const positionRestData = (await rest.getPosition(positionRestParams)).data;
-        /** @type {import('../../../typings').WsN.dataPosition} */
+        /** @type {import('../../../typings/_ws').dataPosition} */
         ws.position.info = Object.assign({}, positionRestData);
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message);
@@ -279,7 +279,7 @@ function Ws(wsOptions) {
       info: null,
       events: null,
       connect: async (liquidationParams) => {
-        /** @type {import('../../../typings').WsN.liquidationEventEmitter} */
+        /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
         ws.liquidation.events = new Events.EventEmitter();
         // Instrument websocket
         const channelInstrument = `ticker.${liquidationParams.symbol}.raw`;
@@ -301,7 +301,7 @@ function Ws(wsOptions) {
         const positionRestData = (await rest.getPosition(positionRestParams)).data;
         const liquidationRestData = (await rest.getLiquidation(liquidationRestParams)).data;
         // Liquidation info
-        /** @type {import('../../../typings').WsN.dataLiquidation} */
+        /** @type {import('../../../typings/_ws').dataLiquidation} */
         ws.liquidation.info = Object.assign({}, positionRestData, liquidationRestData);
         webSocketInstrument.addOnMessage((message) => {
           const messageParse = JSON.parse(message);

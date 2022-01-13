@@ -10,28 +10,28 @@ const WebSocket = require('ws');
   */
 /**
  * @param {number} id
- * @param {import('../../typings').WsN.orderBookOrder[]} orders 
+ * @param {import('../../typings/_ws').orderBookOrder[]} orders 
  */
 function findOrderIndexById(id, orders) {
   return orders.findIndex(v => v.id === id);
 };
 /**
   * @param {number} price
-  * @param {import('../../typings').WsN.orderBookOrder[]} orders 
+  * @param {import('../../typings/_ws').orderBookOrder[]} orders 
   */
 function findOrderIndexByPriceAsk(price, orders) {
   return orders.findIndex(v => v.price >= price);
 };
 /**
  * @param {number} price
- * @param {import('../../typings').WsN.orderBookOrder[]} orders 
+ * @param {import('../../typings/_ws').orderBookOrder[]} orders 
  */
 function findOrderIndexByPriceBid(price, orders) {
   return orders.findIndex(v => v.price <= price);
 };
 /**
- * @param {import('../../typings').WsN.orderBookOrder[]} orders
- * @returns {(update: import('../../typings').WsN.orderBookOrder) => void}
+ * @param {import('../../typings/_ws').orderBookOrder[]} orders
+ * @returns {(update: import('../../typings/_ws').orderBookOrder) => void}
  */
 function getDeleteOrderById(orders) {
   return function deleteOrderById(update) {
@@ -43,8 +43,8 @@ function getDeleteOrderById(orders) {
   };
 };
 /**
- * @param {import('../../typings').WsN.orderBookOrder[]} orders
- * @returns {(update: import('../../typings').WsN.orderBookOrder) => void}
+ * @param {import('../../typings/_ws').orderBookOrder[]} orders
+ * @returns {(update: import('../../typings/_ws').orderBookOrder) => void}
  */
 function getUpdateOrderById(orders) {
   return function updateOrderById(update) {
@@ -62,8 +62,8 @@ function getUpdateOrderById(orders) {
 };
 /**
  * @param {'asks' | 'bids'} side 
- * @param {import('../../typings').WsN.orderBookOrder[]} orders
- * @returns {(update: import('../../typings').WsN.orderBookOrder) => void}
+ * @param {import('../../typings/_ws').orderBookOrder[]} orders
+ * @returns {(update: import('../../typings/_ws').orderBookOrder) => void}
  */
 function getUpdateOrderByPrice(side, orders) {
   const findOrderIndexByPrice = side === 'asks' ? findOrderIndexByPriceAsk : findOrderIndexByPriceBid;
@@ -90,8 +90,8 @@ function getUpdateOrderByPrice(side, orders) {
   };
 };
 /** 
- * @param {import('../../typings').WsN.orderBookOrder[]} orders
- * @returns {(snapshot: import('../../typings').WsN.orderBookOrder[]) => void}
+ * @param {import('../../typings/_ws').orderBookOrder[]} orders
+ * @returns {(snapshot: import('../../typings/_ws').orderBookOrder[]) => void}
  */
 function getInsertSnapshotFunction(orders) {
   return function insertSnapshotFunction(snapshot) {
@@ -101,13 +101,13 @@ function getInsertSnapshotFunction(orders) {
 };
 /**
  * 
- * @param {import('../../typings').WsN.orderBookOrder[]} asks 
- * @param {import('../../typings').WsN.orderBookOrder[]} bids 
+ * @param {import('../../typings/_ws').orderBookOrder[]} asks 
+ * @param {import('../../typings/_ws').orderBookOrder[]} bids 
  * @returns 
  */
 function getCreateServer(asks, bids) {
   /**
-   * @param {import('../../typings').WsN.serverParams} serverParams 
+   * @param {import('../../typings/_ws').serverParams} serverParams 
    */
   function createServer(serverParams) {
     const wss = new WebSocket.Server({
@@ -140,15 +140,15 @@ function getCreateServer(asks, bids) {
   return createServer;
 };
 function OrderBook() {
-  /** @type {import('../../typings').WsN.orderBookOrder[]} */
+  /** @type {import('../../typings/_ws').orderBookOrder[]} */
   const asks = [];
-  /** @type {import('../../typings').WsN.orderBookOrder[]} */
+  /** @type {import('../../typings/_ws').orderBookOrder[]} */
   const bids = [];
   /**
    * 
    * 
    * 
-   * @type {import('../../typings').WsN.dataOrderBook}
+   * @type {import('../../typings/_ws').dataOrderBook}
    * 
    * 
    * 

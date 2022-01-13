@@ -14,12 +14,12 @@ const Request = require('../../_shared-classes/request');
  * 
  */
 /**
- * @param {import('../../../typings').RestN.params | null} params
+ * @param {import('../../../typings/_rest').params | null} params
  * @param {Object | string} responseData 
- * @returns {{ error: import('../../../typings').RestN.RestErrorResponseData }}
+ * @returns {{ error: import('../../../typings/_rest').RestErrorResponseData }}
  */
 function handleResponseError(params, responseData) {
-  /** @type {import('../../../typings').RestN.restErrorResponseDataType} */
+  /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
   if (+responseData.code !== 0) {
     if (+responseData.code === -2011) {
@@ -72,8 +72,8 @@ function getCandleResolution(interval) {
  * 
  */
 /** 
- * @this {import('../../../typings').RestN.Request} 
- * @returns {Promise<import('../../../typings').RestN.requestSendReturn>}
+ * @this {import('../../../typings/_rest').Request} 
+ * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
  */
 async function public(method, path, data) {
   const dataStringified = qs.stringify(data);
@@ -87,8 +87,8 @@ async function public(method, path, data) {
   return response;
 };
 /** 
- * @this {import('../../../typings').RestN.Request} 
- * @returns {Promise<import('../../../typings').RestN.requestSendReturn>}
+ * @this {import('../../../typings/_rest').Request} 
+ * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
  */
 async function key(method, path, data) {
   const dataStringified = qs.stringify(data);
@@ -103,8 +103,8 @@ async function key(method, path, data) {
   return response;
 };
 /** 
- * @this {import('../../../typings').RestN.Request} 
- * @returns {Promise<import('../../../typings').RestN.requestSendReturn>}
+ * @this {import('../../../typings/_rest').Request} 
+ * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
  */
 async function private(method, path, data) {
   const privateData = {};
@@ -137,7 +137,7 @@ async function private(method, path, data) {
  * 
  */
 /** 
- * @param {import('../../../typings').RestN.restOptions} [restOptions] 
+ * @param {import('../../../typings/_rest').restOptions} [restOptions] 
  */
 function Rest(restOptions) {
   // Default restOptions values
@@ -156,7 +156,7 @@ function Rest(restOptions) {
   /** 
    * 
    * 
-   * @type {import('../../../typings').RestN.Rest} 
+   * @type {import('../../../typings/_rest').Rest} 
    * 
    * 
    */

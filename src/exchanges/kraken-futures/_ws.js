@@ -60,8 +60,8 @@ function getSingatureParams(challenge, apiKey, apiSecret) {
  * 
  * @param {string} feed
  * @param {string} symbol
- * @param {import('../../../typings').WsN.WebSocket} webSocket 
- * @param {import('../../../typings').WsN.wsOptions} wsOptions 
+ * @param {import('../../../typings/_ws').WebSocket} webSocket 
+ * @param {import('../../../typings/_ws').wsOptions} wsOptions 
  */
 function connectWebSocket(feed, symbol, webSocket, wsOptions) {
   console.log(`Connecting websocket: ${wsOptions.url}`);
@@ -99,7 +99,7 @@ function connectWebSocket(feed, symbol, webSocket, wsOptions) {
 };
 /**
  * 
- * @param {import('../../../typings').WsN.dataOrderBook} orderBook 
+ * @param {import('../../../typings/_ws').dataOrderBook} orderBook 
  */
 function desynchronizeOrderBook(orderBook) {
   orderBook.asks.length = 0;
@@ -107,7 +107,7 @@ function desynchronizeOrderBook(orderBook) {
 };
 /**
  * @param {Object} snapshot 
- * @param {import('../../../typings').WsN.dataOrderBook} orderBook 
+ * @param {import('../../../typings/_ws').dataOrderBook} orderBook 
  */
 function synchronizeOrderBookSnapshot(snapshot, orderBook) {
   orderBook._insertSnapshotAsks(snapshot.asks.map(v => {
@@ -129,7 +129,7 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  * 
  */
 /**
- * @param {import('../../../typings').WsN.wsOptions} [wsOptions]
+ * @param {import('../../../typings/_ws').wsOptions} [wsOptions]
  */
 function Ws(wsOptions) {
   // Default wsOptions values
@@ -143,7 +143,7 @@ function Ws(wsOptions) {
   /** 
    * 
    * 
-   * @type {import('../../../typings').WsN.Ws} 
+   * @type {import('../../../typings/_ws').Ws} 
    * 
    * 
    */
@@ -161,7 +161,7 @@ function Ws(wsOptions) {
       info: null,
       events: null,
       connect: async (ordersParams) => {
-        /** @type {import('../../../typings').WsN.ordersEventEmitter} */
+        /** @type {import('../../../typings/_ws').ordersEventEmitter} */
         ws.orders.events = new Events.EventEmitter();
         // Open orders websocket
         const feedOpenOrders = 'open_orders';
@@ -229,7 +229,7 @@ function Ws(wsOptions) {
       info: null,
       events: null,
       connect: async (positionParams) => {
-        /** @type {import('../../../typings').WsN.positionEventEmitter} */
+        /** @type {import('../../../typings/_ws').positionEventEmitter} */
         ws.position.events = new Events.EventEmitter();
         const feed = 'open_positions';
         const webSocket = WebSocket();
@@ -237,7 +237,7 @@ function Ws(wsOptions) {
         // Load rest info
         const positionRestParams = { symbol: positionParams.symbol };
         const positionRestData = (await rest.getPosition(positionRestParams)).data;
-        /** @type {import('../../../typings').WsN.dataPosition} */
+        /** @type {import('../../../typings/_ws').dataPosition} */
         ws.position.info = Object.assign({}, positionRestData);
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message);
@@ -275,7 +275,7 @@ function Ws(wsOptions) {
       info: null,
       events: null,
       connect: async (liquidationParams) => {
-        /** @type {import('../../../typings').WsN.liquidationEventEmitter} */
+        /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
         ws.liquidation.events = new Events.EventEmitter();
         // Ticker websocket
         const feedTicker = 'ticker';
@@ -294,7 +294,7 @@ function Ws(wsOptions) {
         const positionRestData = (await rest.getPosition(positionRestParams)).data;
         const liquidationRestData = (await rest.getLiquidation(liquidationRestParams)).data;
         // Liquidation info
-        /** @type {import('../../../typings').WsN.dataLiquidation} */
+        /** @type {import('../../../typings/_ws').dataLiquidation} */
         ws.liquidation.info = Object.assign({}, positionRestData, liquidationRestData);
         webSocketTicker.addOnMessage((message) => {
           const messageParse = JSON.parse(message);
