@@ -6,8 +6,7 @@ const Deribit = require('./src/exchanges/deribit');
 const KrakenFutures = require('./src/exchanges/kraken-futures');
 const Okex = require('./src/exchanges/okex');
 /**
- * 
- * @param {import('./typings').ExchangeN.exchanges} exchange 
+ * @type {import('./typings')}
  */
 function CryptoExchangesApi(exchange) {
   if (exchange === 'binance-coin') {
