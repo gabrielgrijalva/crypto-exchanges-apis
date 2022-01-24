@@ -51,7 +51,7 @@ declare namespace UtilsN {
     getOBExecutionPrice(ob: orderBookOrder[], obType: obTypes, bal: number, skipVol: number, skipLevles: number, skipPer: number): number;
     getBalInvFromPosition(px, qty): number;
     getNBValueFromPosition(px, qty): number;
-    getNQValueFromPosition(px, qty)
+    getNQValueFromPosition(px, qty): number;
   }
 }
 export = UtilsN;
