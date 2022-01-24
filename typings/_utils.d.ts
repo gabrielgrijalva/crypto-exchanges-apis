@@ -1,4 +1,4 @@
-import { orderBookOrder } from "./_rest";
+import { dataOrderBook } from "./_ws";
 
 /**
  * 
@@ -24,6 +24,7 @@ declare namespace UtilsN {
     instrumentType: 'spot' | 'future';
     balanceType: 'base' | 'quote';
     quantityType: 'base' | 'quote';
+    priceStep: number;
     quantityValue: number;
     basePrecision: number;
     quotePrecision: number;
@@ -48,7 +49,9 @@ declare namespace UtilsN {
     getCloseOrderQtyFromOpenPosition(px: number, qty: number, rnd: roundTypes): number;
     getOpenPositionQtyFromOpenExecution(px: number, qty: number, rnd: roundTypes): number;
     getPnl(qty: number, side: sideTypes, entPx: number, extPx: number, entFee: number, extFee: number): number;
-    getOBExecutionPrice(ob: orderBookOrder[], obType: obTypes, bal: number, skipVol: number, skipLevles: number, skipPer: number): number;
+    getOBBestAsk(ob: dataOrderBook): number;
+    getOBBestBid(ob: dataOrderBook): number;
+    getOBExecutionPrice(ob: dataOrderBook, obType: obTypes, bal: number, skipVol: number, skipLevles: number, skipPer: number): number;
     getBalInvFromPosition(px, qty): number;
     getNBValueFromPosition(px, qty): number;
     getNQValueFromPosition(px, qty): number;

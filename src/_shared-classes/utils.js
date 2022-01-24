@@ -29,6 +29,7 @@ function Utils(utilsOptions) {
   const instrumentType = utilsOptions.instrumentType;
   const balanceType = utilsOptions.balanceType;
   const quantityType = utilsOptions.quantityType;
+  const priceStep = utilsOptions.priceStep;
   const quantityValue = utilsOptions.quantityValue;
   const basePrecision = utilsOptions.basePrecision;
   const quotePrecision = utilsOptions.quotePrecision;
@@ -175,6 +176,26 @@ function Utils(utilsOptions) {
     /**
      * 
      * 
+     * GET OB BEST ASK
+     * 
+     * 
+     */
+    getOBBestAsk: (() => {
+      return (ob) => round.normal(ob.asks[0].price - priceStep, pricePrecision);
+    })(),
+    /**
+     * 
+     * 
+     * GET OB BEST BID
+     * 
+     * 
+     */
+    getOBBestBid: (() => {
+      return (ob) => round.normal(ob.bids[0].price + priceStep, pricePrecision);
+    })(),
+    /**
+     * 
+     * 
      * GET OB EXECUTION PRICE
      * 
      * 
@@ -184,11 +205,12 @@ function Utils(utilsOptions) {
         return (ob, obType, bal, skipVol, skipLevels, skipPer) => {
           let qtyNB = 0;
           let qtyNQ = 0;
-          const skipPrice = ob[0].price * (1 + (obType === 'asks' ? +skipPer : -skipPer));
-          const skipPriceIndex = ob.findIndex(v => obType === 'asks' ? (v.price > skipPrice) : (v.price < skipPrice));
+          const orders = ob[obType];
+          const skipPrice = orders[0].price * (1 + (obType === 'asks' ? +skipPer : -skipPer));
+          const skipPriceIndex = orders.findIndex(v => obType === 'asks' ? (v.price > skipPrice) : (v.price < skipPrice));
           const obStartIndex = skipLevels > skipPriceIndex ? skipLevels : skipPriceIndex;
-          for (let i = obStartIndex; bal && ob[i]; i += 1) {
-            const order = ob[i];
+          for (let i = obStartIndex; bal && orders[i]; i += 1) {
+            const order = orders[i];
             let orderNB = order.quantity * quantityValue;
             if (skipVol > orderNB) {
               skipVol = skipVol - orderNB; orderNB = 0;
@@ -208,11 +230,12 @@ function Utils(utilsOptions) {
         return (ob, obType, bal, skipVol, skipLevels, skipPer) => {
           let qtyNB = 0;
           let qtyNQ = 0;
-          const skipPrice = ob[0].price * (1 + (obType === 'asks' ? +skipPer : -skipPer));
-          const skipPriceIndex = ob.findIndex(v => obType === 'asks' ? (v.price > skipPrice) : (v.price < skipPrice));
+          const orders = ob[obType];
+          const skipPrice = orders[0].price * (1 + (obType === 'asks' ? +skipPer : -skipPer));
+          const skipPriceIndex = orders.findIndex(v => obType === 'asks' ? (v.price > skipPrice) : (v.price < skipPrice));
           const obStartIndex = skipLevels > skipPriceIndex ? skipLevels : skipPriceIndex;
-          for (let i = obStartIndex; bal && ob[i]; i += 1) {
-            const order = ob[i];
+          for (let i = obStartIndex; bal && orders[i]; i += 1) {
+            const order = orders[i];
             let orderNB = (quantityValue / order.price) * order.quantity;
             if (skipVol > orderNB) {
               skipVol = skipVol - orderNB; orderNB = 0;
@@ -232,11 +255,12 @@ function Utils(utilsOptions) {
         return (ob, obType, bal, skipVol, skipLevels, skipPer) => {
           let qtyNB = 0;
           let qtyNQ = 0;
-          const skipPrice = ob[0].price * (1 + (obType === 'asks' ? +skipPer : -skipPer));
-          const skipPriceIndex = ob.findIndex(v => obType === 'asks' ? (v.price > skipPrice) : (v.price < skipPrice));
+          const orders = ob[obType];
+          const skipPrice = orders[0].price * (1 + (obType === 'asks' ? +skipPer : -skipPer));
+          const skipPriceIndex = orders.findIndex(v => obType === 'asks' ? (v.price > skipPrice) : (v.price < skipPrice));
           const obStartIndex = skipLevels > skipPriceIndex ? skipLevels : skipPriceIndex;
-          for (let i = obStartIndex; bal && ob[i]; i += 1) {
-            const order = ob[i];
+          for (let i = obStartIndex; bal && orders[i]; i += 1) {
+            const order = orders[i];
             let orderNQ = (order.quantity * quantityValue) * order.price;
             if (skipVol > orderNQ) {
               skipVol = skipVol - orderNQ; orderNQ = 0;
