@@ -160,9 +160,6 @@ declare namespace WsN {
    * 
    * 
    */
-  type webSocketOptions = {
-    url: string;
-  }
   interface WebSocket {
     // Util functions
     send(data: string): void;
