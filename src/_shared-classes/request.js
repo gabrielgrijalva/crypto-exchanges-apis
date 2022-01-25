@@ -2,45 +2,45 @@ const https = require('https');
 const round = require('../_utils/round');
 /**
  * @param {import('../../typings/_rest').Request} request 
- * @param {import('../../typings/_rest').restOptions} restOptions
- * @returns {void}
+ * @param {import('../../typings/settings')} settings
  */
-function createRefillSetInterval(request, restOptions) {
+function createRefillSetInterval(request, settings) {
   const timestamp = Date.now();
-  const timeoutMilliseconds = round.up(timestamp / restOptions
-    .requestsRefillInterval, 0) * restOptions.requestsRefillInterval - timestamp;
+  const timeoutMilliseconds = round.up(timestamp / settings.REST.REQUESTS_REFILL_INTERVAL, 0)
+    * settings.REST.REQUESTS_REFILL_INTERVAL - timestamp;
   const intervalRefillDiscrete = () => {
-    request.remaining = restOptions.requestsRefill;
+    request.remaining = settings.REST.REQUESTS_REFILL;
   };
   const intervalRefillContinouos = () => {
-    request.remaining += request.remaining < restOptions.requestsLimit
-      ? restOptions.requestsRefill : 0;
+    request.remaining += request.remaining < settings.REST.REQUESTS_LIMIT
+      ? settings.REST.REQUESTS_REFILL : 0;
   };
-  const intervalRefillFunction = restOptions.requestsRefillType === 'discrete'
+  const intervalRefillFunction = settings.REST.REQUESTS_REFILL_TYPE === 'discrete'
     ? intervalRefillDiscrete : intervalRefillContinouos;
   setTimeout(() => {
     intervalRefillFunction();
-    setInterval(intervalRefillFunction, restOptions.requestsRefillInterval);
+    setInterval(intervalRefillFunction, settings.REST.REQUESTS_REFILL_INTERVAL);
   }, timeoutMilliseconds);
 };
 /** 
- * @param {import('../../typings/_rest').requestOptions} requestOptions 
- * @returns {import('../../typings/_rest').Request}
+ * @param {import('../../typings/_rest').requestSettings} requestSettings
  */
-function Request(requestOptions) {
-  const restOptions = requestOptions.restOptions;
+function Request(requestSettings) {
+  const key = requestSettings.key;
+  const public = requestSettings.public;
+  const private = requestSettings.private;
+  const settings = requestSettings.settings;
   /** 
    * @type {import('../../typings/_rest').Request} 
    */
   const request = {
     // Variables
-    remaining: restOptions.requestsLimit,
+    remaining: settings.REST.REQUESTS_LIMIT,
     timestamps: [],
-    restOptions: restOptions,
     // Functions
     send: (params) => {
       request.timestamps.unshift(Date.now());
-      request.timestamps.splice(restOptions.requestsTimestamps);
+      request.timestamps.splice(settings.REST.REQUESTS_TIMESTAMPS);
       request.remaining = request.remaining > 0 ? request.remaining - 1 : 0;
       return new Promise(resolve => {
         let data = '';
@@ -69,13 +69,11 @@ function Request(requestOptions) {
         req.end(params.data);
       });
     },
-    key: requestOptions.key,
-    public: requestOptions.public,
-    private: requestOptions.private,
+    key: key,
+    public: public,
+    private: private,
   };
-  if (restOptions.requestsRefillType) {
-    createRefillSetInterval(request, restOptions);
-  }
+  createRefillSetInterval(request, settings);
   return request;
 };
 module.exports = Request;

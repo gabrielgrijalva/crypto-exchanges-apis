@@ -8,7 +8,7 @@ const Okex = require('./src/exchanges/okex');
 /**
  * @type {import('./typings')}
  */
-function CryptoExchangesApi(exchange) {
+function CryptoExchangesApi(settings) {
   if (exchange === 'binance-coin') {
     return BinanceCoin;
   }

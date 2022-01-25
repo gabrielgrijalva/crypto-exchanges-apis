@@ -1,3 +1,4 @@
+import settings = require('../typings/settings');
 /**
  * 
  * 
@@ -143,12 +144,10 @@ declare namespace RestN {
    * 
    * 
    */
-  type requestOptions = {
-    restOptions: restOptions,
-    key?(method: string, path: string, data: any): Promise<requestSendReturn>;
-    public?(method: string, path: string, data: any): Promise<requestSendReturn>;
-    private?(method: string, path: string, data: any, query?: any): Promise<requestSendReturn>;
-  }
+  function send(params: requestSendParams): Promise<requestSendReturn>;
+  function key(method: string, path: string, data: any): Promise<requestSendReturn>;
+  function public(method: string, path: string, data: any): Promise<requestSendReturn>;
+  function private(method: string, path: string, data: any, query?: any): Promise<requestSendReturn>;
   type requestSendParams = {
     url: string;
     data?: string;
@@ -160,14 +159,19 @@ declare namespace RestN {
     status: number;
     headers: any;
   }
+  type requestSettings = {
+    settings: settings,
+    key?: key;
+    public?: public;
+    private?: private;
+  }
   interface Request {
     remaining: number;
     timestamps: number[];
-    restOptions: restOptions;
-    send(params: requestSendParams): Promise<requestSendReturn>;
-    key?(method: string, path: string, data: any): Promise<requestSendReturn>;
-    public?(method: string, path: string, data: any): Promise<requestSendReturn>;
-    private?(method: string, path: string, data: any, query?: any): Promise<requestSendReturn>;
+    send: send;
+    key?: key;
+    public?: public;
+    private?: private;
   }
   /**
    * 
