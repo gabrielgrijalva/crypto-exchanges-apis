@@ -8,15 +8,10 @@ function createRefillSetInterval(request, settings) {
   const timestamp = Date.now();
   const timeoutMilliseconds = round.up(timestamp / settings.REST.REQUESTS_REFILL_INTERVAL, 0)
     * settings.REST.REQUESTS_REFILL_INTERVAL - timestamp;
-  const intervalRefillDiscrete = () => {
-    request.remaining = settings.REST.REQUESTS_REFILL;
-  };
-  const intervalRefillContinouos = () => {
+  const intervalRefillFunction = () => {
     request.remaining += request.remaining < settings.REST.REQUESTS_LIMIT
       ? settings.REST.REQUESTS_REFILL : 0;
   };
-  const intervalRefillFunction = settings.REST.REQUESTS_REFILL_TYPE === 'discrete'
-    ? intervalRefillDiscrete : intervalRefillContinouos;
   setTimeout(() => {
     intervalRefillFunction();
     setInterval(intervalRefillFunction, settings.REST.REQUESTS_REFILL_INTERVAL);
