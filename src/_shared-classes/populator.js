@@ -45,19 +45,18 @@ function saveCandles(connection, candles, table) {
  */
 function Populator(rest) {
   /**
-   * @param {import('../../typings/_populator').populatorOptions} populatorOptions 
+   * @param {import('../../typings/settings')} settings
    */
-  function PopulatorFunc(populatorOptions) {
-    // Default populatorOptions values
-    populatorOptions = populatorOptions || {};
-    populatorOptions.port = populatorOptions.port || 3306;
-    populatorOptions.host = populatorOptions.host || 'localhost';
-    populatorOptions.user = populatorOptions.user || 'root';
-    populatorOptions.database = populatorOptions.database || '';
-    populatorOptions.password = populatorOptions.password || '';
-    populatorOptions.timezone = populatorOptions.timezone || 'Z';
+  function PopulatorFunc(settings) {
     // Create database connection
-    const connection = mysql.createConnection(populatorOptions);
+    const connection = mysql.createConnection({
+      port: settings.POPULATOR.PORT || 3306,
+      host: settings.POPULATOR.HOST || 'localhost',
+      user: settings.POPULATOR.USER || 'root',
+      database: settings.POPULATOR.DATABASE || '',
+      password: settings.POPULATOR.PASSWORD || '',
+      timezone: settings.POPULATOR.TIMEZONE || 'Z',
+    });
     /**
      * 
      * 
