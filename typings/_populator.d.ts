@@ -19,7 +19,6 @@ declare namespace PopulatorN {
    */
   type candlesParams = {
     table: string,
-    symbol: string,
     interval: number,
     start: string,
     finish: string,
@@ -27,7 +26,6 @@ declare namespace PopulatorN {
   };
   type candlesCronParams = {
     table: string,
-    symbol: string,
     interval: number,
   };
   /**

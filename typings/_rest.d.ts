@@ -23,22 +23,17 @@ declare namespace RestN {
     side: 'sell' | 'buy';
     type: 'limit' | 'market';
     price?: number;
-    symbol: string;
     quantity: number;
     direction: 'open' | 'close';
   }
   type createOrdersParams = createOrderParams[];
   type cancelOrderParams = {
     id: string;
-    symbol: string;
   }
   type cancelOrdersParams = cancelOrderParams[];
-  type cancelOrdersAllParams = {
-    symbol: string;
-  }
+  type cancelOrdersAllParams = {}
   type updateOrderParams = {
     id: string;
-    symbol: string;
     price?: number;
     quantity?: number;
     fQuantity?: number;
@@ -46,29 +41,18 @@ declare namespace RestN {
   type updateOrdersParams = updateOrderParams[];
   type getEquityParams = {
     asset: string;
-    symbol: string;
   }
   type getCandlesParams = {
     start: string;
-    symbol: string;
     interval: number;
   }
-  type getPositionParams = {
-    symbol: string;
-  }
-  type getLastPriceParams = {
-    symbol: string;
-  }
+  type getPositionParams = {}
+  type getLastPriceParams = {}
   type getLiquidationParams = {
     asset: string;
-    symbol: string;
   }
-  type getFundingRatesParams = {
-    symbol: string;
-  }
-  type getOrderBookParams = {
-    symbol: string;
-  }
+  type getFundingRatesParams = {}
+  type getOrderBookParams = {}
   type params = cancelOrderParams | cancelOrdersAllParams | updateOrderParams | getEquityParams | createOrderParams | getPositionParams
     | getLastPriceParams | getLiquidationParams | getFundingRatesParams | updateOrdersParams | cancelOrdersParams | createOrdersParams | getOrderBookParams | null;
   /**

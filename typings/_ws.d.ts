@@ -18,9 +18,7 @@ declare namespace WsN {
    * 
    * 
    */
-  type ordersParams = {
-    symbol: string;
-  }
+  type ordersParams = {}
   type dataExecutions = {
     id: string;
     side: 'sell' | 'buy';
@@ -57,9 +55,7 @@ declare namespace WsN {
    * 
    * 
    */
-  type positionParams = {
-    symbol: string;
-  }
+  type positionParams = {}
   type dataPosition = {
     pxS: number;
     pxB: number;
@@ -84,7 +80,6 @@ declare namespace WsN {
    */
   type liquidationParams = {
     asset: string;
-    symbol: string;
   }
   type dataLiquidation = dataPosition & {
     markPx: number;
@@ -106,9 +101,7 @@ declare namespace WsN {
    * 
    * 
    */
-  type orderBookParams = {
-    symbol: string;
-  };
+  type orderBookParams = {}
   /**
    * 
    * 
