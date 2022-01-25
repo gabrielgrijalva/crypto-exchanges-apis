@@ -4,18 +4,6 @@ const round = require('../_utils/round');
  * 
  * 
  * =================================
- * HELPER FUNCTIONS
- * =================================
- * 
- * 
- * 
- */
-
-/**
- * 
- * 
- * 
- * =================================
  * UTILS DEFINITION
  * =================================
  * 
@@ -23,18 +11,18 @@ const round = require('../_utils/round');
  * 
  */
 /**
- * @param {import('../../typings/_utils').utilsOptions} utilsOptions 
+ * @param {import('../../typings/settings')} settings
  */
-function Utils(utilsOptions) {
-  const instrumentType = utilsOptions.instrumentType;
-  const balanceType = utilsOptions.balanceType;
-  const quantityType = utilsOptions.quantityType;
-  const priceStep = utilsOptions.priceStep;
-  const quantityValue = utilsOptions.quantityValue;
-  const basePrecision = utilsOptions.basePrecision;
-  const quotePrecision = utilsOptions.quotePrecision;
-  const pricePrecision = utilsOptions.pricePrecision;
-  const quantityPrecision = utilsOptions.quantityPrecision;
+function Utils(settings) {
+  const INSTRUMENT_TYPE = settings.INSTRUMENT.TYPE;
+  const BALANCE_TYPE = settings.INSTRUMENT.BALANCE_TYPE;
+  const QUANTITY_TYPE = settings.INSTRUMENT.QUANTITY_TYPE;
+  const PRICE_STEP = settings.INSTRUMENT.PRICE_STEP;
+  const QUANTITY_VALUE = settings.INSTRUMENT.QUANTITY_VALUE;
+  const BASE_PRECISION = settings.INSTRUMENT.BASE_PRECISION;
+  const QUOTE_PRECISION = settings.INSTRUMENT.QUOTE_PRECISION;
+  const PRICE_PRECISION = settings.INSTRUMENT.PRICE_PRECISION;
+  const QUANTITY_PRECISION = settings.INSTRUMENT.QUANTITY_PRECISION;
   /**
    * 
    * 
@@ -61,14 +49,14 @@ function Utils(utilsOptions) {
      * 
      */
     getOpenOrderQtyFromBalance: (() => {
-      if (balanceType === 'base' && quantityType === 'base') {
-        return (px, qty, rnd) => round[rnd](qty / quantityValue, quantityPrecision);
+      if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
+        return (px, qty, rnd) => round[rnd](qty / QUANTITY_VALUE, QUANTITY_PRECISION);
       }
-      if (balanceType === 'base' && quantityType === 'quote') {
-        return (px, qty, rnd) => round[rnd](qty / (quantityValue / px), quantityPrecision);
+      if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'quote') {
+        return (px, qty, rnd) => round[rnd](qty / (QUANTITY_VALUE / px), QUANTITY_PRECISION);
       }
-      if (balanceType === 'quote' && quantityType === 'base') {
-        return (px, qty, rnd) => round[rnd]((qty / px) / quantityValue, quantityPrecision);
+      if (BALANCE_TYPE === 'quote' && QUANTITY_TYPE === 'base') {
+        return (px, qty, rnd) => round[rnd]((qty / px) / QUANTITY_VALUE, QUANTITY_PRECISION);
       }
       throw new Error('Could not find function of getOpenOrderQtyFromBalance');
     })(),
@@ -80,16 +68,16 @@ function Utils(utilsOptions) {
      * 
      */
     getCloseOrderQtyFromOpenPosition: (() => {
-      if (instrumentType === 'spot') {
-        if (balanceType === 'base' && quantityType === 'base') {
-          return (px, qty, rnd) => round[rnd]((qty / px) / quantityValue, quantityPrecision);
+      if (INSTRUMENT_TYPE === 'spot') {
+        if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
+          return (px, qty, rnd) => round[rnd]((qty / px) / QUANTITY_VALUE, QUANTITY_PRECISION);
         }
-        if (balanceType === 'quote' && quantityType === 'base') {
-          return (px, qty, rnd) => round[rnd](qty, quantityPrecision);
+        if (BALANCE_TYPE === 'quote' && QUANTITY_TYPE === 'base') {
+          return (px, qty, rnd) => round[rnd](qty, QUANTITY_PRECISION);
         }
       }
-      if (instrumentType === 'future') {
-        return (px, qty, rnd) => round[rnd](qty, quantityPrecision);
+      if (INSTRUMENT_TYPE === 'future') {
+        return (px, qty, rnd) => round[rnd](qty, QUANTITY_PRECISION);
       }
       throw new Error('Could not find function of getCloseOrderQtyFromOpenPosition');
     })(),
@@ -101,16 +89,16 @@ function Utils(utilsOptions) {
      * 
      */
     getOpenPositionQtyFromOpenExecution: (() => {
-      if (instrumentType === 'spot') {
-        if (balanceType === 'base' && quantityType === 'base') {
-          return (px, qty, rnd) => round[rnd]((qty * quantityValue) * px, quotePrecision);
+      if (INSTRUMENT_TYPE === 'spot') {
+        if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
+          return (px, qty, rnd) => round[rnd]((qty * QUANTITY_VALUE) * px, QUOTE_PRECISION);
         }
-        if (balanceType === 'quote' && quantityType === 'base') {
-          return (px, qty, rnd) => round[rnd](qty, quantityPrecision);
+        if (BALANCE_TYPE === 'quote' && QUANTITY_TYPE === 'base') {
+          return (px, qty, rnd) => round[rnd](qty, QUANTITY_PRECISION);
         }
       }
-      if (instrumentType === 'future') {
-        return (px, qty, rnd) => round[rnd](qty, quantityPrecision);
+      if (INSTRUMENT_TYPE === 'future') {
+        return (px, qty, rnd) => round[rnd](qty, QUANTITY_PRECISION);
       }
       throw new Error('Could not find function of getOpenPositionQtyFromOpenExecution');
     })(),
@@ -122,52 +110,52 @@ function Utils(utilsOptions) {
      * 
      */
     getPnl: (() => {
-      if (instrumentType === 'spot') {
-        if (balanceType === 'base' && quantityType === 'base') {
+      if (INSTRUMENT_TYPE === 'spot') {
+        if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
             const entFeeBal = (qty / entPx) * entFee;
             const extFeeBal = (qty / extPx) * extFee;
             const pnl = qty / extPx - qty / entPx;
-            return round.normal(pnl - entFeeBal - extFeeBal, basePrecision);
+            return round.normal(pnl - entFeeBal - extFeeBal, BASE_PRECISION);
           }
         }
-        if (balanceType === 'quote' && quantityType === 'base') {
+        if (BALANCE_TYPE === 'quote' && QUANTITY_TYPE === 'base') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
-            const entFeeBal = ((qty * quantityValue) * entPx) * entFee;
-            const extFeeBal = ((qty * quantityValue) * extPx) * extFee;
-            const pnl = (extPx - entPx) * (qty * quantityValue);
-            return round.normal(pnl - entFeeBal - extFeeBal, quotePrecision);
+            const entFeeBal = ((qty * QUANTITY_VALUE) * entPx) * entFee;
+            const extFeeBal = ((qty * QUANTITY_VALUE) * extPx) * extFee;
+            const pnl = (extPx - entPx) * (qty * QUANTITY_VALUE);
+            return round.normal(pnl - entFeeBal - extFeeBal, QUOTE_PRECISION);
           }
         }
       }
-      if (instrumentType === 'future') {
-        if (balanceType === 'base' && quantityType === 'base') {
+      if (INSTRUMENT_TYPE === 'future') {
+        if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
-            const entFeeBal = (qty * quantityValue) * entFee;
-            const extFeeBal = (qty * quantityValue) * extFee;
+            const entFeeBal = (qty * QUANTITY_VALUE) * entFee;
+            const extFeeBal = (qty * QUANTITY_VALUE) * extFee;
             const pxDiff = side === 'sell' ? (entPx - extPx) : (extPx - entPx);
-            const pnl = (pxDiff * (qty * quantityValue)) / extPx;
-            return round.normal(pnl - entFeeBal - extFeeBal, basePrecision);
+            const pnl = (pxDiff * (qty * QUANTITY_VALUE)) / extPx;
+            return round.normal(pnl - entFeeBal - extFeeBal, BASE_PRECISION);
           }
         }
-        if (balanceType === 'base' && quantityType === 'quote') {
+        if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'quote') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
-            const entFeeBal = ((qty * quantityValue) / entPx) * entFee;
-            const extFeeBal = ((qty * quantityValue) / extPx) * extFee;
+            const entFeeBal = ((qty * QUANTITY_VALUE) / entPx) * entFee;
+            const extFeeBal = ((qty * QUANTITY_VALUE) / extPx) * extFee;
             const pxDiff = side === 'sell'
-              ? ((qty * quantityValue) / extPx - (qty * quantityValue) / entPx)
-              : ((qty * quantityValue) / entPx - (qty * quantityValue) / extPx);
+              ? ((qty * QUANTITY_VALUE) / extPx - (qty * QUANTITY_VALUE) / entPx)
+              : ((qty * QUANTITY_VALUE) / entPx - (qty * QUANTITY_VALUE) / extPx);
             const pnl = pxDiff * qty;
-            return round.normal(pnl - entFeeBal - extFeeBal, basePrecision);
+            return round.normal(pnl - entFeeBal - extFeeBal, BASE_PRECISION);
           }
         }
-        if (balanceType === 'quote' && quantityType === 'base') {
+        if (BALANCE_TYPE === 'quote' && QUANTITY_TYPE === 'base') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
-            const entFeeBal = ((qty * quantityValue) * entPx) * entFee;
-            const extFeeBal = ((qty * quantityValue) * extPx) * extFee;
+            const entFeeBal = ((qty * QUANTITY_VALUE) * entPx) * entFee;
+            const extFeeBal = ((qty * QUANTITY_VALUE) * extPx) * extFee;
             const pxDiff = side === 'sell' ? (entPx - extPx) : (extPx - entPx);
-            const pnl = pxDiff * (qty * quantityValue);
-            return round.normal(pnl - entFeeBal - extFeeBal, quotePrecision);
+            const pnl = pxDiff * (qty * QUANTITY_VALUE);
+            return round.normal(pnl - entFeeBal - extFeeBal, QUOTE_PRECISION);
           }
         }
       }
@@ -181,7 +169,7 @@ function Utils(utilsOptions) {
      * 
      */
     getOBBestAsk: (() => {
-      return (ob) => round.normal(ob.asks[0].price - priceStep, pricePrecision);
+      return (ob) => round.normal(ob.asks[0].price - PRICE_STEP, PRICE_PRECISION);
     })(),
     /**
      * 
@@ -191,7 +179,7 @@ function Utils(utilsOptions) {
      * 
      */
     getOBBestBid: (() => {
-      return (ob) => round.normal(ob.bids[0].price + priceStep, pricePrecision);
+      return (ob) => round.normal(ob.bids[0].price + PRICE_STEP, PRICE_PRECISION);
     })(),
     /**
      * 
@@ -201,7 +189,7 @@ function Utils(utilsOptions) {
      * 
      */
     getOBExecutionPrice: (() => {
-      if (balanceType === 'base' && quantityType === 'base') {
+      if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
         return (ob, obType, bal, skipVol, skipLevels, skipPer) => {
           let qtyNB = 0;
           let qtyNQ = 0;
@@ -211,7 +199,7 @@ function Utils(utilsOptions) {
           const obStartIndex = skipLevels > skipPriceIndex ? skipLevels : skipPriceIndex;
           for (let i = obStartIndex; bal && orders[i]; i += 1) {
             const order = orders[i];
-            let orderNB = order.quantity * quantityValue;
+            let orderNB = order.quantity * QUANTITY_VALUE;
             if (skipVol > orderNB) {
               skipVol = skipVol - orderNB; orderNB = 0;
             } else {
@@ -223,10 +211,10 @@ function Utils(utilsOptions) {
             qtyNQ = qtyNQ + execNQ;
             bal = bal > execNB ? bal - execNB : 0;
           }
-          return round.normal(qtyNQ / qtyNB, pricePrecision);
+          return round.normal(qtyNQ / qtyNB, PRICE_PRECISION);
         };
       }
-      if (balanceType === 'base' && quantityType === 'quote') {
+      if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'quote') {
         return (ob, obType, bal, skipVol, skipLevels, skipPer) => {
           let qtyNB = 0;
           let qtyNQ = 0;
@@ -236,7 +224,7 @@ function Utils(utilsOptions) {
           const obStartIndex = skipLevels > skipPriceIndex ? skipLevels : skipPriceIndex;
           for (let i = obStartIndex; bal && orders[i]; i += 1) {
             const order = orders[i];
-            let orderNB = (quantityValue / order.price) * order.quantity;
+            let orderNB = (QUANTITY_VALUE / order.price) * order.quantity;
             if (skipVol > orderNB) {
               skipVol = skipVol - orderNB; orderNB = 0;
             } else {
@@ -248,10 +236,10 @@ function Utils(utilsOptions) {
             qtyNQ = qtyNQ + execNQ;
             bal = bal > execNB ? bal - execNB : 0;
           }
-          return round.normal(qtyNQ / qtyNB, pricePrecision);
+          return round.normal(qtyNQ / qtyNB, PRICE_PRECISION);
         };
       }
-      if (balanceType === 'quote' && quantityType === 'base') {
+      if (BALANCE_TYPE === 'quote' && QUANTITY_TYPE === 'base') {
         return (ob, obType, bal, skipVol, skipLevels, skipPer) => {
           let qtyNB = 0;
           let qtyNQ = 0;
@@ -261,7 +249,7 @@ function Utils(utilsOptions) {
           const obStartIndex = skipLevels > skipPriceIndex ? skipLevels : skipPriceIndex;
           for (let i = obStartIndex; bal && orders[i]; i += 1) {
             const order = orders[i];
-            let orderNQ = (order.quantity * quantityValue) * order.price;
+            let orderNQ = (order.quantity * QUANTITY_VALUE) * order.price;
             if (skipVol > orderNQ) {
               skipVol = skipVol - orderNQ; orderNQ = 0;
             } else {
@@ -273,7 +261,7 @@ function Utils(utilsOptions) {
             qtyNB = qtyNB + execNB;
             bal = bal > orderNQ ? bal - orderNQ : 0;
           }
-          return round.normal(qtyNQ / qtyNB, pricePrecision);
+          return round.normal(qtyNQ / qtyNB, PRICE_PRECISION);
         };
       }
       throw new Error('Could not find function of getOBExecutionPrice');
@@ -286,32 +274,32 @@ function Utils(utilsOptions) {
      * 
      */
     getBalInvFromPosition: (() => {
-      if (instrumentType === 'spot') {
-        if (balanceType === 'base' && quantityType === 'base') {
+      if (INSTRUMENT_TYPE === 'spot') {
+        if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
           return (px, qty) => {
-            return round.normal(qty / px, basePrecision);
+            return round.normal(qty / px, BASE_PRECISION);
           }
         }
-        if (balanceType === 'quote' && quantityType === 'base') {
+        if (BALANCE_TYPE === 'quote' && QUANTITY_TYPE === 'base') {
           return (px, qty) => {
-            return round.normal((qty * quantityValue) * px, quotePrecision);
+            return round.normal((qty * QUANTITY_VALUE) * px, QUOTE_PRECISION);
           }
         }
       }
-      if (instrumentType === 'future') {
-        if (balanceType === 'base' && quantityType === 'base') {
+      if (INSTRUMENT_TYPE === 'future') {
+        if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
           return (px, qty) => {
-            return round.normal(qty * quantityValue, basePrecision);
+            return round.normal(qty * QUANTITY_VALUE, BASE_PRECISION);
           }
         }
-        if (balanceType === 'base' && quantityType === 'quote') {
+        if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'quote') {
           return (px, qty) => {
-            return round.normal((quantityValue / px) * qty, basePrecision);
+            return round.normal((QUANTITY_VALUE / px) * qty, BASE_PRECISION);
           }
         }
-        if (balanceType === 'quote' && quantityType === 'base') {
+        if (BALANCE_TYPE === 'quote' && QUANTITY_TYPE === 'base') {
           return (px, qty) => {
-            return round.normal(((qty * quantityValue) * px), quotePrecision);
+            return round.normal(((qty * QUANTITY_VALUE) * px), QUOTE_PRECISION);
           }
         }
       }
@@ -325,27 +313,27 @@ function Utils(utilsOptions) {
      * 
      */
     getNBValueFromPosition: (() => {
-      if (instrumentType === 'spot') {
-        if (balanceType === 'base') {
+      if (INSTRUMENT_TYPE === 'spot') {
+        if (BALANCE_TYPE === 'base') {
           return (px, qty) => {
-            return round.normal(qty / px, basePrecision);
+            return round.normal(qty / px, BASE_PRECISION);
           }
         }
-        if (balanceType === 'quote') {
+        if (BALANCE_TYPE === 'quote') {
           return (px, qty) => {
-            return round.normal(qty * quantityValue, basePrecision);
+            return round.normal(qty * QUANTITY_VALUE, BASE_PRECISION);
           }
         }
       }
-      if (instrumentType === 'future') {
-        if (quantityType === 'base') {
+      if (INSTRUMENT_TYPE === 'future') {
+        if (QUANTITY_TYPE === 'base') {
           return (px, qty) => {
-            return round.normal(qty * quantityValue, basePrecision);
+            return round.normal(qty * QUANTITY_VALUE, BASE_PRECISION);
           }
         }
-        if (quantityType === 'quote') {
+        if (QUANTITY_TYPE === 'quote') {
           return (px, qty) => {
-            return round.normal((qty * quantityValue) / px, basePrecision);
+            return round.normal((qty * QUANTITY_VALUE) / px, BASE_PRECISION);
           }
         }
       }
@@ -359,27 +347,27 @@ function Utils(utilsOptions) {
      * 
      */
     getNQValueFromPosition: (() => {
-      if (instrumentType === 'spot') {
-        if (balanceType === 'base') {
+      if (INSTRUMENT_TYPE === 'spot') {
+        if (BALANCE_TYPE === 'base') {
           return (px, qty) => {
-            return round.normal(qty, quotePrecision);
+            return round.normal(qty, QUOTE_PRECISION);
           }
         }
-        if (balanceType === 'quote') {
+        if (BALANCE_TYPE === 'quote') {
           return (px, qty) => {
-            return round.normal((qty * quantityValue) * px, quotePrecision);
+            return round.normal((qty * QUANTITY_VALUE) * px, QUOTE_PRECISION);
           }
         }
       }
-      if (instrumentType === 'future') {
-        if (quantityType === 'base') {
+      if (INSTRUMENT_TYPE === 'future') {
+        if (QUANTITY_TYPE === 'base') {
           return (px, qty) => {
-            return round.normal((qty * quantityValue) * px, quotePrecision);
+            return round.normal((qty * QUANTITY_VALUE) * px, QUOTE_PRECISION);
           }
         }
-        if (quantityType === 'quote') {
+        if (QUANTITY_TYPE === 'quote') {
           return (px, qty) => {
-            return round.normal(qty * quantityValue, quotePrecision);
+            return round.normal(qty * QUANTITY_VALUE, QUOTE_PRECISION);
           }
         }
       }
