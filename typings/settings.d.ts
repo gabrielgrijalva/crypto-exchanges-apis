@@ -37,7 +37,6 @@ type settings = {
     URL?: string,
     REQUESTS_LIMIT: number,
     REQUESTS_REFILL: number,
-    REQUESTS_REFILL_TYPE: 'discrete' | 'continouos',
     REQUESTS_REFILL_INTERVAL: number,
     REQUESTS_TIMESTAMPS: number,
   },

@@ -160,6 +160,10 @@ function getPrivateFunction(settings) {
 function Rest(settings) {
   // Default restOptions values
   settings.REST.URL = settings.REST.URL || 'https://dapi.binance.com';
+  settings.REST.REQUESTS_LIMIT = settings.REST.REQUESTS_LIMIT || 1200;
+  settings.REST.REQUESTS_REFILL = settings.REST.REQUESTS_REFILL || 1200;
+  settings.REST.REQUESTS_REFILL_INTERVAL = settings.REST.REQUESTS_REFILL_INTERVAL || 60000;
+  settings.REST.REQUESTS_TIMESTAMPS = settings.REST.REQUESTS_TIMESTAMPS || 10;
   // Request creation
   const key = getKeyFunction(settings);
   const public = getPublicFunction(settings);

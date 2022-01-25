@@ -133,6 +133,10 @@ function getPrivateFunction(settings) {
 function Rest(settings) {
   // Default restOptions values
   settings.REST.URL = settings.REST.URL || 'https://www.deribit.com';
+  settings.REST.REQUESTS_LIMIT = settings.REST.REQUESTS_LIMIT || 5;
+  settings.REST.REQUESTS_REFILL = settings.REST.REQUESTS_REFILL || 5;
+  settings.REST.REQUESTS_REFILL_INTERVAL = settings.REST.REQUESTS_REFILL_INTERVAL || 1000;
+  settings.REST.REQUESTS_TIMESTAMPS = settings.REST.REQUESTS_TIMESTAMPS || 10;
   // Request creation
   const public = getPublicFunction(settings);
   const private = getPrivateFunction(settings);
