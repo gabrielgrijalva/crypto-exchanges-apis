@@ -14,27 +14,6 @@ declare namespace UtilsN {
    * 
    * 
    * 
-   * UTILS OPTIONS
-   * 
-   * 
-   * 
-   */
-  type utilsOptions = {
-    symbol?: string;
-    instrumentType: 'spot' | 'future';
-    balanceType: 'base' | 'quote';
-    quantityType: 'base' | 'quote';
-    priceStep: number;
-    quantityValue: number;
-    basePrecision: number;
-    quotePrecision: number;
-    pricePrecision: number;
-    quantityPrecision: number;
-  }
-  /**
-   * 
-   * 
-   * 
    * UTILS INTERFACE
    * 
    * 

@@ -7,23 +7,8 @@
  * 
  * 
  */
- declare namespace WsN {
+declare namespace WsN {
   import * as Events from 'events';
-  /**
-   * 
-   * 
-   * 
-   * WS OPTIONS
-   * 
-   * 
-   * 
-   */
-  type wsOptions = {
-    url?: string;
-    apiKey?: string;
-    apiSecret?: string;
-    apiPassphrase?: string;
-  }
   /**
    * 
    * 

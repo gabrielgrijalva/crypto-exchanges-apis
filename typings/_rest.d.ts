@@ -12,26 +12,6 @@ declare namespace RestN {
    * 
    * 
    * 
-   * REST OPTIONS
-   * 
-   * 
-   * 
-   */
-  type restOptions = {
-    url?: string;
-    apiKey?: string;
-    apiSecret?: string;
-    apiPassphrase?: string;
-    requestsLimit?: number;
-    requestsTimestamps?: number;
-    requestsRefill?: number;
-    requestsRefillType?: '' | 'discrete' | 'continouos';
-    requestsRefillInterval?: number;
-  }
-  /**
-   * 
-   * 
-   * 
    * REST PARAMS
    * 
    * 

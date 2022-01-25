@@ -12,23 +12,6 @@ declare namespace PopulatorN {
    * 
    * 
    * 
-   * POPULATOR OPTIONS
-   * 
-   * 
-   * 
-   */
-  type populatorOptions = {
-    port?: number,
-    host?: string,
-    user?: string,
-    database?: string,
-    password?: string,
-    timezone?: string,
-  }
-  /**
-   * 
-   * 
-   * 
    * POPULATOR PARAMS
    * 
    * 
