@@ -79,44 +79,56 @@ function getCandleResolution(interval) {
  * 
  * 
  */
-/** 
- * @this {import('../../../typings/_rest').Request} 
- * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
+/**
+ * @param {import('../../../typings/settings')} settings 
  */
-async function public(method, path, data) {
-  const dataStringified = qs.stringify(data);
-  const requestSendParams = {
-    url: `${path}?${dataStringified}`,
-    method: method,
+function getPublicFunction(settings) {
+  /** 
+   * @this {import('../../../typings/_rest').Request} 
+   * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
+   */
+  async function public(method, path, data) {
+    const dataStringified = qs.stringify(data);
+    const requestSendParams = {
+      url: `${path}?${dataStringified}`,
+      method: method,
+    };
+    console.log(requestSendParams);
+    const response = await this.send(requestSendParams);
+    console.log(response);
+    return response;
   };
-  console.log(requestSendParams);
-  const response = await this.send(requestSendParams);
-  console.log(response);
-  return response;
+  return public;
 };
-/** 
- * @this {import('../../../typings/_rest').Request} 
- * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
+/**
+ * @param {import('../../../typings/settings')} settings 
  */
-async function private(method, path, data) {
-  const seconds = Math.floor(Date.now() / 1000).toString();
-  const microseconds = Math.floor(process.hrtime()[1] / 1000).toString();
-  const micLeadingZeros = '0'.repeat(6 - microseconds.length);
-  const nonce = `${seconds}${micLeadingZeros}${microseconds}`;
-  const dataStringified = typeof data === 'string' ? data : qs.stringify(data);
-  const digest = dataStringified + nonce + path;
-  const hash = crypto.createHash('sha256').update(utf8.encode(digest)).digest();
-  const decoded = Buffer.from(this.restOptions.apiSecret, 'base64');
-  const authent = crypto.createHmac('sha512', decoded).update(hash).digest('base64');
-  const requestSendParams = {
-    url: `${this.restOptions.url}${path}?${encodeURI(dataStringified)}`,
-    method: method,
-    headers: { 'Accept': 'application/json', 'APIKey': this.restOptions.apiKey, 'Nonce': nonce, 'Authent': authent },
+function getPrivateFunction(settings) {
+  /** 
+   * @this {import('../../../typings/_rest').Request} 
+   * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
+   */
+  async function private(method, path, data) {
+    const seconds = Math.floor(Date.now() / 1000).toString();
+    const microseconds = Math.floor(process.hrtime()[1] / 1000).toString();
+    const micLeadingZeros = '0'.repeat(6 - microseconds.length);
+    const nonce = `${seconds}${micLeadingZeros}${microseconds}`;
+    const dataStringified = typeof data === 'string' ? data : qs.stringify(data);
+    const digest = dataStringified + nonce + path;
+    const hash = crypto.createHash('sha256').update(utf8.encode(digest)).digest();
+    const decoded = Buffer.from(settings.API_SECRET, 'base64');
+    const authent = crypto.createHmac('sha512', decoded).update(hash).digest('base64');
+    const requestSendParams = {
+      url: `${settings.REST.URL}${path}?${encodeURI(dataStringified)}`,
+      method: method,
+      headers: { 'Accept': 'application/json', 'APIKey': settings.API_KEY, 'Nonce': nonce, 'Authent': authent },
+    };
+    console.log(requestSendParams);
+    const response = await this.send(requestSendParams);
+    console.log(response);
+    return response;
   };
-  console.log(requestSendParams);
-  const response = await this.send(requestSendParams);
-  console.log(response);
-  return response;
+  return private;
 };
 /**
  * 
@@ -130,22 +142,15 @@ async function private(method, path, data) {
  * 
  */
 /** 
- * @param {import('../../../typings/_rest').restOptions} [restOptions] 
+ * @param {import('../../../typings/settings')} settings
  */
-function Rest(restOptions) {
+function Rest(settings) {
   // Default restOptions values
-  restOptions = restOptions || {};
-  restOptions.url = restOptions.url || 'https://api.futures.kraken.com/derivatives';
-  restOptions.apiKey = restOptions.apiKey || '';
-  restOptions.apiSecret = restOptions.apiSecret || '';
-  restOptions.apiPassphrase = restOptions.apiPassphrase || '';
-  restOptions.requestsLimit = restOptions.requestsLimit || 180;
-  restOptions.requestsTimestamps = restOptions.requestsTimestamps || 10;
-  restOptions.requestsRefill = restOptions.requestsRefill || 0;
-  restOptions.requestsRefillType = restOptions.requestsRefillType || '';
-  restOptions.requestsRefillInterval = restOptions.requestsRefillInterval || 0;
+  settings.REST.URL = settings.REST.URL || 'https://api.futures.kraken.com/derivatives';
   // Request creation
-  const request = Request({ restOptions, public, private });
+  const public = getPublicFunction(settings);
+  const private = getPrivateFunction(settings);
+  const request = Request({ settings, public, private });
   /** 
    * 
    * 
@@ -173,7 +178,7 @@ function Rest(restOptions) {
       const data = {};
       data.side = params.side;
       data.size = params.quantity;
-      data.symbol = params.symbol;
+      data.symbol = settings.SYMBOL;
       data.cliOrdId = params.id;
       if (params.type === 'market') {
         data.orderType = 'mkt';
@@ -206,7 +211,7 @@ function Rest(restOptions) {
         orderData.order_tag = 'ardaga';
         orderData.side = v.side;
         orderData.size = v.quantity;
-        orderData.symbol = v.symbol;
+        orderData.symbol = settings.SYMBOL;
         orderData.cliOrdId = v.id;
         if (v.type === 'market') {
           orderData.orderType = 'mkt';
@@ -289,7 +294,7 @@ function Rest(restOptions) {
      */
     cancelOrdersAll: async (params) => {
       const data = {};
-      data.symbol = params.symbol;
+      data.symbol = settings.SYMBOL;
       const response = await request.private('POST', '/api/v3/cancelallorders', data);
       if (response.status >= 400
         || response.data.error
@@ -385,7 +390,7 @@ function Rest(restOptions) {
     getCandles: async (params) => {
       const timestamp = moment.utc().startOf('minute').unix();
       const data = {};
-      const symbol = params.symbol;
+      const symbol = settings.SYMBOL;
       const interval = getCandleResolution(params.interval);
       data.from = moment.utc(params.start).unix();
       data.to = moment.utc(params.start).add(5000 * params.interval, 'milliseconds').unix();
@@ -420,7 +425,7 @@ function Rest(restOptions) {
         return handleResponseError(params, response.data);
       }
       const positionResult = Array.isArray(response.data.openPositions)
-        ? response.data.openPositions.find(v => v.symbol === params.symbol.toLowerCase()) : null;
+        ? response.data.openPositions.find(v => v.symbol === settings.SYMBOL.toLowerCase()) : null;
       const qtyS = positionResult && positionResult.side === 'short' ? +positionResult.size : 0;
       const qtyB = positionResult && positionResult.side === 'long' ? +positionResult.size : 0;
       const pxS = positionResult && positionResult.side === 'short' ? +positionResult.price : 0;
@@ -437,7 +442,7 @@ function Rest(restOptions) {
      */
     getLastPrice: async (params) => {
       const data = {};
-      const response = await request.public('GET', `${restOptions.url}/api/v3/tickers`, data);
+      const response = await request.public('GET', `${settings.REST.URL}/api/v3/tickers`, data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -454,7 +459,7 @@ function Rest(restOptions) {
     getLiquidation: async (params) => {
       // Get tickers 
       const tickersData = {};
-      const tickersResponse = await request.public('GET', `${restOptions.url}/api/v3/tickers`, tickersData);
+      const tickersResponse = await request.public('GET', `${settings.REST.URL}/api/v3/tickers`, tickersData);
       if (tickersResponse.status >= 400) {
         return handleResponseError(params, tickersResponse.data);
       }
@@ -471,10 +476,10 @@ function Rest(restOptions) {
         return handleResponseError(params, positionsResponse.data);
       }
       // Calculate liquidation
-      const ticker = tickersResponse.data.tickers.find(v => v.symbol === params.symbol.toLowerCase());
+      const ticker = tickersResponse.data.tickers.find(v => v.symbol === settings.SYMBOL.toLowerCase());
       const account = accountsResponse.data.accounts[params.asset];
       const position = Array.isArray(positionsResponse.data.openPositions) ? positionsResponse
-        .data.openPositions.find(v => v.symbol === params.symbol.toLowerCase()) : null;
+        .data.openPositions.find(v => v.symbol === settings.SYMBOL.toLowerCase()) : null;
       const markPx = +ticker.markPrice;
       const liqPxS = position && position.side === 'short' && +position.size ? +account.triggerEstimates.lt : 0;
       const liqPxB = position && position.side === 'long' && +position.size ? +account.triggerEstimates.lt : 0;
@@ -490,11 +495,11 @@ function Rest(restOptions) {
      */
     getFundingRates: async (params) => {
       const data = {};
-      const response = await request.public('GET', `${restOptions.url}/api/v3/tickers`, data);
+      const response = await request.public('GET', `${settings.REST.URL}/api/v3/tickers`, data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      const ticker = response.data.tickers.find(v => v.symbol === params.symbol.toLowerCase());
+      const ticker = response.data.tickers.find(v => v.symbol === settings.SYMBOL.toLowerCase());
       const current = +ticker.fundingRate / (1 / +ticker.last);
       const estimated = +ticker.fundingRatePrediction / (1 / +ticker.last);
       const fundings = { current, estimated };
