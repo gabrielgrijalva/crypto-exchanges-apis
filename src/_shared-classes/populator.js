@@ -48,14 +48,22 @@ function Populator(rest) {
    * @param {import('../../typings/settings')} settings
    */
   function PopulatorFunc(settings) {
+    // Default populator settings values
+    settings.POPULATOR = settings.POPULATOR || {};
+    settings.POPULATOR.PORT = settings.POPULATOR.PORT || 3306;
+    settings.POPULATOR.HOST = settings.POPULATOR.HOST || 'localhost';
+    settings.POPULATOR.USER = settings.POPULATOR.USER || 'root';
+    settings.POPULATOR.DATABASE = settings.POPULATOR.DATABASE || '';
+    settings.POPULATOR.PASSWORD = settings.POPULATOR.PASSWORD || '';
+    settings.POPULATOR.TIMEZONE = settings.POPULATOR.TIMEZONE || '';
     // Create database connection
     const connection = mysql.createConnection({
-      port: settings.POPULATOR.PORT || 3306,
-      host: settings.POPULATOR.HOST || 'localhost',
-      user: settings.POPULATOR.USER || 'root',
-      database: settings.POPULATOR.DATABASE || '',
-      password: settings.POPULATOR.PASSWORD || '',
-      timezone: settings.POPULATOR.TIMEZONE || 'Z',
+      port: settings.POPULATOR.PORT,
+      host: settings.POPULATOR.HOST,
+      user: settings.POPULATOR.USER,
+      database: settings.POPULATOR.DATABASE,
+      password: settings.POPULATOR.PASSWORD,
+      timezone: settings.POPULATOR.TIMEZONE,
     });
     /**
      * 
@@ -67,14 +75,12 @@ function Populator(rest) {
     const populator = {
       candles: async (params) => {
         const table = params.table;
-        const symbol = params.symbol;
         const interval = params.interval;
         let start = moment.utc(params.start);
         const finish = moment.utc(params.finish);
         while (start.unix() < finish.unix()) {
           const candles = (await rest.getCandles({
             start: start.format('YYYY-MM-DD HH:mm:ss'),
-            symbol: symbol,
             interval: interval,
           })).data;
           if (candles.length) {
@@ -94,7 +100,6 @@ function Populator(rest) {
       },
       candlesCron: (params) => {
         const table = params.table;
-        const symbol = params.symbol;
         const interval = params.interval;
         new CronJob('00 * * * * *', async () => {
           const timestamp = moment.utc().startOf('second').subtract(interval, 'milliseconds');
@@ -104,7 +109,6 @@ function Populator(rest) {
             const start = timestamp.clone().subtract(interval * 5, 'milliseconds').format('YYYY-MM-DD HH:mm:ss');
             candle = (await rest.getCandles({
               start: start,
-              symbol: symbol,
               interval: interval,
             })).data.find(v => v.timestamp === timestamp.format('YYYY-MM-DD HH:mm:ss'));
             if (candle) {
