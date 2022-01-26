@@ -146,10 +146,11 @@ function getPrivateFunction(settings) {
  * 
  */
 /** 
- * @param {import('../../../typings/settings')} settings
+ * @param {import('../../../typings/settings')} [settings]
  */
 function Rest(settings) {
   // Default restOptions values
+  settings.REST = settings.REST || {};
   settings.REST.URL = settings.REST.URL || 'https://aws.okex.com';
   settings.REST.REQUESTS_LIMIT = settings.REST.REQUESTS_LIMIT || 60;
   settings.REST.REQUESTS_REFILL = settings.REST.REQUESTS_REFILL || 60;

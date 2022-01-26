@@ -14,35 +14,35 @@ type settings = {
   API_KEY?: string,
   API_SECRET?: string,
   API_PASSPHRASE?: string,
-  INSTRUMENT: null | {
-    TYPE: 'spot' | 'future',
-    BALANCE_TYPE: 'base' | 'quote',
-    QUANTITY_TYPE: 'base' | 'quote',
-    PRICE_STEP: number,
-    QUANTITY_VALUE: number,
-    BASE_PRECISION: number,
-    QUOTE_PRECISION: number,
-    PRICE_PRECISION: number,
-    QUANTITY_PRECISION: number,
+  INSTRUMENT?: {
+    TYPE?: 'spot' | 'future',
+    BALANCE_TYPE?: 'base' | 'quote',
+    QUANTITY_TYPE?: 'base' | 'quote',
+    PRICE_STEP?: number,
+    QUANTITY_VALUE?: number,
+    BASE_PRECISION?: number,
+    QUOTE_PRECISION?: number,
+    PRICE_PRECISION?: number,
+    QUANTITY_PRECISION?: number,
   },
-  POPULATOR: null | {
-    PORT: number,
-    HOST: string,
-    USER: string,
-    DATABASE: string,
-    PASSWORD: string,
-    TIMEZONE: string,
+  POPULATOR?: {
+    PORT?: number,
+    HOST?: string,
+    USER?: string,
+    DATABASE?: string,
+    PASSWORD?: string,
+    TIMEZONE?: string,
   },
-  REST: null | {
+  REST?: {
     URL?: string,
-    REQUESTS_LIMIT: number,
-    REQUESTS_REFILL: number,
-    REQUESTS_REFILL_INTERVAL: number,
-    REQUESTS_TIMESTAMPS: number,
+    REQUESTS_LIMIT?: number,
+    REQUESTS_REFILL?: number,
+    REQUESTS_REFILL_INTERVAL?: number,
+    REQUESTS_TIMESTAMPS?: number,
   },
-  UTILS: null | {
+  UTILS?: {
   },
-  WS: null | {
+  WS?: {
     URL?: string,
   },
 }

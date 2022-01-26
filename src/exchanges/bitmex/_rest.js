@@ -119,10 +119,11 @@ function getPrivateFunction(settings) {
  * 
  */
 /** 
- * @param {import('../../../typings/settings')} settings
+ * @param {import('../../../typings/settings')} [settings]
  */
 function Rest(settings) {
   // Default restOptions values
+  settings.REST = settings.REST || {};
   settings.REST.URL = settings.REST.URL || 'https://www.bitmex.com';
   settings.REST.REQUESTS_LIMIT = settings.REST.REQUESTS_LIMIT || 120;
   settings.REST.REQUESTS_REFILL = settings.REST.REQUESTS_REFILL || 2;
