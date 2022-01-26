@@ -1,4 +1,16 @@
-exports.Populator = require('./_populator');
-exports.Rest = require('./_rest');
-exports.Utils = require('./_utils');
-exports.Ws = require('./_ws');
+const Populator = require('./_populator');
+const Rest = require('./_rest');
+const Utils = require('./_utils');
+const Ws = require('./_ws');
+/**
+ * @type {import('../../../typings')}
+ */
+function CryptoExchangeApi(settings) {
+  return {
+    populator: Populator(settings),
+    rest: Rest(settings),
+    utils: Utils(settings),
+    ws: Ws(settings),
+  }
+};
+module.exports = CryptoExchangeApi;
