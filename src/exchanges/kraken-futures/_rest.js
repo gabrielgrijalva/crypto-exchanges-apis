@@ -145,7 +145,7 @@ function getPrivateFunction(settings) {
  * @param {import('../../../typings/settings')} [settings]
  */
 function Rest(settings) {
-  // Default restOptions values
+  // Default rest settings values
   settings.REST = settings.REST || {};
   settings.REST.URL = settings.REST.URL || 'https://api.futures.kraken.com/derivatives';
   settings.REST.REQUESTS_LIMIT = settings.REST.REQUESTS_LIMIT || 50;

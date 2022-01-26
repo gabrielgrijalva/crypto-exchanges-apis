@@ -158,7 +158,7 @@ function getPrivateFunction(settings) {
  * @param {import('../../../typings/settings')} [settings]
  */
 function Rest(settings) {
-  // Default restOptions values
+  // Default rest settings values
   settings.REST = settings.REST || {};
   settings.REST.URL = settings.REST.URL || 'https://dapi.binance.com';
   settings.REST.REQUESTS_LIMIT = settings.REST.REQUESTS_LIMIT || 1200;
