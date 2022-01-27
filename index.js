@@ -16,11 +16,15 @@ const exchanges = [
 function CryptoExchangesApi(settings) {
   const exchange = exchanges.find(v => v === settings.EXCHANGE);
   if (!exchange) throw new Error('Exchange not found.');
+  const Populator = require(`./src/exchanges/${exchange}/_populator`);
+  const Rest = require(`./src/exchanges/${exchange}/_rest`);
+  const Utils = require(`./src/exchanges/${exchange}/_utils`);
+  const Ws = require(`./src/exchanges/${exchange}/_ws`);
   return {
-    populator: settings.POPULATOR ? require(`./src/exchanges/${exchange}/_populator`) : null,
-    rest: settings.REST ? require(`./src/exchanges/${exchange}/_rest`) : null,
-    utils: settings.UTILS ? require(`./src/exchanges/${exchange}/_utils`) : null,
-    ws: settings.WS ? require(`./src/exhcange/${exchange}/_ws`) : null,
+    populator: settings.POPULATOR ? Populator(settings) : null,
+    rest: settings.REST ? Rest(settings) : null,
+    utils: settings.UTILS ? Utils(settings) : null,
+    ws: settings.WS ? Ws(settings) : null,
   }
 };
 module.exports = CryptoExchangesApi;
