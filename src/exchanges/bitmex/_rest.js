@@ -100,9 +100,7 @@ function getPrivateFunction(settings) {
       method: method,
       headers: headers,
     };
-    console.log(requestSendParams);
     const response = await this.send(requestSendParams);
-    console.log(response);
     return response;
   };
   return private;

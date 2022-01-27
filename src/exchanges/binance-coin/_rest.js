@@ -85,9 +85,7 @@ function getPublicFunction(settings) {
       url: `${settings.REST.URL}${path}?${dataStringified}`,
       method: method,
     };
-    console.log(requestSendParams);
     const response = await this.send(requestSendParams);
-    console.log(response);
     return response;
   };
   return public;
@@ -107,9 +105,7 @@ function getKeyFunction(settings) {
       method: method,
       headers: { 'X-MBX-APIKEY': settings.API_KEY },
     };
-    console.log(requestSendParams);
     const response = await this.send(requestSendParams);
-    console.log(response);
     return response;
   };
   return key;
@@ -136,9 +132,7 @@ function getPrivateFunction(settings) {
       method: method,
       headers: { 'X-MBX-APIKEY': settings.API_KEY },
     };
-    console.log(requestSendParams);
     const response = await this.send(requestSendParams);
-    console.log(response);
     return response;
   };
   return private;

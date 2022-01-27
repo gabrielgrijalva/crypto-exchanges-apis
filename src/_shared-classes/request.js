@@ -60,7 +60,7 @@ function Request(requestSettings) {
           });
         });
         req.on('error', (error) => {
-          console.error(`Problem with request: ${error.message}`);
+          console.log(`Problem with request: ${error.message}`);
           throw error;
         });
         req.end(params.data);

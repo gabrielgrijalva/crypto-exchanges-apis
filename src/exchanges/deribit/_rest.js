@@ -82,9 +82,7 @@ function getPublicFunction(settings) {
       url: `${settings.REST.URL}${path}${dataStringified}`,
       method: method,
     };
-    console.log(requestSendParams);
     const response = await this.send(requestSendParams);
-    console.log(response);
     return response;
   };
   return public;
@@ -109,9 +107,7 @@ function getPrivateFunction(settings) {
       method: method,
       headers: { 'Authorization': authHeaderStr },
     };
-    console.log(requestSendParams);
     const response = await this.send(requestSendParams);
-    console.log(response);
     return response;
   };
   return private;

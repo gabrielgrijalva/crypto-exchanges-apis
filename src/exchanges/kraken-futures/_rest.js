@@ -93,9 +93,7 @@ function getPublicFunction(settings) {
       url: `${path}?${dataStringified}`,
       method: method,
     };
-    console.log(requestSendParams);
     const response = await this.send(requestSendParams);
-    console.log(response);
     return response;
   };
   return public;
@@ -123,9 +121,7 @@ function getPrivateFunction(settings) {
       method: method,
       headers: { 'Accept': 'application/json', 'APIKey': settings.API_KEY, 'Nonce': nonce, 'Authent': authent },
     };
-    console.log(requestSendParams);
     const response = await this.send(requestSendParams);
-    console.log(response);
     return response;
   };
   return private;
