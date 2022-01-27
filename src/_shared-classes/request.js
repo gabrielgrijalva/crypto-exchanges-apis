@@ -11,6 +11,8 @@ function createRefillSetInterval(request, settings) {
   const intervalRefillFunction = () => {
     request.remaining += request.remaining < settings.REST.REQUESTS_LIMIT
       ? settings.REST.REQUESTS_REFILL : 0;
+    request.remaining = request.remaining >= settings.REST.REQUESTS_LIMIT
+      ? settings.REST.REQUESTS_LIMIT : request.remaining;
   };
   setTimeout(() => {
     intervalRefillFunction();
