@@ -46,7 +46,6 @@ function saveCandles(connection, candles, table) {
  */
 function Populator(settings) {
   // Default populator settings values
-  settings.POPULATOR = settings.POPULATOR || {};
   settings.POPULATOR.PORT = settings.POPULATOR.PORT || 3306;
   settings.POPULATOR.HOST = settings.POPULATOR.HOST || 'localhost';
   settings.POPULATOR.USER = settings.POPULATOR.USER || 'root';

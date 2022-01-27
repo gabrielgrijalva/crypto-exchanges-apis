@@ -146,7 +146,6 @@ function getPrivateFunction(settings) {
  */
 function Rest(settings) {
   // Default rest settings values
-  settings.REST = settings.REST || {};
   settings.REST.URL = settings.REST.URL || 'https://api.futures.kraken.com/derivatives';
   settings.REST.REQUESTS_LIMIT = settings.REST.REQUESTS_LIMIT || 50;
   settings.REST.REQUESTS_REFILL = settings.REST.REQUESTS_REFILL || 50;

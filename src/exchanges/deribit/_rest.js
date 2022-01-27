@@ -132,7 +132,6 @@ function getPrivateFunction(settings) {
  */
 function Rest(settings) {
   // Default rest settings values
-  settings.REST = settings.REST || {};
   settings.REST.URL = settings.REST.URL || 'https://www.deribit.com';
   settings.REST.REQUESTS_LIMIT = settings.REST.REQUESTS_LIMIT || 5;
   settings.REST.REQUESTS_REFILL = settings.REST.REQUESTS_REFILL || 5;

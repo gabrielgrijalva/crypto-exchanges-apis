@@ -164,7 +164,6 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  */
 function Ws(settings) {
   // Default wsOptions values
-  settings.WS = settings.WS || {};
   settings.WS.URL = settings.WS.URL || 'wss://ws.okex.com:8443/ws/v5';
   settings.API_KEY = settings.API_KEY || '';
   settings.API_SECRET = settings.API_SECRET || '';

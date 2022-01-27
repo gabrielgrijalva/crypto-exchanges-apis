@@ -151,7 +151,6 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  */
 function Ws(settings) {
   // Default wsOptions values
-  settings.WS = settings.WS || {};
   settings.WS.URL = settings.WS.URL || 'wss://www.deribit.com/ws/api/v2';
   // Rest creation
   const rest = Rest(settings);
