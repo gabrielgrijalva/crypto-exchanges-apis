@@ -1,35 +1,26 @@
-const BinanceCoin = require('./src/exchanges/binance-coin');
-const Bitmex = require('./src/exchanges/bitmex');
-const Bybit = require('./src/exchanges/bybit');
-const BybitFutures = require('./src/exchanges/bybit-futures');
-const Deribit = require('./src/exchanges/deribit');
-const KrakenFutures = require('./src/exchanges/kraken-futures');
-const Okex = require('./src/exchanges/okex');
+/**
+ * EXCHANGES
+ */
+const exchanges = [
+  'binance-coin',
+  'bitmex',
+  'bybit',
+  'bybit-futures',
+  'deribit',
+  'kraken-futures',
+  'okex',
+];
 /**
  * @type {import('./typings')}
  */
 function CryptoExchangesApi(settings) {
-  if (settings.EXCHANGE === 'binance-coin') {
-    return BinanceCoin(settings);
+  const exchange = exchanges.find(v => v === settings.EXCHANGE);
+  if (!exchange) throw new Error('Exchange not found.');
+  return {
+    populator: settings.POPULATOR ? require(`./src/exchanges/${exchange}/_populator`) : null,
+    rest: settings.REST ? require(`./src/exchanges/${exchange}/_rest`) : null,
+    utils: settings.UTILS ? require(`./src/exchanges/${exchange}/_utils`) : null,
+    ws: settings.WS ? require(`./src/exhcange/${exchange}/_ws`) : null,
   }
-  if (settings.EXCHANGE === 'bitmex') {
-    return Bitmex(settings);
-  }
-  if (settings.EXCHANGE === 'bybit') {
-    return Bybit(settings);
-  }
-  if (settings.EXCHANGE === 'bybit-futures') {
-    return BybitFutures(settings);
-  }
-  if (settings.EXCHANGE === 'deribit') {
-    return Deribit(settings);
-  }
-  if (settings.EXCHANGE === 'kraken-futures') {
-    return KrakenFutures(settings);
-  }
-  if (settings.EXCHANGE === 'okex') {
-    return Okex(settings);
-  }
-  throw new Error('Exchange not found.');
 };
 module.exports = CryptoExchangesApi;
