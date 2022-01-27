@@ -40,12 +40,12 @@ function createCancelation(data) {
  * 
  * @param {string} stream
  * @param {import('../../../typings/_ws').WebSocket} webSocket 
- * @param {import('../../../typings/_ws').wsOptions} wsOptions 
+ * @param {import('../../../typings/settings')} settings
  */
-function connectWebSocket(stream, webSocket, wsOptions) {
-  console.log(`Connecting websocket: ${wsOptions.url}`);
+function connectWebSocket(stream, webSocket, settings) {
+  console.log(`Connecting websocket: ${settings.WS.URL}`);
   return new Promise((resolve) => {
-    const url = wsOptions.url;
+    const url = settings.WS.URL;
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
     webSocket.connect(`${url}/ws/${stream}`);
     webSocket.addOnOpen(function connectFunction() {
@@ -103,16 +103,14 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  * 
  */
 /**
- * @param {import('../../../typings/_ws').wsOptions} [wsOptions]
+ * @param {import('../../../typings/settings')} [settings]
  */
-function Ws(wsOptions) {
+function Ws(settings) {
   // Default wsOptions values
-  wsOptions = wsOptions || {};
-  wsOptions.url = wsOptions.url || 'wss://dstream.binance.com';
-  wsOptions.apiKey = wsOptions.apiKey || '';
-  wsOptions.apiSecret = wsOptions.apiSecret || '';
+  settings.WS = settings.WS || {};
+  settings.WS.URL = settings.WS.URL || 'wss://dstream.binance.com';
   // Rest creation
-  const rest = Rest({ apiKey: wsOptions.apiKey, apiSecret: wsOptions.apiSecret });
+  const rest = Rest(settings);
   // Websocket creation
   /** 
    * 
@@ -140,11 +138,11 @@ function Ws(wsOptions) {
         const stream = (await rest._getListenKey()).data;
         const webSocket = WebSocket();
         setInterval(() => rest._getListenKey(), 1800000);
-        await connectWebSocket(stream, webSocket, wsOptions);
+        await connectWebSocket(stream, webSocket, settings);
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message);
           console.log(messageParse);
-          if (messageParse.e !== 'ORDER_TRADE_UPDATE' || messageParse.o.s !== ordersParams.symbol) { return };
+          if (messageParse.e !== 'ORDER_TRADE_UPDATE' || messageParse.o.s !== settings.SYMBOL) { return };
           if (messageParse.o.x === 'NEW') {
             ws.orders.events.emit('creations-updates', [createCreationUpdate(messageParse)]);
           }
@@ -157,7 +155,7 @@ function Ws(wsOptions) {
         });
         webSocket.addOnError(() => console.log('Websocket connection error.'));
         webSocket.addOnClose(() => console.log('Websocket connection closed.'));
-        webSocket.addOnClose(() => { connectWebSocket(stream, webSocket, wsOptions) });
+        webSocket.addOnClose(() => { connectWebSocket(stream, webSocket, settings) });
       },
     },
     /**
@@ -178,9 +176,9 @@ function Ws(wsOptions) {
         const stream = (await rest._getListenKey()).data;
         const webSocket = WebSocket();
         setInterval(() => rest._getListenKey(), 1800000);
-        await connectWebSocket(stream, webSocket, wsOptions);
+        await connectWebSocket(stream, webSocket, settings);
         // Load rest info
-        const positionRestParams = { symbol: positionParams.symbol };
+        const positionRestParams = { symbol: settings.SYMBOL };
         const positionRestData = (await rest.getPosition(positionRestParams)).data;
         /** @type {import('../../../typings/_ws').dataPosition} */
         ws.position.info = Object.assign({}, positionRestData);
@@ -188,7 +186,7 @@ function Ws(wsOptions) {
           const messageParse = JSON.parse(message);
           console.log(messageParse);
           if (messageParse.e !== 'ACCOUNT_UPDATE') { return };
-          const positionEvent = messageParse.a.P.find(v => v.s === positionParams.symbol);
+          const positionEvent = messageParse.a.P.find(v => v.s === settings.SYMBOL);
           if (!positionEvent) { return };
           ws.position.info.pxS = +positionEvent.pa < 0 ? +positionEvent.ep : 0;
           ws.position.info.pxB = +positionEvent.pa > 0 ? +positionEvent.ep : 0;
@@ -198,7 +196,7 @@ function Ws(wsOptions) {
         });
         webSocket.addOnError(() => console.log('Websocket connection error.'));
         webSocket.addOnClose(() => console.log('Websocket connection closed.'));
-        webSocket.addOnClose(() => { connectWebSocket(stream, webSocket, wsOptions) });
+        webSocket.addOnClose(() => { connectWebSocket(stream, webSocket, settings) });
       }
     },
     /**
@@ -217,19 +215,19 @@ function Ws(wsOptions) {
         /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
         ws.liquidation.events = new Events.EventEmitter();
         // Mark price websocket
-        const streamMarkPrice = `${liquidationParams.symbol.toLowerCase()}@markPrice@1s`;
+        const streamMarkPrice = `${settings.SYMBOL.toLowerCase()}@markPrice@1s`;
         const webSocketMarkPrice = WebSocket();
         // Position websocket
         const streamPosition = (await rest._getListenKey()).data;
         const webSocketPosition = WebSocket();
         setInterval(() => rest._getListenKey(), 1800000);
         await Promise.all([
-          connectWebSocket(streamMarkPrice, webSocketMarkPrice, wsOptions),
-          connectWebSocket(streamPosition, webSocketPosition, wsOptions),
+          connectWebSocket(streamMarkPrice, webSocketMarkPrice, settings),
+          connectWebSocket(streamPosition, webSocketPosition, settings),
         ]);
         // Load rest info
-        const positionRestParams = { symbol: liquidationParams.symbol };
-        const liquidationRestParams = { symbol: liquidationParams.symbol, asset: liquidationParams.asset };
+        const positionRestParams = { symbol: settings.SYMBOL };
+        const liquidationRestParams = { symbol: settings.SYMBOL, asset: liquidationParams.asset };
         const positionRestData = (await rest.getPosition(positionRestParams)).data;
         const liquidationRestData = (await rest.getLiquidation(liquidationRestParams)).data;
         // Liquidation info
@@ -246,7 +244,7 @@ function Ws(wsOptions) {
           const messageParsed = JSON.parse(message);
           console.log(messageParsed);
           if (messageParsed.e !== 'ACCOUNT_UPDATE') { return };
-          const positionEvent = messageParsed.a.P.find(v => v.s === liquidationParams.symbol);
+          const positionEvent = messageParsed.a.P.find(v => v.s === settings.SYMBOL);
           if (!positionEvent) { return };
           ws.liquidation.info.pxS = +positionEvent.pa < 0 ? +positionEvent.ep : 0;
           ws.liquidation.info.pxB = +positionEvent.pa > 0 ? +positionEvent.ep : 0;
@@ -265,10 +263,10 @@ function Ws(wsOptions) {
         }, 2000);
         webSocketMarkPrice.addOnError(() => console.log('Websocket connection error.'));
         webSocketMarkPrice.addOnClose(() => console.log('Websocket connection closed.'));
-        webSocketMarkPrice.addOnClose(() => connectWebSocket(streamMarkPrice, webSocketMarkPrice, wsOptions));
+        webSocketMarkPrice.addOnClose(() => connectWebSocket(streamMarkPrice, webSocketMarkPrice, settings));
         webSocketPosition.addOnError(() => console.log('Websocket connection error.'));
         webSocketPosition.addOnClose(() => console.log('Websocket connection closed.'));
-        webSocketPosition.addOnClose(() => connectWebSocket(streamPosition, webSocketPosition, wsOptions));
+        webSocketPosition.addOnClose(() => connectWebSocket(streamPosition, webSocketPosition, settings));
       },
     },
     /**
@@ -285,9 +283,9 @@ function Ws(wsOptions) {
       events: null,
       connect: async (orderBookParams) => {
         // Connect websocket
-        const stream = `${orderBookParams.symbol.toLowerCase()}@depth`;
+        const stream = `${settings.SYMBOL.toLowerCase()}@depth`;
         const webSocket = WebSocket();
-        await connectWebSocket(stream, webSocket, wsOptions);
+        await connectWebSocket(stream, webSocket, settings);
         // Order book functionality
         const flags = { synchronized: false, synchronizing: false, snapshot: null };
         ws.orderBook.info = OrderBook();
@@ -296,7 +294,7 @@ function Ws(wsOptions) {
           if (!flags.synchronized) {
             if (!flags.synchronizing) {
               if (!flags.snapshot) {
-                getOrderBookSnapshot(rest, flags, orderBookParams.symbol);
+                getOrderBookSnapshot(rest, flags, settings.SYMBOL);
               } else {
                 const snapshot = flags.snapshot;
                 if (snapshot.lastUpdateId < messageParse.U) {
@@ -331,7 +329,7 @@ function Ws(wsOptions) {
         webSocket.addOnClose(() => console.log('Websocket connection closed.'));
         webSocket.addOnClose(() => {
           desynchronizeOrderBook(flags, ws.orderBook.info);
-          connectWebSocket(stream, webSocket, wsOptions);
+          connectWebSocket(stream, webSocket, settings);
         });
       }
     },

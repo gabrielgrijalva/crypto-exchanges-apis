@@ -82,14 +82,14 @@ function getSignatureParams(apiKey, apiSecret) {
  * @param {string} channel
  * @param {string} method
  * @param {import('../../../typings/_ws').WebSocket} webSocket 
- * @param {import('../../../typings/_ws').wsOptions} wsOptions 
+ * @param {import('../../../typings/settings')} settings
  */
-function connectWebSocket(channel, method, webSocket, wsOptions) {
-  console.log(`Connecting websocket: ${wsOptions.url}`);
+function connectWebSocket(channel, method, webSocket, settings) {
+  console.log(`Connecting websocket: ${settings.WS.URL}`);
   return new Promise((resolve) => {
-    const url = wsOptions.url;
-    const apiKey = wsOptions.apiKey;
-    const apiSecret = wsOptions.apiSecret;
+    const url = settings.WS.URL;
+    const apiKey = settings.API_KEY;
+    const apiSecret = settings.API_SECRET;
     const subscribeParams = getSubscribeParams(channel, method);
     const signatureParams = getSignatureParams(apiKey, apiSecret);
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
@@ -147,16 +147,14 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  * 
  */
 /**
- * @param {import('../../../typings/_ws').wsOptions} [wsOptions]
+ * @param {import('../../../typings/settings')} [settings]
  */
-function Ws(wsOptions) {
+function Ws(settings) {
   // Default wsOptions values
-  wsOptions = wsOptions || {};
-  wsOptions.url = wsOptions.url || 'wss://www.deribit.com/ws/api/v2';
-  wsOptions.apiKey = wsOptions.apiKey || '';
-  wsOptions.apiSecret = wsOptions.apiSecret || '';
+  settings.WS = settings.WS || {};
+  settings.WS.URL = settings.WS.URL || 'wss://www.deribit.com/ws/api/v2';
   // Rest creation
-  const rest = Rest({ apiKey: wsOptions.apiKey, apiSecret: wsOptions.apiSecret });
+  const rest = Rest(settings);
   // Websocket creation
   /** 
    * 
@@ -182,14 +180,14 @@ function Ws(wsOptions) {
         /** @type {import('../../../typings/_ws').ordersEventEmitter} */
         ws.orders.events = new Events.EventEmitter();
         // Open orders websocket
-        const channelOpenOrders = `user.orders.${ordersParams.symbol}.raw`;
+        const channelOpenOrders = `user.orders.${settings.SYMBOL}.raw`;
         const webSocketOpenOrders = WebSocket();
         // Executions websocket
-        const channelExecutions = `user.trades.${ordersParams.symbol}.raw`;
+        const channelExecutions = `user.trades.${settings.SYMBOL}.raw`;
         const webSocketExecutions = WebSocket();
         await Promise.all([
-          connectWebSocket(channelOpenOrders, 'private', webSocketOpenOrders, wsOptions),
-          connectWebSocket(channelExecutions, 'private', webSocketExecutions, wsOptions),
+          connectWebSocket(channelOpenOrders, 'private', webSocketOpenOrders, settings),
+          connectWebSocket(channelExecutions, 'private', webSocketExecutions, settings),
         ]);
         webSocketOpenOrders.addOnMessage((message) => {
           const messageParse = JSON.parse(message);
@@ -220,10 +218,10 @@ function Ws(wsOptions) {
         });
         webSocketOpenOrders.addOnError(() => console.log('Websocket connection error.'));
         webSocketOpenOrders.addOnClose(() => console.log('Websocket connection closed.'));
-        webSocketOpenOrders.addOnClose(() => { connectWebSocket(channelOpenOrders, 'private', webSocketOpenOrders, wsOptions) });
+        webSocketOpenOrders.addOnClose(() => { connectWebSocket(channelOpenOrders, 'private', webSocketOpenOrders, settings) });
         webSocketExecutions.addOnError(() => console.log('Websocket connection error.'));
         webSocketExecutions.addOnClose(() => console.log('Websocket connection closed.'));
-        webSocketExecutions.addOnClose(() => { connectWebSocket(channelExecutions, 'private', webSocketExecutions, wsOptions) });
+        webSocketExecutions.addOnClose(() => { connectWebSocket(channelExecutions, 'private', webSocketExecutions, settings) });
       }
     },
     /**
@@ -241,11 +239,11 @@ function Ws(wsOptions) {
       connect: async (positionParams) => {
         /** @type {import('../../../typings/_ws').positionEventEmitter} */
         ws.position.events = new Events.EventEmitter();
-        const channel = `user.changes.${positionParams.symbol}.raw`;
+        const channel = `user.changes.${settings.SYMBOL}.raw`;
         const webSocket = WebSocket();
-        await connectWebSocket(channel, 'private', webSocket, wsOptions);
+        await connectWebSocket(channel, 'private', webSocket, settings);
         // Load rest info
-        const positionRestParams = { symbol: positionParams.symbol };
+        const positionRestParams = { symbol: settings.SYMBOL };
         const positionRestData = (await rest.getPosition(positionRestParams)).data;
         /** @type {import('../../../typings/_ws').dataPosition} */
         ws.position.info = Object.assign({}, positionRestData);
@@ -263,7 +261,7 @@ function Ws(wsOptions) {
         });
         webSocket.addOnError(() => console.log('Websocket connection error.'));
         webSocket.addOnClose(() => console.log('Websocket connection closed.'));
-        webSocket.addOnClose(() => { connectWebSocket(channel, 'private', webSocket, wsOptions) });
+        webSocket.addOnClose(() => { connectWebSocket(channel, 'private', webSocket, settings) });
       }
     },
     /**
@@ -282,22 +280,22 @@ function Ws(wsOptions) {
         /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
         ws.liquidation.events = new Events.EventEmitter();
         // Instrument websocket
-        const channelInstrument = `ticker.${liquidationParams.symbol}.raw`;
+        const channelInstrument = `ticker.${settings.SYMBOL}.raw`;
         const webSocketInstrument = WebSocket();
         // Position websocket
-        const channelPosition = `user.changes.${liquidationParams.symbol}.raw`;
+        const channelPosition = `user.changes.${settings.SYMBOL}.raw`;
         const webSocketPosition = WebSocket();
         // Portfolio websocket
         const channelPortfolio = `user.portfolio.${liquidationParams.asset}`;
         const webSocketPortfolio = WebSocket();
         await Promise.all([
-          connectWebSocket(channelInstrument, 'public', webSocketInstrument, wsOptions),
-          connectWebSocket(channelPosition, 'private', webSocketPosition, wsOptions),
-          connectWebSocket(channelPortfolio, 'private', webSocketPortfolio, wsOptions),
+          connectWebSocket(channelInstrument, 'public', webSocketInstrument, settings),
+          connectWebSocket(channelPosition, 'private', webSocketPosition, settings),
+          connectWebSocket(channelPortfolio, 'private', webSocketPortfolio, settings),
         ]);
         // Load rest info
-        const positionRestParams = { symbol: liquidationParams.symbol };
-        const liquidationRestParams = { symbol: liquidationParams.symbol, asset: liquidationParams.asset };
+        const positionRestParams = { symbol: settings.SYMBOL };
+        const liquidationRestParams = { symbol: settings.SYMBOL, asset: liquidationParams.asset };
         const positionRestData = (await rest.getPosition(positionRestParams)).data;
         const liquidationRestData = (await rest.getLiquidation(liquidationRestParams)).data;
         // Liquidation info
@@ -335,13 +333,13 @@ function Ws(wsOptions) {
         });
         webSocketInstrument.addOnError(() => console.log('Websocket connection error.'));
         webSocketInstrument.addOnClose(() => console.log('Websocket connection closed.'));
-        webSocketInstrument.addOnClose(() => connectWebSocket(channelInstrument, 'public', webSocketInstrument, wsOptions));
+        webSocketInstrument.addOnClose(() => connectWebSocket(channelInstrument, 'public', webSocketInstrument, settings));
         webSocketPosition.addOnError(() => console.log('Websocket connection error.'));
         webSocketPosition.addOnClose(() => console.log('Websocket connection closed.'));
-        webSocketPosition.addOnClose(() => connectWebSocket(channelPosition, 'private', webSocketPosition, wsOptions));
+        webSocketPosition.addOnClose(() => connectWebSocket(channelPosition, 'private', webSocketPosition, settings));
         webSocketPortfolio.addOnError(() => console.log('Websocket connection error.'));
         webSocketPortfolio.addOnClose(() => console.log('Websocket connection closed.'));
-        webSocketPortfolio.addOnClose(() => connectWebSocket(channelPortfolio, 'private', webSocketPortfolio, wsOptions));
+        webSocketPortfolio.addOnClose(() => connectWebSocket(channelPortfolio, 'private', webSocketPortfolio, settings));
       }
     },
     /**
@@ -358,9 +356,9 @@ function Ws(wsOptions) {
       events: null,
       connect: async (orderBookParams) => {
         // Connect websocket
-        const channel = `book.${orderBookParams.symbol}.100ms`;
+        const channel = `book.${settings.SYMBOL}.100ms`;
         const webSocket = WebSocket();
-        await connectWebSocket(channel, 'public', webSocket, wsOptions);
+        await connectWebSocket(channel, 'public', webSocket, settings);
         // Order book functionality
         let prevChangeId = null;
         ws.orderBook.info = OrderBook();
@@ -392,7 +390,7 @@ function Ws(wsOptions) {
         webSocket.addOnClose(() => console.log('Websocket connection closed.'));
         webSocket.addOnClose(() => {
           desynchronizeOrderBook(ws.orderBook.info);
-          connectWebSocket(channel, 'public', webSocket, wsOptions)
+          connectWebSocket(channel, 'public', webSocket, settings);
         });
       }
     },
