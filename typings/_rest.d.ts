@@ -182,7 +182,7 @@ declare namespace RestN {
      */
     cancelOrder(params: cancelOrderParams): Promise<RestResponse<cancelOrderResponseData>>;
     cancelOrders(params: cancelOrdersParams): Promise<RestResponse<cancelOrderResponseData>[]>;
-    cancelOrdersAll(params: cancelOrdersAllParams): Promise<RestResponse<cancelOrdersAllResponseData>>;
+    cancelOrdersAll(): Promise<RestResponse<cancelOrdersAllResponseData>>;
     /**
      * UPDATE FUNCTIONS
      */
@@ -193,15 +193,15 @@ declare namespace RestN {
      */
     getEquity(params: getEquityParams): Promise<RestResponse<getEquityResponseData>>;
     getCandles(params: getCandlesParams): Promise<RestResponse<getCandlesResponseData>>;
-    getPosition(params: getPositionParams): Promise<RestResponse<getPositionResponseData>>;
-    getLastPrice(params: getLastPriceParams): Promise<RestResponse<getLastPriceResponseData>>;
+    getPosition(): Promise<RestResponse<getPositionResponseData>>;
+    getLastPrice(): Promise<RestResponse<getLastPriceResponseData>>;
     getLiquidation(params: getLiquidationParams): Promise<RestResponse<getLiquidationResponseData>>;
-    getFundingRates(params: getFundingRatesParams): Promise<RestResponse<getFundingRatesResponseData>>;
+    getFundingRates(): Promise<RestResponse<getFundingRatesResponseData>>;
     /**
      * CUSTOM EXCHANGE FUNCTIONS
      */
     _getListenKey?(): Promise<RestResponse<getListenKeyResponseData>> // binance-coin
-    _getOrderBook?(params: getOrderBookParams): Promise<RestResponse<getOrderBookResponseData>> // binance-coint
+    _getOrderBook?(): Promise<RestResponse<getOrderBookResponseData>> // binance-coint
   }
 }
 export = RestN;
