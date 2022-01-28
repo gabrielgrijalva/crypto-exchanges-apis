@@ -59,11 +59,10 @@ function connectWebSocket(stream, webSocket, settings) {
 /**
  * @param {import('../../../typings/_rest').Rest} rest
  * @param {import('../../../typings/_ws').flags} flags
- * @param {string} symbol
  */
-async function getOrderBookSnapshot(rest, flags, symbol) {
+async function getOrderBookSnapshot(rest, flags) {
   flags.synchronizing = true;
-  flags.snapshot = (await rest._getOrderBook({ symbol: symbol })).data;
+  flags.snapshot = (await rest._getOrderBook()).data;
   flags.synchronizing = false;
 };
 /**
@@ -132,7 +131,7 @@ function Ws(settings) {
     orders: {
       info: null,
       events: null,
-      connect: async (ordersParams) => {
+      connect: async () => {
         /** @type {import('../../../typings/_ws').ordersEventEmitter} */
         ws.orders.events = new Events.EventEmitter();
         const stream = (await rest._getListenKey()).data;
@@ -170,7 +169,7 @@ function Ws(settings) {
     position: {
       info: null,
       events: null,
-      connect: async (positionParams) => {
+      connect: async () => {
         /** @type {import('../../../typings/_ws').positionEventEmitter} */
         ws.position.events = new Events.EventEmitter();
         const stream = (await rest._getListenKey()).data;
@@ -178,8 +177,7 @@ function Ws(settings) {
         setInterval(() => rest._getListenKey(), 1800000);
         await connectWebSocket(stream, webSocket, settings);
         // Load rest info
-        const positionRestParams = { symbol: settings.SYMBOL };
-        const positionRestData = (await rest.getPosition(positionRestParams)).data;
+        const positionRestData = (await rest.getPosition()).data;
         /** @type {import('../../../typings/_ws').dataPosition} */
         ws.position.info = Object.assign({}, positionRestData);
         webSocket.addOnMessage((message) => {
@@ -226,9 +224,8 @@ function Ws(settings) {
           connectWebSocket(streamPosition, webSocketPosition, settings),
         ]);
         // Load rest info
-        const positionRestParams = { symbol: settings.SYMBOL };
-        const liquidationRestParams = { symbol: settings.SYMBOL, asset: liquidationParams.asset };
-        const positionRestData = (await rest.getPosition(positionRestParams)).data;
+        const liquidationRestParams = { asset: liquidationParams.asset };
+        const positionRestData = (await rest.getPosition()).data;
         const liquidationRestData = (await rest.getLiquidation(liquidationRestParams)).data;
         // Liquidation info
         /** @type {import('../../../typings/_ws').dataLiquidation} */
@@ -281,7 +278,7 @@ function Ws(settings) {
     orderBook: {
       info: null,
       events: null,
-      connect: async (orderBookParams) => {
+      connect: async () => {
         // Connect websocket
         const stream = `${settings.SYMBOL.toLowerCase()}@depth`;
         const webSocket = WebSocket();
@@ -294,7 +291,7 @@ function Ws(settings) {
           if (!flags.synchronized) {
             if (!flags.synchronizing) {
               if (!flags.snapshot) {
-                getOrderBookSnapshot(rest, flags, settings.SYMBOL);
+                getOrderBookSnapshot(rest, flags);
               } else {
                 const snapshot = flags.snapshot;
                 if (snapshot.lastUpdateId < messageParse.U) {

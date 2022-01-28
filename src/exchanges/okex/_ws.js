@@ -189,7 +189,7 @@ function Ws(settings) {
     orders: {
       info: null,
       events: null,
-      connect: async (ordersParams) => {
+      connect: async () => {
         /** @type {import('../../../typings/_ws').ordersEventEmitter} */
         ws.orders.events = new Events.EventEmitter();
         const openOrders = [];
@@ -264,7 +264,7 @@ function Ws(settings) {
     position: {
       info: null,
       events: null,
-      connect: async (positionParams) => {
+      connect: async () => {
         /** @type {import('../../../typings/_ws').positionEventEmitter} */
         ws.position.events = new Events.EventEmitter();
         const symbol = settings.SYMBOL;
@@ -272,8 +272,7 @@ function Ws(settings) {
         const webSocket = WebSocket();
         await connectWebSocket('private', symbol, channel, webSocket, settings);
         // Load rest info
-        const positionRestParams = { symbol: symbol };
-        const positionRestData = (await rest.getPosition(positionRestParams)).data;
+        const positionRestData = (await rest.getPosition()).data;
         /** @type {import('../../../typings/_ws').dataPosition} */
         ws.position.info = Object.assign({}, positionRestData);
         webSocket.addOnMessage((message) => {
@@ -320,9 +319,8 @@ function Ws(settings) {
           connectWebSocket('private', symbol, channelPosition, webSocketPosition, settings),
         ]);
         // Load rest info
-        const positionRestParams = { symbol: settings.SYMBOL };
-        const liquidationRestParams = { symbol: settings.SYMBOL, asset: liquidationParams.asset };
-        const positionRestData = (await rest.getPosition(positionRestParams)).data;
+        const liquidationRestParams = { asset: liquidationParams.asset };
+        const positionRestData = (await rest.getPosition()).data;
         const liquidationRestData = (await rest.getLiquidation(liquidationRestParams)).data;
         // Liquidation info
         /** @type {import('../../../typings/_ws').dataLiquidation} */
@@ -370,7 +368,7 @@ function Ws(settings) {
     orderBook: {
       info: null,
       events: null,
-      connect: async (orderBookParams) => {
+      connect: async () => {
         // Connect websocket
         const channel = 'books-l2-tbt';
         const symbol = settings.SYMBOL;
