@@ -17,6 +17,7 @@ interface CryptoExchangeApi {
   rest: RestN.Rest;
   utils: UtilsN.Utils;
   ws: WsN.Ws;
+  settings: settings;
 }
 declare function CryptoExchangesApi(settings: settings): CryptoExchangeApi;
 export = CryptoExchangesApi;

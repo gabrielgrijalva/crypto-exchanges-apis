@@ -25,6 +25,7 @@ function CryptoExchangesApi(settings) {
     rest: settings.REST ? Rest(settings) : null,
     utils: settings.UTILS ? Utils(settings) : null,
     ws: settings.WS ? Ws(settings) : null,
+    settings: settings,
   }
 };
 module.exports = CryptoExchangesApi;
