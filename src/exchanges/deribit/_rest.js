@@ -124,7 +124,7 @@ function getPrivateFunction(settings) {
  * 
  */
 /** 
- * @param {import('../../../typings/settings')} [settings]
+ * @param {import('../../../typings/settings')} settings
  */
 function Rest(settings) {
   // Default rest settings values

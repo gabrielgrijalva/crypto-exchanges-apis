@@ -12,7 +12,7 @@ const UtilsFactory = require('../../_shared-classes/utils');
  * 
  */
 /**
- * @param {import('../../../typings/settings')} [settings]
+ * @param {import('../../../typings/settings')} settings
  */
 function Utils(settings) {
   const utils = UtilsFactory(settings);

@@ -125,10 +125,11 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  * 
  */
 /**
- * @param {import('../../../typings/settings')} [settings]
+ * @param {import('../../../typings/settings')} settings
  */
 function Ws(settings) {
   // Default wsOptions values
+  settings.REST = settings.REST || {};
   settings.WS.URL = settings.WS.URL || 'wss://stream.bybit.com/realtime';
   // Rest creation
   const rest = Rest(settings);

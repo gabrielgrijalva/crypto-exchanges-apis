@@ -147,10 +147,11 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  * 
  */
 /**
- * @param {import('../../../typings/settings')} [settings]
+ * @param {import('../../../typings/settings')} settings
  */
 function Ws(settings) {
   // Default wsOptions values
+  settings.REST = settings.REST || {};
   settings.WS.URL = settings.WS.URL || 'wss://www.deribit.com/ws/api/v2';
   // Rest creation
   const rest = Rest(settings);

@@ -160,16 +160,14 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  * 
  */
 /**
- * @param {import('../../../typings/settings')} [settings]
+ * @param {import('../../../typings/settings')} settings
  */
 function Ws(settings) {
   // Default wsOptions values
+  settings.REST = settings.REST || {};
   settings.WS.URL = settings.WS.URL || 'wss://ws.okex.com:8443/ws/v5';
-  settings.API_KEY = settings.API_KEY || '';
-  settings.API_SECRET = settings.API_SECRET || '';
-  settings.API_PASSPHRASE = settings.API_PASSPHRASE || '';
   // Rest creation
-  const rest = Rest();
+  const rest = Rest(settings);
   // Websocket creation
   /** 
    * 
