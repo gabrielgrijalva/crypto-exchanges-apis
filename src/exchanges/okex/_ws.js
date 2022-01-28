@@ -163,7 +163,7 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  * @param {import('../../../typings/settings')} settings
  */
 function Ws(settings) {
-  // Default wsOptions values
+  // Default ws settings values
   settings.REST = settings.REST || {};
   settings.WS.URL = settings.WS.URL || 'wss://ws.okex.com:8443/ws/v5';
   // Rest creation
