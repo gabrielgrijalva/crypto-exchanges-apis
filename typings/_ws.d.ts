@@ -18,7 +18,6 @@ declare namespace WsN {
    * 
    * 
    */
-  type ordersParams = {}
   type dataExecutions = {
     id: string;
     side: 'sell' | 'buy';
@@ -55,7 +54,6 @@ declare namespace WsN {
    * 
    * 
    */
-  type positionParams = {}
   type dataPosition = {
     pxS: number;
     pxB: number;
@@ -92,16 +90,6 @@ declare namespace WsN {
     // On 'event' functions
     on(event: 'update', listener: (data: dataLiquidation) => void);
   }
-  /**
-   * 
-   * 
-   * 
-   * WS ORDER BOOK
-   * 
-   * 
-   * 
-   */
-  type orderBookParams = {}
   /**
    * 
    * 
@@ -178,14 +166,11 @@ declare namespace WsN {
    * 
    * 
    */
-  type wsObject<I, E, P> = {
-    info: I, events: E, connect(params: P): Promise<void>,
-  }
   interface Ws {
-    orders: wsObject<null, ordersEventEmitter, ordersParams>;
-    position: wsObject<dataPosition, positionEventEmitter, positionParams>;
-    liquidation: wsObject<dataLiquidation, liquidationEventEmitter, liquidationParams>;
-    orderBook: wsObject<dataOrderBook, null, orderBookParams>;
+    orders: { info: null, events: ordersEventEmitter, connect(): Promise<void>, };
+    position: { info: dataPosition, events: positionEventEmitter, connect(): Promise<void>, };
+    liquidation: { info: dataLiquidation, events: liquidationEventEmitter, connect(params: liquidationParams): Promise<void>, };
+    orderBook: { info: dataOrderBook, events: null, connect(): Promise<void>, };
   }
 }
 export = WsN;
