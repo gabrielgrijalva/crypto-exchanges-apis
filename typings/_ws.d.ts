@@ -178,14 +178,14 @@ declare namespace WsN {
    * 
    * 
    */
-  type wsReturnPromise<I, E, P> = {
+  type wsObject<I, E, P> = {
     info: I, events: E, connect(params: P): Promise<void>,
   }
   interface Ws {
-    orders: wsReturnPromise<null, ordersEventEmitter, ordersParams>;
-    position: wsReturnPromise<dataPosition, positionEventEmitter, positionParams>;
-    liquidation: wsReturnPromise<dataLiquidation, liquidationEventEmitter, liquidationParams>;
-    orderBook: wsReturnPromise<dataOrderBook, null, orderBookParams>;
+    orders: wsObject<null, ordersEventEmitter, ordersParams>;
+    position: wsObject<dataPosition, positionEventEmitter, positionParams>;
+    liquidation: wsObject<dataLiquidation, liquidationEventEmitter, liquidationParams>;
+    orderBook: wsObject<dataOrderBook, null, orderBookParams>;
   }
 }
 export = WsN;
