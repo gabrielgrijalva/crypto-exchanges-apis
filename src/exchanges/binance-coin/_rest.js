@@ -282,14 +282,14 @@ function Rest(settings) {
      * 
      * 
      */
-    cancelOrdersAll: async (params) => {
+    cancelOrdersAll: async () => {
       const data = {};
       data.symbol = settings.SYMBOL;
       const response = await request.private('DELETE', '/dapi/v1/allOpenOrders', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
-      return { data: params };
+      return { data: {} };
     },
     /**
      * 
@@ -365,11 +365,11 @@ function Rest(settings) {
      * 
      * 
      */
-    getPosition: async (params) => {
+    getPosition: async () => {
       const data = {};
       const response = await request.private('GET', '/dapi/v1/positionRisk', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const positionData = response.data.find(v => v.symbol === settings.SYMBOL);
       const qtyS = +positionData.positionAmt < 0 ? Math.abs(+positionData.positionAmt) : 0;
@@ -386,12 +386,12 @@ function Rest(settings) {
      * 
      * 
      */
-    getLastPrice: async (params) => {
+    getLastPrice: async () => {
       const data = {};
       data.symbol = settings.SYMBOL;
       const response = await request.public('GET', '/dapi/v1/trades', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const price = +response.data[response.data.length - 1].price;
       return { data: price };
@@ -432,12 +432,12 @@ function Rest(settings) {
      * 
      * 
      */
-    getFundingRates: async (params) => {
+    getFundingRates: async () => {
       const data = {};
       data.symbol = settings.SYMBOL;
       const response = await request.public('GET', '/dapi/v1/premiumIndex', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const responseData = response.data[0];
       const current = responseData ? +responseData.lastFundingRate : 0;
@@ -468,12 +468,12 @@ function Rest(settings) {
      * 
      * 
      */
-    _getOrderBook: async (params) => {
+    _getOrderBook: async () => {
       const data = {};
       data.symbol = settings.SYMBOL;
       const response = await request.public('GET', '/dapi/v1/depth', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const lastUpdateId = response.data.lastUpdateId;
       const asks = response.data.asks.map(v => {

@@ -238,14 +238,14 @@ function Rest(settings) {
      * 
      * 
      */
-    cancelOrdersAll: async (params) => {
+    cancelOrdersAll: async () => {
       const data = {};
       data.symbol = settings.SYMBOL;
       const response = await request.private('POST', '/futures/private/order/cancelAll', data);
       if (+response.data.ret_code !== 0 || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
-      return { data: params };
+      return { data: {} };
     },
     /**
      * 
@@ -331,12 +331,12 @@ function Rest(settings) {
      * 
      * 
      */
-    getPosition: async (params) => {
+    getPosition: async () => {
       const data = {};
       data.symbol = settings.SYMBOL;
       const response = await request.private('GET', '/futures/private/position/list', data);
       if (+response.data.ret_code !== 0 || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const positionResult = response.data.result.find(v => v.data.symbol === settings.SYMBOL).data;
       const qtyS = positionResult.side === 'Sell' ? +positionResult.size : 0;
@@ -353,12 +353,12 @@ function Rest(settings) {
      * 
      * 
      */
-    getLastPrice: async (params) => {
+    getLastPrice: async () => {
       const data = {};
       data.symbol = settings.SYMBOL;
       const response = await request.public('GET', '/v2/public/tickers', data);
       if (+response.data.ret_code !== 0 || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const price = +response.data.result[0].last_price;
       return { data: price };
@@ -401,7 +401,7 @@ function Rest(settings) {
      * 
      * 
      */
-    getFundingRates: async (params) => {
+    getFundingRates: async () => {
       const fundings = { current: 0, estimated: 0, };
       return { data: fundings };
     },

@@ -281,16 +281,16 @@ function Rest(settings) {
      * 
      * 
      */
-    cancelOrdersAll: async (params) => {
+    cancelOrdersAll: async () => {
       // Get open orders
       const ordersData = {};
       ordersData.instId = settings.SYMBOL;
       const ordersResponse = await request.private('GET', '/api/v5/trade/orders-pending', null, ordersData);
       if (ordersResponse.data.code !== '0') {
-        return handleResponseError(params, ordersResponse.data);
+        return handleResponseError({}, ordersResponse.data);
       }
       if (!ordersResponse.data.data.length) {
-        return { data: params }
+        return { data: {} }
       };
       // Cancel open orders
       const cancelData = ordersResponse.data.data.map(v => {
@@ -298,9 +298,9 @@ function Rest(settings) {
       });
       const cancelResponse = await request.private('POST', '/api/v5/trade/cancel-batch-orders', cancelData);
       if (cancelResponse.data.code !== '0') {
-        return handleResponseError(params, cancelResponse.data);
+        return handleResponseError({}, cancelResponse.data);
       }
-      return { data: params };
+      return { data: {} };
     },
     /**
      * 
@@ -412,12 +412,12 @@ function Rest(settings) {
      * 
      * 
      */
-    getPosition: async (params) => {
+    getPosition: async () => {
       const data = {};
       data.instId = settings.SYMBOL;
       const response = await request.private('GET', '/api/v5/account/positions', null, data);
       if (response.data.code !== '0') {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const positionData = response.data.data.find(v => v.instId === settings.SYMBOL);
       const qtyS = positionData && +positionData.pos < 0 ? Math.abs(+positionData.pos) : 0;
@@ -434,12 +434,12 @@ function Rest(settings) {
      * 
      * 
      */
-    getLastPrice: async (params) => {
+    getLastPrice: async () => {
       const data = {};
       data.instId = settings.SYMBOL;
       const response = await request.public('GET', '/api/v5/market/ticker', data);
       if (response.data.code !== '0') {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const ticker = response.data.data.find(v => v.instId === settings.SYMBOL);
       const price = +ticker.last;
@@ -483,7 +483,7 @@ function Rest(settings) {
      * 
      * 
      */
-    getFundingRates: async (params) => {
+    getFundingRates: async () => {
       if (!settings.SYMBOL.includes('SWAP')) {
         const fundings = { current: 0, estimated: 0 };
         return { data: fundings };
@@ -492,7 +492,7 @@ function Rest(settings) {
       data.instId = settings.SYMBOL;
       const response = await request.public('GET', '/api/v5/public/funding-rate', data);
       if (response.data.code !== '0') {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const fundingRate = response.data.data.find(v => v.instId === settings.SYMBOL);
       const current = fundingRate ? +fundingRate.fundingRate : 0;

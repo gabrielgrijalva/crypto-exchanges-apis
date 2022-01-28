@@ -221,14 +221,14 @@ function Rest(settings) {
      * 
      * 
      */
-    cancelOrdersAll: async (params) => {
+    cancelOrdersAll: async () => {
       const data = {};
       data.symbol = settings.SYMBOL;
       const response = await request.private('DELETE', '/api/v1/order/all', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
-      return { data: params };
+      return { data: {} };
     },
     /**
      * 
@@ -313,12 +313,12 @@ function Rest(settings) {
      * 
      * 
      */
-    getPosition: async (params) => {
+    getPosition: async () => {
       const data = {};
       data.filter = { symbol: settings.SYMBOL };
       const response = await request.private('GET', '/api/v1/position', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const qtyS = Math.abs(response.data[0] && +response.data[0].currentQty < 0 ? +response.data[0].currentQty : 0);
       const qtyB = Math.abs(response.data[0] && +response.data[0].currentQty > 0 ? +response.data[0].currentQty : 0);
@@ -335,13 +335,13 @@ function Rest(settings) {
      * 
      * 
      */
-    getLastPrice: async (params) => {
+    getLastPrice: async () => {
       const data = {};
       data.symbol = settings.SYMBOL;
       data.reverse = true;
       const response = await request.private('GET', '/api/v1/trade', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const price = +response.data[0].price;
       return { data: price };
@@ -382,12 +382,12 @@ function Rest(settings) {
      * 
      * 
      */
-    getFundingRates: async (params) => {
+    getFundingRates: async () => {
       const data = {};
       data.symbol = settings.SYMBOL;
       const response = await request.private('GET', '/api/v1/instrument', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const fundings = {
         current: +response.data[0].fundingRate,

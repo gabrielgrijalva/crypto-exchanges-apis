@@ -292,7 +292,7 @@ function Rest(settings) {
      * 
      * 
      */
-    cancelOrdersAll: async (params) => {
+    cancelOrdersAll: async () => {
       const data = {};
       data.symbol = settings.SYMBOL;
       const response = await request.private('POST', '/api/v3/cancelallorders', data);
@@ -300,9 +300,9 @@ function Rest(settings) {
         || response.data.error
         || !response.data.cancelStatus
         || response.data.cancelStatus.status !== 'cancelled') {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
-      return { data: params };
+      return { data: {} };
     },
     /**
      * 
@@ -418,11 +418,11 @@ function Rest(settings) {
      * 
      * 
      */
-    getPosition: async (params) => {
+    getPosition: async () => {
       const data = {};
       const response = await request.private('GET', '/api/v3/openpositions', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const positionResult = Array.isArray(response.data.openPositions)
         ? response.data.openPositions.find(v => v.symbol === settings.SYMBOL.toLowerCase()) : null;
@@ -440,11 +440,11 @@ function Rest(settings) {
      * 
      * 
      */
-    getLastPrice: async (params) => {
+    getLastPrice: async () => {
       const data = {};
       const response = await request.public('GET', `${settings.REST.URL}/api/v3/tickers`, data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const price = +response.data.tickers.find(v => v.symbol === v.symbol.toLowerCase()).last;
       return { data: price };
@@ -493,11 +493,11 @@ function Rest(settings) {
      * 
      * 
      */
-    getFundingRates: async (params) => {
+    getFundingRates: async () => {
       const data = {};
       const response = await request.public('GET', `${settings.REST.URL}/api/v3/tickers`, data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const ticker = response.data.tickers.find(v => v.symbol === settings.SYMBOL.toLowerCase());
       const current = +ticker.fundingRate / (1 / +ticker.last);

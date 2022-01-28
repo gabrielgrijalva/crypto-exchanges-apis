@@ -220,14 +220,14 @@ function Rest(settings) {
      * 
      * 
      */
-    cancelOrdersAll: async (params) => {
+    cancelOrdersAll: async () => {
       const data = {};
       data.instrument_name = settings.SYMBOL;
       const response = await request.private('GET', '/api/v2/private/cancel_all_by_instrument', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
-      return { data: params };
+      return { data: {} };
     },
     /**
      * 
@@ -315,12 +315,12 @@ function Rest(settings) {
      * 
      * 
      */
-    getPosition: async (params) => {
+    getPosition: async () => {
       const data = {};
       data.instrument_name = settings.SYMBOL;
       const response = await request.private('GET', '/api/v2/private/get_position', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const positionResult = response.data.result;
       const qtyS = positionResult.direction === 'sell' ? Math.abs(+positionResult.size) : 0;
@@ -337,12 +337,12 @@ function Rest(settings) {
      * 
      * 
      */
-    getLastPrice: async (params) => {
+    getLastPrice: async () => {
       const data = {};
       data.instrument_name = settings.SYMBOL;
       const response = await request.public('GET', '/api/v2/public/ticker', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const price = +response.data.result.last_price;
       return { data: price };
@@ -375,12 +375,12 @@ function Rest(settings) {
      * 
      * 
      */
-    getFundingRates: async (params) => {
+    getFundingRates: async () => {
       const data = {};
       data.instrument_name = settings.SYMBOL;
       const response = await request.public('GET', '/api/v2/public/ticker', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const current = +response.data.result.current_funding;
       const estimated = +response.data.result.current_funding;
