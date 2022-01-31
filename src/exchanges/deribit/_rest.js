@@ -267,13 +267,13 @@ function Rest(settings) {
      * 
      * 
      */
-    getEquity: async (params) => {
+    getEquity: async () => {
       const data = {};
       data.extended = true;
-      data.currency = params.asset;
+      data.currency = settings.ASSET;
       const response = await request.private('GET', '/api/v2/private/get_account_summary', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const equity = +response.data.result.equity;
       return { data: equity };

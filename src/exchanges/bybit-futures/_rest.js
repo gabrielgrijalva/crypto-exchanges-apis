@@ -285,14 +285,14 @@ function Rest(settings) {
      * 
      * 
      */
-    getEquity: async (params) => {
+    getEquity: async () => {
       const data = {};
-      data.currency = params.asset;
+      data.currency = settings.ASSET;
       const response = await request.private('GET', '/v2/private/wallet/balance', data);
       if (+response.data.ret_code !== 0 || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
-      const equity = response.data.result[params.asset].equity;
+      const equity = response.data.result[settings.ASSET].equity;
       return { data: equity };
     },
     /**
@@ -370,20 +370,20 @@ function Rest(settings) {
      * 
      * 
      */
-    getLiquidation: async (params) => {
+    getLiquidation: async () => {
       // Get tickers 
       const tickersData = {};
       tickersData.symbol = settings.SYMBOL;
       const tickersResponse = await request.public('GET', '/v2/public/tickers', tickersData);
       if (tickersResponse.data.ret_code !== 0 || tickersResponse.status >= 400) {
-        return handleResponseError(params, tickersResponse.data);
+        return handleResponseError({}, tickersResponse.data);
       }
       // Get position
       const positionData = {};
       positionData.symbol = settings.SYMBOL;
       const positionResponse = await request.private('GET', '/futures/private/position/list', positionData);
       if (positionResponse.data.ret_code !== 0 || positionResponse.status >= 400) {
-        return handleResponseError(params, positionResponse.data);
+        return handleResponseError({}, positionResponse.data);
       }
       // Calculate liquidation
       const tickersResult = tickersResponse.data.result;

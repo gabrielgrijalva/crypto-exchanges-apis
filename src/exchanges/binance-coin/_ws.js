@@ -209,7 +209,7 @@ function Ws(settings) {
     liquidation: {
       info: null,
       events: null,
-      connect: async (liquidationParams) => {
+      connect: async () => {
         /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
         ws.liquidation.events = new Events.EventEmitter();
         // Mark price websocket
@@ -224,9 +224,8 @@ function Ws(settings) {
           connectWebSocket(streamPosition, webSocketPosition, settings),
         ]);
         // Load rest info
-        const liquidationRestParams = { asset: liquidationParams.asset };
         const positionRestData = (await rest.getPosition()).data;
-        const liquidationRestData = (await rest.getLiquidation(liquidationRestParams)).data;
+        const liquidationRestData = (await rest.getLiquidation()).data;
         // Liquidation info
         /** @type {import('../../../typings/_ws').dataLiquidation} */
         ws.liquidation.info = Object.assign({}, positionRestData, liquidationRestData);
@@ -253,7 +252,7 @@ function Ws(settings) {
         });
         setInterval(async () => {
           if (!ws.liquidation.info.qtyS && !ws.liquidation.info.qtyB) { return };
-          const liquidationInfo = await rest.getLiquidation(liquidationParams);
+          const liquidationInfo = await rest.getLiquidation();
           ws.liquidation.info.markPx = liquidationInfo.data.markPx;
           ws.liquidation.info.liqPxS = liquidationInfo.data.liqPxS;
           ws.liquidation.info.liqPxB = liquidationInfo.data.liqPxB;

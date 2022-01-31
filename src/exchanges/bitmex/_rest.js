@@ -267,12 +267,12 @@ function Rest(settings) {
      * 
      * 
      */
-    getEquity: async (params) => {
+    getEquity: async () => {
       const data = {};
-      data.currency = params.asset;
+      data.currency = settings.ASSET;
       const response = await request.private('GET', '/api/v1/user/margin', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const equity = round.normal(response.data.marginBalance / 100000000, 8);
       return { data: equity };
@@ -353,20 +353,20 @@ function Rest(settings) {
      * 
      * 
      */
-    getLiquidation: async (params) => {
+    getLiquidation: async () => {
       // Get position 
       const positionData = {};
       positionData.filter = { symbol: settings.SYMBOL };
       const positionResponse = await request.private('GET', '/api/v1/position', positionData);
       if (positionResponse.status >= 400) {
-        return handleResponseError(params, positionResponse.data);
+        return handleResponseError({}, positionResponse.data);
       }
       // Get instrument
       const instrumentData = {};
       instrumentData.symbol = settings.SYMBOL;
       const instrumentResponse = await request.private('GET', '/api/v1/instrument', instrumentData);
       if (instrumentResponse.status >= 400) {
-        return handleResponseError(params, instrumentResponse.data);
+        return handleResponseError({}, instrumentResponse.data);
       }
       // Calculate liquidation
       const markPx = +instrumentResponse.data[0].markPrice;

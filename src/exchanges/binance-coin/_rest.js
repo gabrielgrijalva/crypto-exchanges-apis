@@ -314,14 +314,14 @@ function Rest(settings) {
      * 
      * 
      */
-    getEquity: async (params) => {
+    getEquity: async () => {
       const data = {};
       const response = await request.private('GET', '/dapi/v1/account', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const equity = +response.data.assets.find(v => v.asset
-        === params.asset).marginBalance;
+        === settings.ASSET).marginBalance;
       return { data: equity };
     },
     /**
@@ -403,19 +403,19 @@ function Rest(settings) {
      * 
      * 
      */
-    getLiquidation: async (params) => {
+    getLiquidation: async () => {
       // Get premium index 
       const premiumIndexData = {};
       premiumIndexData.symbol = settings.SYMBOL;
       const premiumIndexResponse = await request.public('GET', '/dapi/v1/premiumIndex', premiumIndexData);
       if (premiumIndexResponse.status >= 400) {
-        return handleResponseError(params, premiumIndexResponse.data);
+        return handleResponseError({}, premiumIndexResponse.data);
       }
       // Get position
       const positionData = {};
       const positionResponse = await request.private('GET', '/dapi/v1/positionRisk', positionData);
       if (positionResponse.status >= 400) {
-        return handleResponseError(params, positionResponse.data);
+        return handleResponseError({}, positionResponse.data);
       }
       // Calculate liquidation
       const position = positionResponse.data.find(v => v.symbol === settings.SYMBOL);

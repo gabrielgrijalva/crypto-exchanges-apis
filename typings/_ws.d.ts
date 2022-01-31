@@ -76,9 +76,6 @@ declare namespace WsN {
    * 
    * 
    */
-  type liquidationParams = {
-    asset: string;
-  }
   type dataLiquidation = dataPosition & {
     markPx: number;
     liqPxS: number;
@@ -166,11 +163,16 @@ declare namespace WsN {
    * 
    * 
    */
+  type wsObject<I, E> = {
+    info: I;
+    events: E;
+    connect(): Promise<void>;
+  }
   interface Ws {
-    orders: { info: null, events: ordersEventEmitter, connect(): Promise<void>, };
-    position: { info: dataPosition, events: positionEventEmitter, connect(): Promise<void>, };
-    liquidation: { info: dataLiquidation, events: liquidationEventEmitter, connect(params: liquidationParams): Promise<void>, };
-    orderBook: { info: dataOrderBook, events: null, connect(): Promise<void>, };
+    orders: wsObject<null, ordersEventEmitter>;
+    position: wsObject<dataPosition, positionEventEmitter>;
+    liquidation: wsObject<dataLiquidation, liquidationEventEmitter>;
+    orderBook: wsObject<dataOrderBook, null>;
   }
 }
 export = WsN;

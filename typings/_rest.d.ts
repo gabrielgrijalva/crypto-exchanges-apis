@@ -39,22 +39,16 @@ declare namespace RestN {
     fQuantity?: number;
   }
   type updateOrdersParams = updateOrderParams[];
-  type getEquityParams = {
-    asset: string;
-  }
   type getCandlesParams = {
     start: string;
     interval: number;
   }
   type getPositionParams = {}
   type getLastPriceParams = {}
-  type getLiquidationParams = {
-    asset: string;
-  }
   type getFundingRatesParams = {}
   type getOrderBookParams = {}
-  type params = cancelOrderParams | cancelOrdersAllParams | updateOrderParams | getEquityParams | createOrderParams | getPositionParams
-    | getLastPriceParams | getLiquidationParams | getFundingRatesParams | updateOrdersParams | cancelOrdersParams | createOrdersParams | getOrderBookParams | null;
+  type params = cancelOrderParams | cancelOrdersAllParams | updateOrderParams | createOrderParams | getPositionParams
+    | getLastPriceParams | getFundingRatesParams | updateOrdersParams | cancelOrdersParams | createOrdersParams | getOrderBookParams | null;
   /**
    * 
    * 
@@ -191,11 +185,11 @@ declare namespace RestN {
     /**
      * INFORMATION FUNCTIONS
      */
-    getEquity(params: getEquityParams): Promise<RestResponse<getEquityResponseData>>;
+    getEquity(): Promise<RestResponse<getEquityResponseData>>;
     getCandles(params: getCandlesParams): Promise<RestResponse<getCandlesResponseData>>;
     getPosition(): Promise<RestResponse<getPositionResponseData>>;
     getLastPrice(): Promise<RestResponse<getLastPriceResponseData>>;
-    getLiquidation(params: getLiquidationParams): Promise<RestResponse<getLiquidationResponseData>>;
+    getLiquidation(): Promise<RestResponse<getLiquidationResponseData>>;
     getFundingRates(): Promise<RestResponse<getFundingRatesResponseData>>;
     /**
      * CUSTOM EXCHANGE FUNCTIONS

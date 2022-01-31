@@ -10,6 +10,7 @@
 type exchanges = 'binance-coin' | 'bitmex' | 'bybit' | 'bybit-futures' | 'deribit' | 'kraken-futures' | 'okex';
 type settings = {
   EXCHANGE: exchanges,
+  ASSET: string,
   SYMBOL: string,
   API_KEY?: string,
   API_SECRET?: string,

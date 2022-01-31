@@ -365,14 +365,14 @@ function Rest(settings) {
      * 
      * 
      */
-    getEquity: async (params) => {
+    getEquity: async () => {
       const data = {};
-      data.ccy = params.asset;
+      data.ccy = settings.ASSET;
       const response = await request.private('GET', '/api/v5/account/balance', null, data);
       if (response.data.code !== '0') {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
-      const asset = response.data.data[0].details.find(v => v.ccy === params.asset);
+      const asset = response.data.data[0].details.find(v => v.ccy === settings.ASSET);
       const equity = asset ? +asset.eq : 0;
       return { data: equity };
     },
@@ -452,20 +452,20 @@ function Rest(settings) {
      * 
      * 
      */
-    getLiquidation: async (params) => {
+    getLiquidation: async () => {
       // Get mark price 
       const markData = {};
       markData.instId = settings.SYMBOL;
       const markResponse = await request.public('GET', '/api/v5/public/mark-price', markData);
       if (markResponse.data.code !== '0') {
-        return handleResponseError(params, markResponse.data);
+        return handleResponseError({}, markResponse.data);
       }
       // Get position
       const positionData = {};
       positionData.instId = settings.SYMBOL;
       const positionResponse = await request.private('GET', '/api/v5/account/positions', null, positionData);
       if (positionResponse.data.code !== '0') {
-        return handleResponseError(params, positionResponse.data);
+        return handleResponseError({}, positionResponse.data);
       }
       // Calculate liquidation
       const markResponseData = markResponse.data.data.find(v => v.instId === settings.SYMBOL);

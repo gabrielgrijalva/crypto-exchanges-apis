@@ -275,7 +275,7 @@ function Ws(settings) {
     liquidation: {
       info: null,
       events: null,
-      connect: async (liquidationParams) => {
+      connect: async () => {
         /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
         ws.liquidation.events = new Events.EventEmitter();
         // Instrument websocket
@@ -285,7 +285,7 @@ function Ws(settings) {
         const channelPosition = `user.changes.${settings.SYMBOL}.raw`;
         const webSocketPosition = WebSocket();
         // Portfolio websocket
-        const channelPortfolio = `user.portfolio.${liquidationParams.asset}`;
+        const channelPortfolio = `user.portfolio.${settings.ASSET}`;
         const webSocketPortfolio = WebSocket();
         await Promise.all([
           connectWebSocket(channelInstrument, 'public', webSocketInstrument, settings),
@@ -293,9 +293,8 @@ function Ws(settings) {
           connectWebSocket(channelPortfolio, 'private', webSocketPortfolio, settings),
         ]);
         // Load rest info
-        const liquidationRestParams = { asset: liquidationParams.asset };
         const positionRestData = (await rest.getPosition()).data;
-        const liquidationRestData = (await rest.getLiquidation(liquidationRestParams)).data;
+        const liquidationRestData = (await rest.getLiquidation()).data;
         // Liquidation info
         /** @type {import('../../../typings/_ws').dataLiquidation} */
         ws.liquidation.info = Object.assign({}, positionRestData, liquidationRestData);

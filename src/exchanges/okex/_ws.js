@@ -304,7 +304,7 @@ function Ws(settings) {
     liquidation: {
       info: null,
       events: null,
-      connect: async (liquidationParams) => {
+      connect: async () => {
         /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
         ws.liquidation.events = new Events.EventEmitter();
         const symbol = settings.SYMBOL;
@@ -319,9 +319,8 @@ function Ws(settings) {
           connectWebSocket('private', symbol, channelPosition, webSocketPosition, settings),
         ]);
         // Load rest info
-        const liquidationRestParams = { asset: liquidationParams.asset };
         const positionRestData = (await rest.getPosition()).data;
-        const liquidationRestData = (await rest.getLiquidation(liquidationRestParams)).data;
+        const liquidationRestData = (await rest.getLiquidation()).data;
         // Liquidation info
         /** @type {import('../../../typings/_ws').dataLiquidation} */
         ws.liquidation.info = Object.assign({}, positionRestData, liquidationRestData);

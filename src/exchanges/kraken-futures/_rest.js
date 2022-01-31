@@ -371,13 +371,13 @@ function Rest(settings) {
      * 
      * 
      */
-    getEquity: async (params) => {
+    getEquity: async () => {
       const data = {};
       const response = await request.private('GET', '/api/v3/accounts', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
-      const equity = response.data.accounts[params.asset].auxiliary.pv;
+      const equity = response.data.accounts[settings.ASSET].auxiliary.pv;
       return { data: equity };
     },
     /**
@@ -456,28 +456,28 @@ function Rest(settings) {
      * 
      * 
      */
-    getLiquidation: async (params) => {
+    getLiquidation: async () => {
       // Get tickers 
       const tickersData = {};
       const tickersResponse = await request.public('GET', `${settings.REST.URL}/api/v3/tickers`, tickersData);
       if (tickersResponse.status >= 400) {
-        return handleResponseError(params, tickersResponse.data);
+        return handleResponseError({}, tickersResponse.data);
       }
       // Get accounts
       const accountsData = {};
       const accountsResponse = await request.private('GET', '/api/v3/accounts', accountsData);
       if (accountsResponse.status >= 400) {
-        return handleResponseError(params, accountsResponse.data);
+        return handleResponseError({}, accountsResponse.data);
       }
       // Get positions
       const positionsData = {};
       const positionsResponse = await request.private('GET', '/api/v3/openpositions', positionsData);
       if (positionsResponse.status >= 400) {
-        return handleResponseError(params, positionsResponse.data);
+        return handleResponseError({}, positionsResponse.data);
       }
       // Calculate liquidation
       const ticker = tickersResponse.data.tickers.find(v => v.symbol === settings.SYMBOL.toLowerCase());
-      const account = accountsResponse.data.accounts[params.asset];
+      const account = accountsResponse.data.accounts[settings.ASSET];
       const position = Array.isArray(positionsResponse.data.openPositions) ? positionsResponse
         .data.openPositions.find(v => v.symbol === settings.SYMBOL.toLowerCase()) : null;
       const markPx = +ticker.markPrice;
