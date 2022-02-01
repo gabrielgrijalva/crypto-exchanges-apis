@@ -3,8 +3,10 @@ const ws = require('ws');
 function WebSocket() {
   /** @type {ws.WebSocket} */
   let wsInstance = null;
+  let wsInstanceErrors = 0;
   let wsInstanceTimeout = null;
   let wsInstanceInterval = null;
+  let wsInstanceErrorInterval = null;
   const onOpenFunctions = [];
   const onCloseFunctions = [];
   const onErrorFunctions = [];
@@ -30,15 +32,30 @@ function WebSocket() {
   const disconnectFunction = () => {
     clearTimeout(wsInstanceTimeout);
     clearInterval(wsInstanceInterval);
+    clearInterval(wsInstanceErrorInterval);
     if (wsInstance && wsInstance.readyState === wsInstance.OPEN) {
       wsInstance.close();
     }
     wsInstance = null;
     wsInstanceTimeout = null;
     wsInstanceInterval = null;
+    wsInstanceErrorInterval = null;
+  };
+  const errorResetFunction = () => {
+    wsInstanceErrorInterval = setInterval(() => {
+      wsInstanceErrors = 0;
+    }, 120000);
+  };
+  const errorHandlerFunction = (error) => {
+    console.log(error);
+    wsInstanceErrors += 1;
+    if (wsInstanceErrors <= 4) { return };
+    throw new Error('Too many websocket errors in a short period of time.');
   };
   onOpenFunctions.push(pingPongFunction);
+  onOpenFunctions.push(errorResetFunction);
   onCloseFunctions.push(disconnectFunction);
+  onErrorFunctions.push(errorHandlerFunction);
   /**
    * 
    * 
