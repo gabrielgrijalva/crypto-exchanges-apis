@@ -353,11 +353,11 @@ function Ws(settings) {
       events: null,
       connect: async (params) => {
         ws.orderBook.info = OrderBook();
+        if (params && params.type === 'server') {
+          ws.orderBook.info._createServer(params);
+        }
         if (params && params.type === 'client') {
           ws.orderBook.info._connectClient(params); return;
-        }
-        if (params && params.type === 'server') {
-          ws.orderBook.info._createServer(params); return;
         }
         // Connect websocket
         const channel = `book.${settings.SYMBOL}.100ms`;
