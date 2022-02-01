@@ -1,4 +1,5 @@
-const WebSocket = require('ws');
+const ws = require('ws');
+const WebSocket = require('./websocket');
 /**
   * 
   * 
@@ -100,23 +101,21 @@ function getInsertSnapshotFunction(orders) {
   };
 };
 /**
- * 
  * @param {import('../../typings/_ws').orderBookOrder[]} asks 
  * @param {import('../../typings/_ws').orderBookOrder[]} bids 
- * @returns 
  */
 function getCreateServer(asks, bids) {
   /**
-   * @param {import('../../typings/_ws').serverParams} serverParams 
+   * @param {import('../../typings/_ws').orderBookServerParams} orderBookServerParams 
    */
-  function createServer(serverParams) {
-    const wss = new WebSocket.Server({
-      port: serverParams.port,
-      host: serverParams.host,
+  function createServer(orderBookServerParams) {
+    const wss = new ws.Server({
+      port: orderBookServerParams.port,
+      host: orderBookServerParams.host,
       clientTracking: true,
     });
     wss.on('listening', function listening() {
-      console.log(`Order Book Server listening on: ${serverParams.port}.`);
+      console.log(`Order Book Server listening on: ${orderBookServerParams.port}.`);
     });
     wss.on('connection', function connection(ws) {
       ws.on('ping', () => { ws.pong() });
@@ -135,9 +134,36 @@ function getCreateServer(asks, bids) {
           timestamp: Date.now(),
         }))
       });
-    }, serverParams.broadcast);
+    }, orderBookServerParams.broadcast);
   };
   return createServer;
+};
+/**
+ * @param {import('../../typings/_ws').orderBookOrder[]} asks 
+ * @param {import('../../typings/_ws').orderBookOrder[]} bids 
+ */
+function getConnectClient(asks, bids) {
+  /**
+   * @param {import('../../typings/_ws').orderBookClientParams} orderBookClientParams 
+   */
+  function connectClient(orderBookClientParams) {
+    const port = orderBookClientParams.port;
+    const host = orderBookClientParams.host;
+    const url = `ws://${host}:${port}`;
+    const webSocket = WebSocket();
+    webSocket.connect(url);
+    webSocket.addOnMessage((message) => {
+      const messageParsed = JSON.parse(message);
+      asks.splice(0);
+      bids.splice(0);
+      messageParsed.asks.forEach(v => asks.push(v));
+      messageParsed.bids.forEach(v => bids.push(v));
+    });
+    webSocket.addOnError(() => console.log('Websocket connection error.'));
+    webSocket.addOnClose(() => console.log('Websocket connection closed.'));
+    webSocket.addOnClose(() => { webSocket.connect(url) });
+  };
+  return connectClient;
 };
 function OrderBook() {
   /** @type {import('../../typings/_ws').orderBookOrder[]} */
@@ -156,9 +182,9 @@ function OrderBook() {
   const orderBook = {
     asks: asks,
     bids: bids,
-    getFirstAsk: () => asks[0],
-    getFirstBid: () => bids[0],
-    createServer: getCreateServer(asks, bids),
+    // Create server or connect client
+    _createServer: getCreateServer(asks, bids),
+    _connectClient: getConnectClient(asks, bids),
     // Action by id
     _deleteOrderByIdAsk: getDeleteOrderById(asks),
     _deleteOrderByIdBid: getDeleteOrderById(bids),

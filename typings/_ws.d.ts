@@ -91,20 +91,6 @@ declare namespace WsN {
    * 
    * 
    * 
-   * WS SERVER
-   * 
-   * 
-   * 
-   */
-  type serverParams = {
-    port: number,
-    host: string,
-    broadcast: number,
-  };
-  /**
-   * 
-   * 
-   * 
    * ORDER BOOK INTERFACE
    * 
    * 
@@ -112,14 +98,25 @@ declare namespace WsN {
    */
   type flags = { synchronizing: boolean, synchronized: boolean, snapshot: null | { asks: orderBookOrder[], bids: orderBookOrder[], lastUpdateId: number } };
   type orderBookOrder = { id: number, price: number, quantity: number };
+  type orderBookClientParams = {
+    type: 'client';
+    port: number;
+    host: string;
+  };
+  type orderBookServerParams = {
+    type: 'server';
+    port: number;
+    host: string;
+    broadcast: number;
+  };
+  type orderBookParams = orderBookClientParams | orderBookServerParams;
   type dataOrderBook = {
     // Public data
     asks: orderBookOrder[];
     bids: orderBookOrder[];
-    getFirstAsk(): orderBookOrder;
-    getFirstBid(): orderBookOrder;
-    createServer(params: serverParams): void;
     // Private data
+    _createServer(params: orderBookServerParams): void;
+    _connectClient(params: orderBookClientParams): void;
     _deleteOrderByIdAsk(update: orderBookOrder): void;
     _deleteOrderByIdBid(update: orderBookOrder): void;
     _updateOrderByIdAsk(update: orderBookOrder): void;
@@ -163,16 +160,16 @@ declare namespace WsN {
    * 
    * 
    */
-  type wsObject<I, E> = {
+  type wsObject<I, E, P> = {
     info: I;
     events: E;
-    connect(): Promise<void>;
+    connect(params?: P): Promise<void>;
   }
   interface Ws {
-    orders: wsObject<null, ordersEventEmitter>;
-    position: wsObject<dataPosition, positionEventEmitter>;
-    liquidation: wsObject<dataLiquidation, liquidationEventEmitter>;
-    orderBook: wsObject<dataOrderBook, null>;
+    orders: wsObject<null, ordersEventEmitter, null>;
+    position: wsObject<dataPosition, positionEventEmitter, null>;
+    liquidation: wsObject<dataLiquidation, liquidationEventEmitter, null>;
+    orderBook: wsObject<dataOrderBook, null, orderBookParams>;
   }
 }
 export = WsN;
