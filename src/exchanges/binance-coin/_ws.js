@@ -277,14 +277,20 @@ function Ws(settings) {
     orderBook: {
       info: null,
       events: null,
-      connect: async () => {
+      connect: async (params) => {
+        ws.orderBook.info = OrderBook();
+        if (params && params.type === 'client') {
+          ws.orderBook.info._connectClient(params); return;
+        }
+        if (params && params.type === 'server') {
+          ws.orderBook.info._createServer(params); return;
+        }
         // Connect websocket
         const stream = `${settings.SYMBOL.toLowerCase()}@depth`;
         const webSocket = WebSocket();
         await connectWebSocket(stream, webSocket, settings);
         // Order book functionality
         const flags = { synchronized: false, synchronizing: false, snapshot: null };
-        ws.orderBook.info = OrderBook();
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message);
           if (!flags.synchronized) {

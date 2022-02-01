@@ -367,14 +367,20 @@ function Ws(settings) {
     orderBook: {
       info: null,
       events: null,
-      connect: async () => {
+      connect: async (params) => {
+        ws.orderBook.info = OrderBook();
+        if (params && params.type === 'client') {
+          ws.orderBook.info._connectClient(params); return;
+        }
+        if (params && params.type === 'server') {
+          ws.orderBook.info._createServer(params); return;
+        }
         // Connect websocket
         const channel = 'books-l2-tbt';
         const symbol = settings.SYMBOL;
         const webSocket = WebSocket();
         await connectWebSocket('public', symbol, channel, webSocket, settings);
         // Order book functionality
-        ws.orderBook.info = OrderBook();
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message.toString());
           if (!messageParse.arg || messageParse.arg.channel !== channel) { return };

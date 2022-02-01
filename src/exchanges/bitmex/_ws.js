@@ -298,13 +298,19 @@ function Ws(settings) {
     orderBook: {
       info: null,
       events: null,
-      connect: async () => {
+      connect: async (params) => {
+        ws.orderBook.info = OrderBook();
+        if (params && params.type === 'client') {
+          ws.orderBook.info._connectClient(params); return;
+        }
+        if (params && params.type === 'server') {
+          ws.orderBook.info._createServer(params); return;
+        }
         // Connect websocket
         const topic = `orderBookL2:${settings.SYMBOL}`;
         const webSocket = WebSocket();
         await connectWebSocket(topic, webSocket, settings);
         // Order book functionality
-        ws.orderBook.info = OrderBook();
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message);
           if (messageParse.action === 'partial') {
