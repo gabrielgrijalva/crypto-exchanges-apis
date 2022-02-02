@@ -344,7 +344,6 @@ function Ws(settings) {
         // Order book functionality
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message);
-          console.log(messageParse);
           if (messageParse.topic !== topic) { return };
           if (messageParse.type === 'snapshot') {
             synchronizeOrderBookSnapshot(messageParse.data, ws.orderBook.info);
