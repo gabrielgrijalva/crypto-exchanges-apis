@@ -331,7 +331,7 @@ function Rest(settings) {
      * 
      * 
      */
-    getPosition: async ({ }) => {
+    getPosition: async () => {
       const data = {};
       data.symbol = settings.SYMBOL;
       const response = await request.private('GET', '/v2/private/position/list', data);
