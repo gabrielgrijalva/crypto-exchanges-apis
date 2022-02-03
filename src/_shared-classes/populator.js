@@ -103,8 +103,8 @@ function Populator(settings) {
       new CronJob('00 * * * * *', async () => {
         const timestamp = moment.utc().startOf('second').subtract(interval, 'milliseconds');
         if ((timestamp.valueOf() % interval) !== 0) { return };
-        let candle = null
-        for (let i = 0; i < 15 && !candle; i += 1) {
+        let candle = null;
+        for (let i = 0; i < 15 && (!candle || !candle.volume); i += 1) {
           const start = timestamp.clone().subtract(interval * 5, 'milliseconds').format('YYYY-MM-DD HH:mm:ss');
           candle = (await rest.getCandles({
             start: start,
@@ -114,6 +114,7 @@ function Populator(settings) {
             console.log(candle.timestamp);
             await saveCandles(connection, [candle], table);
           }
+          await wait(500);
         }
       }, () => { }, true);
     },
