@@ -1,4 +1,5 @@
 const uuid = require('uuid').v4;
+const UtilsFactory = require('../../_shared-classes/utils');
 /**
  * 
  * 
@@ -11,23 +12,11 @@ const uuid = require('uuid').v4;
  * 
  */
 /**
- * @param {import('../../../typings/_utils').utilsOptions} [utilsOptions]
+ * @param {import('../../../typings/settings')} settings
  */
-function Utils(utilsOptions) {
-  // Default utilsOptions values
-  utilsOptions = utilsOptions || {};
-  utilsOptions.symbol = utilsOptions.symbol || '';
-  /**
-   * 
-   * 
-   * 
-   * @type {import('../../../typings/_utils').Utils}
-   * 
-   * 
-   */
-  const utils = {
-    getOrderId: () => `${utilsOptions.symbol}-${uuid()}`,
-  };
+function Utils(settings) {
+  const utils = UtilsFactory(settings);
+  utils.getOrderId = () => `${settings.SYMBOL}-${uuid()}`;
   return utils;
 };
 module.exports = Utils;

@@ -12,23 +12,6 @@ declare namespace PopulatorN {
    * 
    * 
    * 
-   * POPULATOR OPTIONS
-   * 
-   * 
-   * 
-   */
-  type populatorOptions = {
-    port?: number,
-    host?: string,
-    user?: string,
-    database?: string,
-    password?: string,
-    timezone?: string,
-  }
-  /**
-   * 
-   * 
-   * 
    * POPULATOR PARAMS
    * 
    * 
@@ -36,7 +19,6 @@ declare namespace PopulatorN {
    */
   type candlesParams = {
     table: string,
-    symbol: string,
     interval: number,
     start: string,
     finish: string,
@@ -44,7 +26,6 @@ declare namespace PopulatorN {
   };
   type candlesCronParams = {
     table: string,
-    symbol: string,
     interval: number,
   };
   /**

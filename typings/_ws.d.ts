@@ -7,23 +7,8 @@
  * 
  * 
  */
- declare namespace WsN {
+declare namespace WsN {
   import * as Events from 'events';
-  /**
-   * 
-   * 
-   * 
-   * WS OPTIONS
-   * 
-   * 
-   * 
-   */
-  type wsOptions = {
-    url?: string;
-    apiKey?: string;
-    apiSecret?: string;
-    apiPassphrase?: string;
-  }
   /**
    * 
    * 
@@ -33,9 +18,6 @@
    * 
    * 
    */
-  type ordersParams = {
-    symbol: string;
-  }
   type dataExecutions = {
     id: string;
     side: 'sell' | 'buy';
@@ -72,9 +54,6 @@
    * 
    * 
    */
-  type positionParams = {
-    symbol: string;
-  }
   type dataPosition = {
     pxS: number;
     pxB: number;
@@ -97,10 +76,6 @@
    * 
    * 
    */
-  type liquidationParams = {
-    asset: string;
-    symbol: string;
-  }
   type dataLiquidation = dataPosition & {
     markPx: number;
     liqPxS: number;
@@ -116,32 +91,6 @@
    * 
    * 
    * 
-   * WS ORDER BOOK
-   * 
-   * 
-   * 
-   */
-  type orderBookParams = {
-    symbol: string;
-  };
-  /**
-   * 
-   * 
-   * 
-   * WS SERVER
-   * 
-   * 
-   * 
-   */
-  type serverParams = {
-    port: number,
-    host: string,
-    broadcast: number,
-  };
-  /**
-   * 
-   * 
-   * 
    * ORDER BOOK INTERFACE
    * 
    * 
@@ -149,14 +98,25 @@
    */
   type flags = { synchronizing: boolean, synchronized: boolean, snapshot: null | { asks: orderBookOrder[], bids: orderBookOrder[], lastUpdateId: number } };
   type orderBookOrder = { id: number, price: number, quantity: number };
+  type orderBookClientParams = {
+    type: 'client';
+    port: number;
+    host: string;
+  };
+  type orderBookServerParams = {
+    type: 'server';
+    port: number;
+    host: string;
+    broadcast: number;
+  };
+  type orderBookParams = orderBookClientParams | orderBookServerParams;
   type dataOrderBook = {
     // Public data
     asks: orderBookOrder[];
     bids: orderBookOrder[];
-    getFirstAsk(): orderBookOrder;
-    getFirstBid(): orderBookOrder;
-    createServer(params: serverParams): void;
     // Private data
+    _createServer(params: orderBookServerParams): void;
+    _connectClient(params: orderBookClientParams): void;
     _deleteOrderByIdAsk(update: orderBookOrder): void;
     _deleteOrderByIdBid(update: orderBookOrder): void;
     _updateOrderByIdAsk(update: orderBookOrder): void;
@@ -175,9 +135,6 @@
    * 
    * 
    */
-  type webSocketOptions = {
-    url: string;
-  }
   interface WebSocket {
     // Util functions
     send(data: string): void;
@@ -203,14 +160,16 @@
    * 
    * 
    */
-  type wsReturnPromise<I, E, P> = {
-    info: I, events: E, connect(params: P): Promise<void>,
+  type wsObject<I, E, P> = {
+    info: I;
+    events: E;
+    connect(params?: P): Promise<void>;
   }
   interface Ws {
-    orders: wsReturnPromise<null, ordersEventEmitter, ordersParams>;
-    position: wsReturnPromise<dataPosition, positionEventEmitter, positionParams>;
-    liquidation: wsReturnPromise<dataLiquidation, liquidationEventEmitter, liquidationParams>;
-    orderBook: wsReturnPromise<dataOrderBook, null, orderBookParams>;
+    orders: wsObject<null, ordersEventEmitter, null>;
+    position: wsObject<dataPosition, positionEventEmitter, null>;
+    liquidation: wsObject<dataLiquidation, liquidationEventEmitter, null>;
+    orderBook: wsObject<dataOrderBook, null, orderBookParams>;
   }
 }
 export = WsN;

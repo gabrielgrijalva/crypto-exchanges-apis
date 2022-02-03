@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2022-02-03
+- Changed general implementation and consumption of exchanges apis.
 ## [1.1.2] - 2022-01-13
 - Changed typings declaration structure.
 ## [1.1.1] - 2022-01-12

@@ -68,41 +68,49 @@ function getCandleResolution(interval) {
  * 
  * 
  */
-/** 
- * @this {import('../../../typings/_rest').Request} 
- * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
+/**
+ * @param {import('../../../typings/settings')} settings 
  */
-async function public(method, path, data) {
-  const dataStringified = data ? `?${qs.stringify(data)}` : '';
-  const requestSendParams = {
-    url: `${this.restOptions.url}${path}${dataStringified}`,
-    method: method,
+function getPublicFunction(settings) {
+  /** 
+   * @this {import('../../../typings/_rest').Request} 
+   * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
+   */
+  async function public(method, path, data) {
+    const dataStringified = data ? `?${qs.stringify(data)}` : '';
+    const requestSendParams = {
+      url: `${settings.REST.URL}${path}${dataStringified}`,
+      method: method,
+    };
+    const response = await this.send(requestSendParams);
+    return response;
   };
-  console.log(requestSendParams);
-  const response = await this.send(requestSendParams);
-  console.log(response);
-  return response;
+  return public;
 };
-/** 
- * @this {import('../../../typings/_rest').Request} 
- * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
+/**
+ * @param {import('../../../typings/settings')} settings 
  */
-async function private(method, path, data) {
-  const nonce = uuid();
-  const timestamp = Date.now();
-  const dataStringified = data ? `?${qs.stringify(data)}` : '';
-  const digest = `${timestamp}\n${nonce}\n${method}\n${path}${dataStringified}\n${''}\n`;
-  const signature = crypto.createHmac('sha256', this.restOptions.apiSecret).update(digest).digest('hex');
-  const authHeaderStr = `deri-hmac-sha256 id=${this.restOptions.apiKey},ts=${timestamp},nonce=${nonce},sig=${signature}`;
-  const requestSendParams = {
-    url: `${this.restOptions.url}${path}${dataStringified}`,
-    method: method,
-    headers: { 'Authorization': authHeaderStr },
+function getPrivateFunction(settings) {
+  /** 
+   * @this {import('../../../typings/_rest').Request} 
+   * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
+   */
+  async function private(method, path, data) {
+    const nonce = uuid();
+    const timestamp = Date.now();
+    const dataStringified = data ? `?${qs.stringify(data)}` : '';
+    const digest = `${timestamp}\n${nonce}\n${method}\n${path}${dataStringified}\n${''}\n`;
+    const signature = crypto.createHmac('sha256', settings.API_SECRET).update(digest).digest('hex');
+    const authHeaderStr = `deri-hmac-sha256 id=${settings.API_KEY},ts=${timestamp},nonce=${nonce},sig=${signature}`;
+    const requestSendParams = {
+      url: `${settings.REST.URL}${path}${dataStringified}`,
+      method: method,
+      headers: { 'Authorization': authHeaderStr },
+    };
+    const response = await this.send(requestSendParams);
+    return response;
   };
-  console.log(requestSendParams);
-  const response = await this.send(requestSendParams);
-  console.log(response);
-  return response;
+  return private;
 };
 /**
  * 
@@ -116,22 +124,19 @@ async function private(method, path, data) {
  * 
  */
 /** 
- * @param {import('../../../typings/_rest').restOptions} [restOptions] 
+ * @param {import('../../../typings/settings')} settings
  */
-function Rest(restOptions) {
-  // Default restOptions values
-  restOptions = restOptions || {};
-  restOptions.url = restOptions.url || 'https://www.deribit.com';
-  restOptions.apiKey = restOptions.apiKey || '';
-  restOptions.apiSecret = restOptions.apiSecret || '';
-  restOptions.apiPassphrase = restOptions.apiPassphrase || '';
-  restOptions.requestsLimit = restOptions.requestsLimit || 5;
-  restOptions.requestsTimestamps = restOptions.requestsTimestamps || 10;
-  restOptions.requestsRefill = restOptions.requestsRefill || 0;
-  restOptions.requestsRefillType = restOptions.requestsRefillType || '';
-  restOptions.requestsRefillInterval = restOptions.requestsRefillInterval || 0;
+function Rest(settings) {
+  // Default rest settings values
+  settings.REST.URL = settings.REST.URL || 'https://www.deribit.com';
+  settings.REST.REQUESTS_LIMIT = settings.REST.REQUESTS_LIMIT || 5;
+  settings.REST.REQUESTS_REFILL = settings.REST.REQUESTS_REFILL || 5;
+  settings.REST.REQUESTS_REFILL_INTERVAL = settings.REST.REQUESTS_REFILL_INTERVAL || 1000;
+  settings.REST.REQUESTS_TIMESTAMPS = settings.REST.REQUESTS_TIMESTAMPS || 10;
   // Request creation
-  const request = Request({ restOptions, public, private });
+  const public = getPublicFunction(settings);
+  const private = getPrivateFunction(settings);
+  const request = Request({ settings, public, private });
   /** 
    * 
    * 
@@ -157,7 +162,7 @@ function Rest(restOptions) {
      */
     createOrder: async (params) => {
       const data = {};
-      data.instrument_name = params.symbol;
+      data.instrument_name = settings.SYMBOL;
       data.amount = params.quantity;
       data.label = params.id;
       if (params.type === 'limit') {
@@ -215,14 +220,14 @@ function Rest(restOptions) {
      * 
      * 
      */
-    cancelOrdersAll: async (params) => {
+    cancelOrdersAll: async () => {
       const data = {};
-      data.instrument_name = params.symbol;
+      data.instrument_name = settings.SYMBOL;
       const response = await request.private('GET', '/api/v2/private/cancel_all_by_instrument', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
-      return { data: params };
+      return { data: {} };
     },
     /**
      * 
@@ -234,7 +239,7 @@ function Rest(restOptions) {
     updateOrder: async (params) => {
       const data = {};
       data.label = params.id;
-      data.instrument_name = params.symbol;
+      data.instrument_name = settings.SYMBOL;
       if (params.price) {
         data.price = params.price;
       }
@@ -262,13 +267,13 @@ function Rest(restOptions) {
      * 
      * 
      */
-    getEquity: async (params) => {
+    getEquity: async () => {
       const data = {};
       data.extended = true;
-      data.currency = params.asset;
+      data.currency = settings.ASSET;
       const response = await request.private('GET', '/api/v2/private/get_account_summary', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const equity = +response.data.result.equity;
       return { data: equity };
@@ -282,7 +287,7 @@ function Rest(restOptions) {
      */
     getCandles: async (params) => {
       const data = {};
-      data.instrument_name = params.symbol;
+      data.instrument_name = settings.SYMBOL;
       data.start_timestamp = moment.utc(params.start).valueOf();
       data.end_timestamp = moment.utc(params.start).add(86400000, 'milliseconds').valueOf();
       data.resolution = getCandleResolution(params.interval);
@@ -310,12 +315,12 @@ function Rest(restOptions) {
      * 
      * 
      */
-    getPosition: async (params) => {
+    getPosition: async () => {
       const data = {};
-      data.instrument_name = params.symbol;
+      data.instrument_name = settings.SYMBOL;
       const response = await request.private('GET', '/api/v2/private/get_position', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const positionResult = response.data.result;
       const qtyS = positionResult.direction === 'sell' ? Math.abs(+positionResult.size) : 0;
@@ -332,12 +337,12 @@ function Rest(restOptions) {
      * 
      * 
      */
-    getLastPrice: async (params) => {
+    getLastPrice: async () => {
       const data = {};
-      data.instrument_name = params.symbol;
+      data.instrument_name = settings.SYMBOL;
       const response = await request.public('GET', '/api/v2/public/ticker', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const price = +response.data.result.last_price;
       return { data: price };
@@ -351,7 +356,7 @@ function Rest(restOptions) {
      */
     getLiquidation: async (params) => {
       const data = {};
-      data.instrument_name = params.symbol;
+      data.instrument_name = settings.SYMBOL;
       const response = await request.private('GET', '/api/v2/private/get_position', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
@@ -370,12 +375,12 @@ function Rest(restOptions) {
      * 
      * 
      */
-    getFundingRates: async (params) => {
+    getFundingRates: async () => {
       const data = {};
-      data.instrument_name = params.symbol;
+      data.instrument_name = settings.SYMBOL;
       const response = await request.public('GET', '/api/v2/public/ticker', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError({}, response.data);
       }
       const current = +response.data.result.current_funding;
       const estimated = +response.data.result.current_funding;

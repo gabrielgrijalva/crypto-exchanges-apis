@@ -1,36 +1,31 @@
-const BinanceCoin = require('./src/exchanges/binance-coin');
-const Bitmex = require('./src/exchanges/bitmex');
-const Bybit = require('./src/exchanges/bybit');
-const BybitFutures = require('./src/exchanges/bybit-futures');
-const Deribit = require('./src/exchanges/deribit');
-const KrakenFutures = require('./src/exchanges/kraken-futures');
-const Okex = require('./src/exchanges/okex');
 /**
- * 
- * @param {import('./typings').ExchangeN.exchanges} exchange 
+ * EXCHANGES
  */
-function CryptoExchangesApi(exchange) {
-  if (exchange === 'binance-coin') {
-    return BinanceCoin;
+const exchanges = [
+  'binance-coin',
+  'bitmex',
+  'bybit',
+  'bybit-futures',
+  'deribit',
+  'kraken-futures',
+  'okex',
+];
+/**
+ * @type {import('./typings')}
+ */
+function CryptoExchangesApi(settings) {
+  const exchange = exchanges.find(v => v === settings.EXCHANGE);
+  if (!exchange) throw new Error('Exchange not found.');
+  const Populator = require(`./src/exchanges/${exchange}/_populator`);
+  const Rest = require(`./src/exchanges/${exchange}/_rest`);
+  const Utils = require(`./src/exchanges/${exchange}/_utils`);
+  const Ws = require(`./src/exchanges/${exchange}/_ws`);
+  return {
+    populator: settings.POPULATOR ? Populator(settings) : null,
+    rest: settings.REST ? Rest(settings) : null,
+    utils: settings.UTILS ? Utils(settings) : null,
+    ws: settings.WS ? Ws(settings) : null,
+    settings: settings,
   }
-  if (exchange === 'bitmex') {
-    return Bitmex;
-  }
-  if (exchange === 'bybit') {
-    return Bybit;
-  }
-  if (exchange === 'bybit-futures') {
-    return BybitFutures;
-  }
-  if (exchange === 'deribit') {
-    return Deribit;
-  }
-  if (exchange === 'kraken-futures') {
-    return KrakenFutures;
-  }
-  if (exchange === 'okex') {
-    return Okex;
-  }
-  throw new Error('Exchange not found.');
 };
 module.exports = CryptoExchangesApi;
