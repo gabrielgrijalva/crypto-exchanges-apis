@@ -373,6 +373,26 @@ function Utils(settings) {
       }
       throw new Error('Could not find function of getNQValueFromPosition');
     })(),
+    /**
+     * 
+     * 
+     * GET CHANGE PX BY PERCENTAGE
+     * 
+     * 
+     */
+    getChangePxByPercentage: (() => {
+      // Lineal Calculation
+      if (BALANCE_TYPE === 'quote') {
+        return (px, per) => round.normal(round.normal((px * (1 + per))
+          / PRICE_STEP, 0) * PRICE_STEP, PRICE_PRECISION);
+      } 
+      // Inverse Calculation
+      if (BALANCE_TYPE === 'base') {
+        return (px, per) => round.normal(round.normal((px / (1 + -1 * per))
+          / PRICE_STEP, 0) * PRICE_STEP, PRICE_PRECISION);
+      }
+      throw new Error('Could not find function of getChangePxByPercentage');
+    })(),
   };
   return utils;
 }
