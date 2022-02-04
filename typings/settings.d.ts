@@ -23,6 +23,7 @@ type settings = {
     QUANTITY_VALUE?: number,
     BASE_PRECISION?: number,
     QUOTE_PRECISION?: number,
+    BALANCE_PRECISION?: number,
     PRICE_PRECISION?: number,
     QUANTITY_PRECISION?: number,
   },
