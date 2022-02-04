@@ -31,9 +31,10 @@ declare namespace UtilsN {
     getOBBestAsk(ob: dataOrderBook): number;
     getOBBestBid(ob: dataOrderBook): number;
     getOBExecutionPrice(ob: dataOrderBook, obType: obTypes, bal: number, skipVol: number, skipLevles: number, skipPer: number): number;
-    getBalInvFromPosition(px, qty): number;
-    getNBValueFromPosition(px, qty): number;
-    getNQValueFromPosition(px, qty): number;
+    getBalInvFromPosition(px: number, qty: number): number;
+    getNBValueFromPosition(px: number, qty: number): number;
+    getNQValueFromPosition(px: number, qty: number): number;
+    getChangePxByPercentage(px: number, per: number): number;
   }
 }
 export = UtilsN;
