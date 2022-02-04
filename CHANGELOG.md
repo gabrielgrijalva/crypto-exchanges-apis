@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.1] - 2022-02-04
+- Added new utils function.
 ## [1.2.0] - 2022-02-03
 - Changed general implementation and consumption of exchanges apis.
 ## [1.1.2] - 2022-01-13
