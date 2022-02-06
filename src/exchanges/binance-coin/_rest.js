@@ -372,8 +372,8 @@ function Rest(settings) {
         return handleResponseError({}, response.data);
       }
       const positionData = response.data.find(v => v.symbol === settings.SYMBOL);
-      const qtyS = +positionData.positionAmt < 0 ? Math.abs(+positionData.positionAmt) : 0;
-      const qtyB = +positionData.positionAmt > 0 ? Math.abs(+positionData.positionAmt) : 0;
+      const qtyS = positionData && +positionData.positionAmt < 0 ? Math.abs(+positionData.positionAmt) : 0;
+      const qtyB = positionData && +positionData.positionAmt > 0 ? Math.abs(+positionData.positionAmt) : 0;
       const pxS = qtyS ? +positionData.entryPrice : 0;
       const pxB = qtyB ? +positionData.entryPrice : 0;
       const position = { qtyS, qtyB, pxS, pxB };
@@ -420,8 +420,8 @@ function Rest(settings) {
       // Calculate liquidation
       const position = positionResponse.data.find(v => v.symbol === settings.SYMBOL);
       const markPx = +premiumIndexResponse.data[0].markPrice;
-      const liqPxS = +position.positionAmt < 0 ? +position.liquidationPrice : 0;
-      const liqPxB = +position.positionAmt > 0 ? +position.liquidationPrice : 0;
+      const liqPxS = position && +position.positionAmt < 0 ? +position.liquidationPrice : 0;
+      const liqPxB = position && +position.positionAmt > 0 ? +position.liquidationPrice : 0;
       const liquidation = { markPx, liqPxS, liqPxB, };
       return { data: liquidation };
     },
