@@ -395,6 +395,15 @@ function Ws(settings) {
           desynchronizeOrderBook(ws.orderBook.info);
           connectWebSocket(channel, 'public', webSocket, settings);
         });
+        await (new Promise(resolve => {
+          let counter = 0;
+          const interval = setInterval(() => {
+            counter += 1;
+            if (counter >= 120) throw new Error('Could not verify connection of order book.');
+            if (!ws.orderBook.info.asks.length || !ws.orderBook.info.bids.length) return;
+            resolve(); clearInterval(interval);
+          }, 500);
+        }));
       }
     },
   };
