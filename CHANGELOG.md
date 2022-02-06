@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.3] - 2022-02-06
+- Corrected error in binance implementation.
+- Added order book connection verification code.
 ## [1.2.2] - 2022-02-04
 - Added balance precision setting.
 ## [1.2.1] - 2022-02-04
