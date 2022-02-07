@@ -113,7 +113,7 @@ function Utils(settings) {
       if (INSTRUMENT_TYPE === 'spot') {
         if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
-            if (!qty) return 0;
+            if (!qty) { return 0 };
             const entFeeBal = (qty / entPx) * entFee;
             const extFeeBal = (qty / extPx) * extFee;
             const pnl = qty / extPx - qty / entPx;
@@ -122,7 +122,7 @@ function Utils(settings) {
         }
         if (BALANCE_TYPE === 'quote' && QUANTITY_TYPE === 'base') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
-            if (!qty) return 0;
+            if (!qty) { return 0 };
             const entFeeBal = ((qty * QUANTITY_VALUE) * entPx) * entFee;
             const extFeeBal = ((qty * QUANTITY_VALUE) * extPx) * extFee;
             const pnl = (extPx - entPx) * (qty * QUANTITY_VALUE);
@@ -133,7 +133,7 @@ function Utils(settings) {
       if (INSTRUMENT_TYPE === 'future') {
         if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
-            if (!qty) return 0;
+            if (!qty) { return 0 };
             const entFeeBal = (qty * QUANTITY_VALUE) * entFee;
             const extFeeBal = (qty * QUANTITY_VALUE) * extFee;
             const pxDiff = side === 'sell' ? (entPx - extPx) : (extPx - entPx);
@@ -143,7 +143,7 @@ function Utils(settings) {
         }
         if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'quote') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
-            if (!qty) return 0;
+            if (!qty) { return 0 };
             const entFeeBal = ((qty * QUANTITY_VALUE) / entPx) * entFee;
             const extFeeBal = ((qty * QUANTITY_VALUE) / extPx) * extFee;
             const pxDiff = side === 'sell'
@@ -155,7 +155,7 @@ function Utils(settings) {
         }
         if (BALANCE_TYPE === 'quote' && QUANTITY_TYPE === 'base') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
-            if (!qty) return 0;
+            if (!qty) { return 0 };
             const entFeeBal = ((qty * QUANTITY_VALUE) * entPx) * entFee;
             const extFeeBal = ((qty * QUANTITY_VALUE) * extPx) * extFee;
             const pxDiff = side === 'sell' ? (entPx - extPx) : (extPx - entPx);
@@ -282,11 +282,13 @@ function Utils(settings) {
       if (INSTRUMENT_TYPE === 'spot') {
         if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
           return (px, qty) => {
+            if (!qty) { return 0 };
             return round.normal(qty / px, BASE_PRECISION);
           }
         }
         if (BALANCE_TYPE === 'quote' && QUANTITY_TYPE === 'base') {
           return (px, qty) => {
+            if (!qty) { return 0 };
             return round.normal((qty * QUANTITY_VALUE) * px, QUOTE_PRECISION);
           }
         }
@@ -294,16 +296,19 @@ function Utils(settings) {
       if (INSTRUMENT_TYPE === 'future') {
         if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
           return (px, qty) => {
+            if (!qty) { return 0 };
             return round.normal(qty * QUANTITY_VALUE, BASE_PRECISION);
           }
         }
         if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'quote') {
           return (px, qty) => {
+            if (!qty) { return 0 };
             return round.normal((QUANTITY_VALUE / px) * qty, BASE_PRECISION);
           }
         }
         if (BALANCE_TYPE === 'quote' && QUANTITY_TYPE === 'base') {
           return (px, qty) => {
+            if (!qty) { return 0 };
             return round.normal(((qty * QUANTITY_VALUE) * px), QUOTE_PRECISION);
           }
         }
@@ -321,11 +326,13 @@ function Utils(settings) {
       if (INSTRUMENT_TYPE === 'spot') {
         if (BALANCE_TYPE === 'base') {
           return (px, qty) => {
+            if (!qty) { return 0 };
             return round.normal(qty / px, BASE_PRECISION);
           }
         }
         if (BALANCE_TYPE === 'quote') {
           return (px, qty) => {
+            if (!qty) { return 0 };
             return round.normal(qty * QUANTITY_VALUE, BASE_PRECISION);
           }
         }
@@ -333,11 +340,13 @@ function Utils(settings) {
       if (INSTRUMENT_TYPE === 'future') {
         if (QUANTITY_TYPE === 'base') {
           return (px, qty) => {
+            if (!qty) { return 0 };
             return round.normal(qty * QUANTITY_VALUE, BASE_PRECISION);
           }
         }
         if (QUANTITY_TYPE === 'quote') {
           return (px, qty) => {
+            if (!qty) { return 0 };
             return round.normal((qty * QUANTITY_VALUE) / px, BASE_PRECISION);
           }
         }
@@ -355,11 +364,13 @@ function Utils(settings) {
       if (INSTRUMENT_TYPE === 'spot') {
         if (BALANCE_TYPE === 'base') {
           return (px, qty) => {
+            if (!qty) { return 0 };
             return round.normal(qty, QUOTE_PRECISION);
           }
         }
         if (BALANCE_TYPE === 'quote') {
           return (px, qty) => {
+            if (!qty) { return 0 };
             return round.normal((qty * QUANTITY_VALUE) * px, QUOTE_PRECISION);
           }
         }
@@ -367,11 +378,13 @@ function Utils(settings) {
       if (INSTRUMENT_TYPE === 'future') {
         if (QUANTITY_TYPE === 'base') {
           return (px, qty) => {
+            if (!qty) { return 0 };
             return round.normal((qty * QUANTITY_VALUE) * px, QUOTE_PRECISION);
           }
         }
         if (QUANTITY_TYPE === 'quote') {
           return (px, qty) => {
+            if (!qty) { return 0 };
             return round.normal(qty * QUANTITY_VALUE, QUOTE_PRECISION);
           }
         }
