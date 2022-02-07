@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.6] - 2022-02-07
+- Corrected error in utils implementation.
 ## [1.2.5] - 2022-02-07
 - Changed ws implementation for exchanges.
 ## [1.2.4] - 2022-02-07
