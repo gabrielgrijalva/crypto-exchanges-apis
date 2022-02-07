@@ -130,10 +130,8 @@ function Ws(settings) {
      */
     orders: {
       info: null,
-      events: null,
+      events: new Events.EventEmitter(),
       connect: async () => {
-        /** @type {import('../../../typings/_ws').ordersEventEmitter} */
-        ws.orders.events = new Events.EventEmitter();
         const stream = (await rest._getListenKey()).data;
         const webSocket = WebSocket();
         setInterval(() => rest._getListenKey(), 1800000);
@@ -168,10 +166,8 @@ function Ws(settings) {
      */
     position: {
       info: null,
-      events: null,
+      events: new Events.EventEmitter(),
       connect: async () => {
-        /** @type {import('../../../typings/_ws').positionEventEmitter} */
-        ws.position.events = new Events.EventEmitter();
         const stream = (await rest._getListenKey()).data;
         const webSocket = WebSocket();
         setInterval(() => rest._getListenKey(), 1800000);
@@ -208,10 +204,8 @@ function Ws(settings) {
      */
     liquidation: {
       info: null,
-      events: null,
+      events: new Events.EventEmitter(),
       connect: async () => {
-        /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
-        ws.liquidation.events = new Events.EventEmitter();
         // Mark price websocket
         const streamMarkPrice = `${settings.SYMBOL.toLowerCase()}@markPrice@1s`;
         const webSocketMarkPrice = WebSocket();
