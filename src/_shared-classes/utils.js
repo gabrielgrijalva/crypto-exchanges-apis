@@ -113,6 +113,7 @@ function Utils(settings) {
       if (INSTRUMENT_TYPE === 'spot') {
         if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
+            if (!qty) return 0;
             const entFeeBal = (qty / entPx) * entFee;
             const extFeeBal = (qty / extPx) * extFee;
             const pnl = qty / extPx - qty / entPx;
@@ -121,6 +122,7 @@ function Utils(settings) {
         }
         if (BALANCE_TYPE === 'quote' && QUANTITY_TYPE === 'base') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
+            if (!qty) return 0;
             const entFeeBal = ((qty * QUANTITY_VALUE) * entPx) * entFee;
             const extFeeBal = ((qty * QUANTITY_VALUE) * extPx) * extFee;
             const pnl = (extPx - entPx) * (qty * QUANTITY_VALUE);
@@ -131,6 +133,7 @@ function Utils(settings) {
       if (INSTRUMENT_TYPE === 'future') {
         if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
+            if (!qty) return 0;
             const entFeeBal = (qty * QUANTITY_VALUE) * entFee;
             const extFeeBal = (qty * QUANTITY_VALUE) * extFee;
             const pxDiff = side === 'sell' ? (entPx - extPx) : (extPx - entPx);
@@ -140,6 +143,7 @@ function Utils(settings) {
         }
         if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'quote') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
+            if (!qty) return 0;
             const entFeeBal = ((qty * QUANTITY_VALUE) / entPx) * entFee;
             const extFeeBal = ((qty * QUANTITY_VALUE) / extPx) * extFee;
             const pxDiff = side === 'sell'
@@ -151,6 +155,7 @@ function Utils(settings) {
         }
         if (BALANCE_TYPE === 'quote' && QUANTITY_TYPE === 'base') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
+            if (!qty) return 0;
             const entFeeBal = ((qty * QUANTITY_VALUE) * entPx) * entFee;
             const extFeeBal = ((qty * QUANTITY_VALUE) * extPx) * extFee;
             const pxDiff = side === 'sell' ? (entPx - extPx) : (extPx - entPx);
@@ -385,7 +390,7 @@ function Utils(settings) {
       if (BALANCE_TYPE === 'quote') {
         return (px, per) => round.normal(round.normal((px * (1 + per))
           / PRICE_STEP, 0) * PRICE_STEP, PRICE_PRECISION);
-      } 
+      }
       // Inverse Calculation
       if (BALANCE_TYPE === 'base') {
         return (px, per) => round.normal(round.normal((px / (1 + -1 * per))
