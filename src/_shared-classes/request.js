@@ -1,4 +1,4 @@
-const https = require('https');
+const RestRequest = require('@gabrielgrijalva/rest-request');
 const round = require('../_utils/round');
 /**
  * @param {import('../../typings/_rest').Request} request 
@@ -39,32 +39,7 @@ function Request(requestSettings) {
       request.timestamps.unshift(Date.now());
       request.timestamps.splice(settings.REST.REQUESTS_TIMESTAMPS);
       request.remaining = request.remaining > 0 ? request.remaining - 1 : 0;
-      return new Promise(resolve => {
-        let data = '';
-        const options = {
-          method: params.method,
-          headers: params.headers,
-        };
-        const req = https.request(params.url, options, (res) => {
-          res.setEncoding('utf8');
-          res.on('data', (chunk) => data += chunk);
-          res.on('end', () => {
-            try {
-              data = JSON.parse(data);
-            } catch (error) { }
-            resolve({
-              data: data,
-              status: res.statusCode,
-              headers: res.headers,
-            });
-          });
-        });
-        req.on('error', (error) => {
-          console.log(`Problem with request: ${error.message}`);
-          throw error;
-        });
-        req.end(params.data);
-      });
+      return RestRequest.send(params);
     },
     key: key,
     public: public,
