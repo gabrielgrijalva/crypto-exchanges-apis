@@ -1,5 +1,5 @@
 {
-  "name": "crypto-exchanges-apis",
+  "name": "@gabrielgrijalva/crypto-exchanges-apis",
   "version": "1.2.6",
   "description": "Crypto Exchanges APIs libraries.",
   "main": "./index.js",
