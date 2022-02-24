@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2022-02-24
+- Changed rest request implementation.
 ## [1.3.0] - 2022-02-24
 - Changed to a npm project scoped name.
 ## [1.2.6] - 2022-02-07
