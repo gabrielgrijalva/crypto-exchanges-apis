@@ -10,7 +10,7 @@
   "author": "Gabriel Grijalva Flores",
   "license": "ISC",
   "dependencies": {
-    "@gabrielgrijalva/rest-request": "^1.0.1",
+    "@gabrielgrijalva/rest-request": "^1.0.2",
     "@types/ws": "^8.2.0",
     "cron": "^1.8.2",
     "moment": "^2.29.1",
