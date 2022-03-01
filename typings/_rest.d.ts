@@ -139,17 +139,17 @@ declare namespace RestN {
   }
   type requestSettings = {
     settings: settings,
-    key?: key;
-    public?: public;
-    private?: private;
+    key?(method: string, path: string, data: any): Promise<requestSendReturn>;
+    public?(method: string, path: string, data: any): Promise<requestSendReturn>;
+    private?(method: string, path: string, data: any, query?: any): Promise<requestSendReturn>;
   }
   interface Request {
     remaining: number;
     timestamps: number[];
-    send: send;
-    key?: key;
-    public?: public;
-    private?: private;
+    send(params: requestSendParams): Promise<requestSendReturn>;
+    key(method: string, path: string, data: any): Promise<requestSendReturn>;
+    public(method: string, path: string, data: any): Promise<requestSendReturn>;
+    private(method: string, path: string, data: any, query?: any): Promise<requestSendReturn>;
   }
   /**
    * 

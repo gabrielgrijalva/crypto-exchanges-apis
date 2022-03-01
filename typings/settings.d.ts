@@ -7,7 +7,7 @@
  * 
  * 
  */
-type exchanges = 'binance-coin' | 'bitmex' | 'bybit' | 'bybit-futures' | 'deribit' | 'kraken-futures' | 'okex';
+type exchanges = 'binance-coin' | 'bitmex' | 'bitstamp' | 'bybit' | 'bybit-futures' | 'deribit' | 'kraken-futures' | 'okex';
 type settings = {
   EXCHANGE: exchanges,
   ASSET: string,
