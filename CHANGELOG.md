@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2022-03-01
+- Implemented bitstamp rest candles function.
 ## [1.3.2] - 2022-02-25
 - Updated versions of dependencies.
 ## [1.3.1] - 2022-02-24
