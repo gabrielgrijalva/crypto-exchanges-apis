@@ -4,6 +4,7 @@
 const exchanges = [
   'binance-coin',
   'bitmex',
+  'bitstamp',
   'bybit',
   'bybit-futures',
   'deribit',
@@ -16,15 +17,11 @@ const exchanges = [
 function CryptoExchangesApi(settings) {
   const exchange = exchanges.find(v => v === settings.EXCHANGE);
   if (!exchange) throw new Error('Exchange not found.');
-  const Populator = require(`./src/exchanges/${exchange}/_populator`);
-  const Rest = require(`./src/exchanges/${exchange}/_rest`);
-  const Utils = require(`./src/exchanges/${exchange}/_utils`);
-  const Ws = require(`./src/exchanges/${exchange}/_ws`);
   return {
-    populator: settings.POPULATOR ? Populator(settings) : null,
-    rest: settings.REST ? Rest(settings) : null,
-    utils: settings.UTILS ? Utils(settings) : null,
-    ws: settings.WS ? Ws(settings) : null,
+    populator: settings.POPULATOR ? require(`./src/exchanges/${exchange}/_populator`)(settings) : null,
+    rest: settings.REST ? require(`./src/exchanges/${exchange}/_rest`)(settings) : null,
+    utils: settings.UTILS ? require(`./src/exchanges/${exchange}/_utils`)(settings) : null,
+    ws: settings.WS ? require(`./src/exchanges/${exchange}/_ws`)(settings) : null,
     settings: settings,
   }
 };
