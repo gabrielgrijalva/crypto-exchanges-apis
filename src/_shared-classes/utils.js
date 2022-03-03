@@ -147,8 +147,8 @@ function Utils(settings) {
             const entFeeBal = ((qty * QUANTITY_VALUE) / entPx) * entFee;
             const extFeeBal = ((qty * QUANTITY_VALUE) / extPx) * extFee;
             const pxDiff = side === 'sell'
-              ? ((qty * QUANTITY_VALUE) / extPx - (qty * QUANTITY_VALUE) / entPx)
-              : ((qty * QUANTITY_VALUE) / entPx - (qty * QUANTITY_VALUE) / extPx);
+              ? (QUANTITY_VALUE / extPx - QUANTITY_VALUE / entPx)
+              : (QUANTITY_VALUE / entPx - QUANTITY_VALUE / extPx);
             const pnl = pxDiff * qty;
             return round.normal(pnl - entFeeBal - extFeeBal, BASE_PRECISION);
           }
