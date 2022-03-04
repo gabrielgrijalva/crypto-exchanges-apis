@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.4.2] - 2022-03-04
+- Corrected error in utils functions.
 ## [1.4.1] - 2022-03-03
 - Corrected error in get pnl function.
 ## [1.4.0] - 2022-03-01
