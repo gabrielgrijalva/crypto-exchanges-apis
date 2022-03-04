@@ -1,4 +1,5 @@
 const ws = require('ws');
+const moment = require('moment');
 
 function WebSocket() {
   /** @type {ws.WebSocket} */
@@ -52,10 +53,18 @@ function WebSocket() {
     if (wsInstanceErrors <= 4) { return };
     throw new Error('Too many websocket errors in a short period of time.');
   };
+  const wsEventLogFunction = (eventType) => (err) => {
+    const timestamp = moment.utc().format('YYYY-MM-DD HH:mm:ss');
+    console.log(`Websocket ${eventType} event: ${timestamp} (${wsInstance.url})`);
+    if (err) console.log(err);
+  }
   onOpenFunctions.push(pingPongFunction);
   onOpenFunctions.push(errorResetFunction);
+  onOpenFunctions.push(wsEventLogFunction('open'));
   onCloseFunctions.push(disconnectFunction);
+  onCloseFunctions.push(wsEventLogFunction('close'));
   onErrorFunctions.push(errorHandlerFunction);
+  onErrorFunctions.push(wsEventLogFunction('error'));
   /**
    * 
    * 
