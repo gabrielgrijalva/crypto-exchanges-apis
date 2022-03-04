@@ -200,7 +200,7 @@ function Utils(settings) {
           let qtyNQ = 0;
           const orders = ob[obType];
           const skipPrice = orders[0].price * (1 + (obType === 'asks' ? +skipPer : -skipPer));
-          const skipPriceIndex = orders.findIndex(v => obType === 'asks' ? (v.price > skipPrice) : (v.price < skipPrice));
+          const skipPriceIndex = orders.findIndex(v => obType === 'asks' ? (v.price >= skipPrice) : (v.price <= skipPrice));
           const obStartIndex = skipLevels > skipPriceIndex ? skipLevels : skipPriceIndex;
           for (let i = obStartIndex; bal && orders[i]; i += 1) {
             const order = orders[i];
@@ -225,7 +225,7 @@ function Utils(settings) {
           let qtyNQ = 0;
           const orders = ob[obType];
           const skipPrice = orders[0].price * (1 + (obType === 'asks' ? +skipPer : -skipPer));
-          const skipPriceIndex = orders.findIndex(v => obType === 'asks' ? (v.price > skipPrice) : (v.price < skipPrice));
+          const skipPriceIndex = orders.findIndex(v => obType === 'asks' ? (v.price >= skipPrice) : (v.price <= skipPrice));
           const obStartIndex = skipLevels > skipPriceIndex ? skipLevels : skipPriceIndex;
           for (let i = obStartIndex; bal && orders[i]; i += 1) {
             const order = orders[i];
@@ -250,7 +250,7 @@ function Utils(settings) {
           let qtyNQ = 0;
           const orders = ob[obType];
           const skipPrice = orders[0].price * (1 + (obType === 'asks' ? +skipPer : -skipPer));
-          const skipPriceIndex = orders.findIndex(v => obType === 'asks' ? (v.price > skipPrice) : (v.price < skipPrice));
+          const skipPriceIndex = orders.findIndex(v => obType === 'asks' ? (v.price >= skipPrice) : (v.price <= skipPrice));
           const obStartIndex = skipLevels > skipPriceIndex ? skipLevels : skipPriceIndex;
           for (let i = obStartIndex; bal && orders[i]; i += 1) {
             const order = orders[i];
