@@ -60,7 +60,6 @@ function getSignedHeaders(apiKey, apiSecret) {
  * @param {import('../../../typings/settings')} settings
  */
 function connectWebSocket(topic, webSocket, settings) {
-  console.log(`Connecting websocket: ${settings.WS.URL}`);
   return new Promise((resolve) => {
     const url = settings.WS.URL;
     const apiKey = settings.API_KEY;
@@ -71,7 +70,6 @@ function connectWebSocket(topic, webSocket, settings) {
     webSocket.addOnMessage(function connectFunction(message) {
       const messageParse = JSON.parse(message);
       if (messageParse.success && messageParse.subscribe === topic) {
-        console.log('Connected websocket');
         resolve();
         clearTimeout(connectTimeout);
         webSocket.removeOnMessage(connectFunction);
@@ -181,8 +179,6 @@ function Ws(settings) {
             ws.orders.events.emit('cancelations', cancelationOrders);
           }
         });
-        webSocket.addOnError(() => console.log('Websocket connection error.'));
-        webSocket.addOnClose(() => console.log('Websocket connection closed.'));
         webSocket.addOnClose(() => { connectWebSocket(topic, webSocket, settings) });
       },
     },
@@ -220,8 +216,6 @@ function Ws(settings) {
           ws.position.info.qtyB = +positionEvent.currentQty > 0 ? Math.abs(+positionEvent.currentQty) : 0;
           ws.position.events.emit('update', ws.position.info);
         });
-        webSocket.addOnError(() => console.log('Websocket connection error.'));
-        webSocket.addOnClose(() => console.log('Websocket connection closed.'));
         webSocket.addOnClose(() => { connectWebSocket(topic, webSocket, settings) });
       },
     },
@@ -278,11 +272,7 @@ function Ws(settings) {
           ws.liquidation.info.liqPxB = +positionEvent.currentQty > 0 ? (+positionEvent.liquidationPrice ? +positionEvent.liquidationPrice : ws.liquidation.info.liqPxB) : 0;
           ws.liquidation.events.emit('update', ws.liquidation.info);
         });
-        webSocketInstrument.addOnError(() => console.log('Websocket connection error.'));
-        webSocketInstrument.addOnClose(() => console.log('Websocket connection closed.'));
         webSocketInstrument.addOnClose(() => connectWebSocket(topicInstrument, webSocketInstrument, settings));
-        webSocketPosition.addOnError(() => console.log('Websocket connection error.'));
-        webSocketPosition.addOnClose(() => console.log('Websocket connection closed.'));
         webSocketPosition.addOnClose(() => connectWebSocket(topicPosition, webSocketPosition, settings));
       }
     },
@@ -350,8 +340,6 @@ function Ws(settings) {
             });
           }
         });
-        webSocket.addOnError(() => console.log('Websocket connection error.'));
-        webSocket.addOnClose(() => console.log('Websocket connection closed.'));
         webSocket.addOnClose(() => {
           desynchronizeOrderBook(ws.orderBook.info);
           connectWebSocket(topic, webSocket, settings);

@@ -43,13 +43,11 @@ function createCancelation(data) {
  * @param {import('../../../typings/settings')} settings
  */
 function connectWebSocket(stream, webSocket, settings) {
-  console.log(`Connecting websocket: ${settings.WS.URL}`);
   return new Promise((resolve) => {
     const url = settings.WS.URL;
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
     webSocket.connect(`${url}/ws/${stream}`);
     webSocket.addOnOpen(function connectFunction() {
-      console.log('Connected websocket');
       resolve();
       clearTimeout(connectTimeout);
       webSocket.removeOnOpen(connectFunction);
@@ -150,8 +148,6 @@ function Ws(settings) {
             ws.orders.events.emit('cancelations', [createCancelation(messageParse)]);
           }
         });
-        webSocket.addOnError(() => console.log('Websocket connection error.'));
-        webSocket.addOnClose(() => console.log('Websocket connection closed.'));
         webSocket.addOnClose(() => { connectWebSocket(stream, webSocket, settings) });
       },
     },
@@ -188,8 +184,6 @@ function Ws(settings) {
           ws.position.info.qtyB = +positionEvent.pa > 0 ? Math.abs(+positionEvent.pa) : 0;
           ws.position.events.emit('update', ws.position.info);
         });
-        webSocket.addOnError(() => console.log('Websocket connection error.'));
-        webSocket.addOnClose(() => console.log('Websocket connection closed.'));
         webSocket.addOnClose(() => { connectWebSocket(stream, webSocket, settings) });
       }
     },
@@ -251,11 +245,7 @@ function Ws(settings) {
           ws.liquidation.info.liqPxS = liquidationInfo.data.liqPxS;
           ws.liquidation.info.liqPxB = liquidationInfo.data.liqPxB;
         }, 2000);
-        webSocketMarkPrice.addOnError(() => console.log('Websocket connection error.'));
-        webSocketMarkPrice.addOnClose(() => console.log('Websocket connection closed.'));
         webSocketMarkPrice.addOnClose(() => connectWebSocket(streamMarkPrice, webSocketMarkPrice, settings));
-        webSocketPosition.addOnError(() => console.log('Websocket connection error.'));
-        webSocketPosition.addOnClose(() => console.log('Websocket connection closed.'));
         webSocketPosition.addOnClose(() => connectWebSocket(streamPosition, webSocketPosition, settings));
       },
     },
@@ -321,8 +311,6 @@ function Ws(settings) {
             ws.orderBook.info._updateOrderByPriceBid(update);
           })
         });
-        webSocket.addOnError(() => console.log('Websocket connection error.'));
-        webSocket.addOnClose(() => console.log('Websocket connection closed.'));
         webSocket.addOnClose(() => {
           desynchronizeOrderBook(flags, ws.orderBook.info);
           connectWebSocket(stream, webSocket, settings);
