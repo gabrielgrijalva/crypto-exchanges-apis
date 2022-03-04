@@ -202,6 +202,7 @@ function Utils(settings) {
           const skipPrice = orders[0].price * (1 + (obType === 'asks' ? +skipPer : -skipPer));
           const skipPriceIndex = orders.findIndex(v => obType === 'asks' ? (v.price >= skipPrice) : (v.price <= skipPrice));
           const obStartIndex = skipLevels > skipPriceIndex ? skipLevels : skipPriceIndex;
+          if (skipPriceIndex === -1) return round.normal(qtyNQ / qtyNB, PRICE_PRECISION);
           for (let i = obStartIndex; bal && orders[i]; i += 1) {
             const order = orders[i];
             let orderNB = order.quantity * QUANTITY_VALUE;
@@ -227,6 +228,7 @@ function Utils(settings) {
           const skipPrice = orders[0].price * (1 + (obType === 'asks' ? +skipPer : -skipPer));
           const skipPriceIndex = orders.findIndex(v => obType === 'asks' ? (v.price >= skipPrice) : (v.price <= skipPrice));
           const obStartIndex = skipLevels > skipPriceIndex ? skipLevels : skipPriceIndex;
+          if (skipPriceIndex === -1) return round.normal(qtyNQ / qtyNB, PRICE_PRECISION);
           for (let i = obStartIndex; bal && orders[i]; i += 1) {
             const order = orders[i];
             let orderNB = (QUANTITY_VALUE / order.price) * order.quantity;
@@ -252,6 +254,7 @@ function Utils(settings) {
           const skipPrice = orders[0].price * (1 + (obType === 'asks' ? +skipPer : -skipPer));
           const skipPriceIndex = orders.findIndex(v => obType === 'asks' ? (v.price >= skipPrice) : (v.price <= skipPrice));
           const obStartIndex = skipLevels > skipPriceIndex ? skipLevels : skipPriceIndex;
+          if (skipPriceIndex === -1) return round.normal(qtyNQ / qtyNB, PRICE_PRECISION);
           for (let i = obStartIndex; bal && orders[i]; i += 1) {
             const order = orders[i];
             let orderNQ = (order.quantity * QUANTITY_VALUE) * order.price;
@@ -261,7 +264,7 @@ function Utils(settings) {
               orderNQ = orderNQ - skipVol; skipVol = 0;
             }
             const execNQ = orderNQ < bal ? orderNQ : bal;
-            const execNB = orderNQ / order.price;
+            const execNB = execNQ / order.price;
             qtyNQ = qtyNQ + execNQ;
             qtyNB = qtyNB + execNB;
             bal = bal > orderNQ ? bal - orderNQ : 0;
