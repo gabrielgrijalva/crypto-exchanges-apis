@@ -22,11 +22,11 @@ function WebSocket() {
     wsInstance.ping();
     wsInstance.on('pong', async () => {
       clearTimeout(wsInstanceTimeout);
-      await wait(3000);
+      await wait(1000);
       wsInstance.ping();
-      wsInstanceTimeout = setTimeout(disconnectFunction, 3000);
+      wsInstanceTimeout = setTimeout(disconnectFunction, 1000);
     });
-    wsInstanceTimeout = setTimeout(disconnectFunction, 3000);
+    wsInstanceTimeout = setTimeout(disconnectFunction, 1000);
   };
   const disconnectFunction = () => {
     clearTimeout(wsInstanceTimeout);
