@@ -1,5 +1,6 @@
 const ws = require('ws');
 const moment = require('moment');
+const wait = require('../_utils/wait');
 
 function WebSocket() {
   /** @type {ws.WebSocket} */
@@ -18,20 +19,21 @@ function WebSocket() {
    * 
    */
   const pingPongFunction = () => {
-    wsInstance.on('pong', () => clearTimeout(wsInstanceTimeout));
-    wsInstanceInterval = setInterval(() => {
-      if (wsInstance.readyState === wsInstance.OPEN) {
-        wsInstance.ping();
-      }
-      wsInstanceTimeout = setTimeout(disconnectFunction, 5000);
-    }, 5000);
+    wsInstance.ping();
+    wsInstance.on('pong', async () => {
+      clearTimeout(wsInstanceTimeout);
+      await wait(3000);
+      wsInstance.ping();
+      wsInstanceTimeout = setTimeout(disconnectFunction, 3000);
+    });
+    wsInstanceTimeout = setTimeout(disconnectFunction, 3000);
   };
   const disconnectFunction = () => {
     clearTimeout(wsInstanceTimeout);
     clearInterval(wsInstanceInterval);
     clearInterval(wsInstanceErrorInterval);
     if (wsInstance && wsInstance.readyState === wsInstance.OPEN) {
-      wsInstance.close();
+      wsInstance.terminate();
     }
     wsInstance = null;
     wsInstanceTimeout = null;
@@ -43,7 +45,7 @@ function WebSocket() {
       wsInstanceErrors = 0;
     }, 120000);
   };
-  const errorHandlerFunction = (error) => {
+  const errorHandlerFunction = () => {
     wsInstanceErrors += 1;
     if (wsInstanceErrors <= 4) { return };
     throw new Error('Too many websocket errors in a short period of time.');
