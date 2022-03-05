@@ -1,4 +1,6 @@
 const ws = require('ws');
+const moment = require('moment');
+const wait = require('../_utils/wait');
 
 function WebSocket() {
   /** @type {ws.WebSocket} */
@@ -7,10 +9,6 @@ function WebSocket() {
   let wsInstanceTimeout = null;
   let wsInstanceInterval = null;
   let wsInstanceErrorInterval = null;
-  const onOpenFunctions = [];
-  const onCloseFunctions = [];
-  const onErrorFunctions = [];
-  const onMessageFunctions = [];
   /**
    * 
    * 
@@ -21,20 +19,21 @@ function WebSocket() {
    * 
    */
   const pingPongFunction = () => {
-    wsInstance.on('pong', () => clearTimeout(wsInstanceTimeout));
-    wsInstanceInterval = setInterval(() => {
-      if (wsInstance.readyState === wsInstance.OPEN) {
-        wsInstance.ping();
-      }
-      wsInstanceTimeout = setTimeout(disconnectFunction, 5000);
-    }, 5000);
+    wsInstance.ping();
+    wsInstance.on('pong', async () => {
+      clearTimeout(wsInstanceTimeout);
+      await wait(3000);
+      wsInstance.ping();
+      wsInstanceTimeout = setTimeout(disconnectFunction, 3000);
+    });
+    wsInstanceTimeout = setTimeout(disconnectFunction, 3000);
   };
   const disconnectFunction = () => {
     clearTimeout(wsInstanceTimeout);
     clearInterval(wsInstanceInterval);
     clearInterval(wsInstanceErrorInterval);
     if (wsInstance && wsInstance.readyState === wsInstance.OPEN) {
-      wsInstance.close();
+      wsInstance.terminate();
     }
     wsInstance = null;
     wsInstanceTimeout = null;
@@ -46,16 +45,16 @@ function WebSocket() {
       wsInstanceErrors = 0;
     }, 120000);
   };
-  const errorHandlerFunction = (error) => {
-    console.log(error);
+  const errorHandlerFunction = () => {
     wsInstanceErrors += 1;
     if (wsInstanceErrors <= 4) { return };
     throw new Error('Too many websocket errors in a short period of time.');
   };
-  onOpenFunctions.push(pingPongFunction);
-  onOpenFunctions.push(errorResetFunction);
-  onCloseFunctions.push(disconnectFunction);
-  onErrorFunctions.push(errorHandlerFunction);
+  const wsEventLogFunction = (url, eventType) => (err) => {
+    const timestamp = moment.utc().format('YYYY-MM-DD HH:mm:ss');
+    console.log(`Websocket ${eventType} event: ${timestamp} (${url})`);
+    if (err) console.log(err);
+  }
   /**
    * 
    * 
@@ -73,48 +72,39 @@ function WebSocket() {
     connect: (url, options) => {
       if (wsInstance) { webSocket.disconnect() };
       wsInstance = new ws(url, options);
-      onOpenFunctions.forEach(v => wsInstance.on('open', v));
-      onCloseFunctions.forEach(v => wsInstance.on('close', v));
-      onErrorFunctions.forEach(v => wsInstance.on('error', v));
-      onMessageFunctions.forEach(v => wsInstance.on('message', v));
+      wsInstance.on('open', pingPongFunction);
+      wsInstance.on('open', errorResetFunction);
+      wsInstance.on('open', wsEventLogFunction(url, 'open'));
+      wsInstance.on('close', disconnectFunction);
+      wsInstance.on('close', wsEventLogFunction(url, 'close'));
+      wsInstance.on('error', errorHandlerFunction);
+      wsInstance.on('error', wsEventLogFunction(url, 'error'));
     },
     disconnect: disconnectFunction,
     // Add function listener
     addOnOpen: (listener) => {
-      onOpenFunctions.push(listener);
       wsInstance ? wsInstance.on('open', listener) : null;
     },
     addOnClose: (listener) => {
-      onCloseFunctions.push(listener);
       wsInstance ? wsInstance.on('close', listener) : null;
     },
     addOnError: (listener) => {
-      onErrorFunctions.push(listener);
       wsInstance ? wsInstance.on('error', listener) : null;
     },
     addOnMessage: (listener) => {
-      onMessageFunctions.push(listener);
       wsInstance ? wsInstance.on('message', listener) : null;
     },
     // Remove function listener
     removeOnOpen: (listener) => {
-      const index = onOpenFunctions.findIndex(v => v === listener);
-      onOpenFunctions.splice(index, 1);
       wsInstance ? wsInstance.removeListener('open', listener) : null;
     },
     removeOnClose: (listener) => {
-      const index = onCloseFunctions.findIndex(v => v === listener);
-      onCloseFunctions.splice(index, 1);
       wsInstance ? wsInstance.removeListener('close', listener) : null;
     },
     removeOnError: (listener) => {
-      const index = onErrorFunctions.findIndex(v => v === listener);
-      onErrorFunctions.splice(index, 1);
       wsInstance ? wsInstance.removeListener('error', listener) : null;
     },
     removeOnMessage: (listener) => {
-      const index = onMessageFunctions.findIndex(v => v === listener);
-      onMessageFunctions.splice(index, 1);
       wsInstance ? wsInstance.removeListener('message', listener) : null;
     },
   };
