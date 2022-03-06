@@ -91,23 +91,26 @@ async function sendRestCancelOrder(rest, params, errors = 0) {
  * @param {import('../../typings/settings')} settings 
  * @returns {import('../../typings/_rest').createOrderParams}
  */
-function getFixOrder(fixQtyS, fixQtyB, fixType, positionQtyS, positionQtyB, ws, utils, settings) {
+function getFixOrderCreate(fixQtyS, fixQtyB, fixType, positionQtyS, positionQtyB, ws, utils, settings) {
   /** @type {'sell' | 'buy'} */
   let side = 'sell';
   /** @type {number} */
   let quantity = 0;
   /** @type {'open' | 'close'} */
   let direction = 'open';
+  const type = settings.INSTRUMENT.TYPE;
+  const bestAsk = ws.orderBook.info.asks[0].price;
+  const bestBid = ws.orderBook.info.bids[0].price;
   // OPEN SELL
   if (fixQtyS > positionQtyS) {
     side = 'sell';
-    quantity = round.normal(fixQtyS - positionQtyS, settings.INSTRUMENT.QUANTITY_PRECISION);
+    quantity = round.normal((fixQtyS - positionQtyS) / (type === 'spot' ? bestAsk : 1), settings.INSTRUMENT.QUANTITY_PRECISION);
     direction = 'open';
   }
   // CLOSE SELL
   if (fixQtyS < positionQtyS) {
     side = 'buy';
-    quantity = round.normal(positionQtyS - fixQtyS, settings.INSTRUMENT.QUANTITY_PRECISION);
+    quantity = round.normal((positionQtyS - fixQtyS) / (type === 'spot' ? bestBid : 1), settings.INSTRUMENT.QUANTITY_PRECISION);
     direction = 'close';
   }
   // OPEN BUY
@@ -127,14 +130,14 @@ function getFixOrder(fixQtyS, fixQtyB, fixType, positionQtyS, positionQtyB, ws, 
   if (quantity < settings.INSTRUMENT.QUANTITY_MIN) {
     side = direction === 'open' ? side : (side === 'sell' ? 'buy' : 'sell');
     quantity = round.normal(quantity + settings.INSTRUMENT.QUANTITY_MIN, settings.INSTRUMENT.QUANTITY_PRECISION);
-    direction = direction === 'open' ? direction : 'close'
+    direction = 'open';
   };
   const orderParams = {};
   orderParams.id = utils.getOrderId();
   orderParams.side = side;
   orderParams.type = fixType;
   if (orderParams.type === 'limit') {
-    orderParams.price = orderParams.side === 'sell' ? ws.orderBook.info.asks[0].price : ws.orderBook.info.bids[0].price;
+    orderParams.price = orderParams.side === 'sell' ? bestAsk : bestBid;
   }
   orderParams.quantity = quantity;
   orderParams.direction = direction;
@@ -158,6 +161,31 @@ function getFixOrderUpdate(ws, order) {
 function getFixOrderCancel(order) {
   return { id: order.id };
 };
+/**
+ * 
+ * @param {number} fixQtyS 
+ * @param {number} fixQtyB
+ * @param {number} positionQtyS 
+ * @param {number} positionQtyB 
+ * @param {import('../../typings/settings')} settings 
+ * @returns {boolean}
+ */
+function shouldCreateFixOrder(fixQtyS, fixQtyB, positionQtyS, positionQtyB, settings) {
+  const instruType = settings.INSTRUMENT.TYPE;
+  const qtyPrecision = instruType === 'future' ? settings.INSTRUMENT.QUANTITY_PRECISION : settings.INSTRUMENT.BALANCE_PRECISION;
+  const fixQtyAbs = round.normal(fixQtyB - fixQtyS, qtyPrecision);
+  const positionQtyAbs = round.normal(positionQtyB - positionQtyS, qtyPrecision);
+  if (fixQtyAbs === positionQtyAbs) {
+    return false;
+  }
+  const fixQtyDiffS = Math.abs(fixQtyS - positionQtyS);
+  const fixQtyDiffB = Math.abs(fixQtyB - positionQtyB);
+  const quantityMinDiff = settings.INSTRUMENT.QUANTITY_MIN * 0.50;
+  if (instruType === 'spot' && (fixQtyDiffS <= quantityMinDiff || fixQtyDiffB <= quantityMinDiff)) {
+    return false;
+  }
+  return true;
+}
 /**
  * 
  * 
@@ -259,10 +287,10 @@ function Fixer(settings) {
         ws.orders.events.on('cancelations', cancelationsFunc);
         (async function main() {
           if (!order && !creating && !updating && !canceling) {
-            if (qtyS !== positionQtyS || qtyB !== positionQtyB) {
+            if (shouldCreateFixOrder(qtyS, qtyB, positionQtyS, positionQtyB, settings)) {
               creating = true;
               creatingTimeout = setTimeout(() => { throw new Error('creatingTimeout') }, 10000);
-              sendRestCreateOrder(rest, getFixOrder(qtyS, qtyB, type, positionQtyS, positionQtyB, ws, utils, settings));
+              sendRestCreateOrder(rest, getFixOrderCreate(qtyS, qtyB, type, positionQtyS, positionQtyB, ws, utils, settings));
             }
           } else if (order && !creating && !updating && !canceling && type === 'limit'
             && ((order.side === 'sell' && order.price > ws.orderBook.info.asks[0].price)
@@ -277,7 +305,7 @@ function Fixer(settings) {
               sendRestCancelOrder(rest, getFixOrderCancel(order));
             }
           }
-          if (qtyS === positionQtyS && qtyB === positionQtyB) {
+          if (!shouldCreateFixOrder(qtyS, qtyB, positionQtyS, positionQtyB, settings)) {
             resolve();
             ws.orders.events.removeListener('creations-updates', creationsUpdatesFunc);
             ws.orders.events.removeListener('executions', executionsFunc);
