@@ -18,6 +18,7 @@ function CryptoExchangesApi(settings) {
   const exchange = exchanges.find(v => v === settings.EXCHANGE);
   if (!exchange) throw new Error('Exchange not found.');
   return {
+    fixer: settings.FIXER ? require(`./src/exchanges/${exchange}/_fixer`)(settings) : null,
     populator: settings.POPULATOR ? require(`./src/exchanges/${exchange}/_populator`)(settings) : null,
     rest: settings.REST ? require(`./src/exchanges/${exchange}/_rest`)(settings) : null,
     utils: settings.UTILS ? require(`./src/exchanges/${exchange}/_utils`)(settings) : null,

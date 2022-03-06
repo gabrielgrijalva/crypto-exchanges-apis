@@ -20,12 +20,15 @@ type settings = {
     BALANCE_TYPE?: 'base' | 'quote',
     QUANTITY_TYPE?: 'base' | 'quote',
     PRICE_STEP?: number,
+    QUANTITY_MIN?: number,
     QUANTITY_VALUE?: number,
     BASE_PRECISION?: number,
     QUOTE_PRECISION?: number,
     BALANCE_PRECISION?: number,
     PRICE_PRECISION?: number,
     QUANTITY_PRECISION?: number,
+  },
+  FIXER?: {
   },
   POPULATOR?: {
     PORT?: number,
