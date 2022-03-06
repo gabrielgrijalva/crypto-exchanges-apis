@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2022-03-06
+- Implemented fixer functionality.
 ## [1.4.4] - 2022-03-05
 - Changed ping/pong events frequency in websockets.
 ## [1.4.3] - 2022-03-05
