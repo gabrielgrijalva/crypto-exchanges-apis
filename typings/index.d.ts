@@ -1,3 +1,4 @@
+import FixerN = require('./_fixer');
 import PopulatorN = require('./_populator');
 import RestN = require('./_rest');
 import UtilsN = require('./_utils');
@@ -13,6 +14,7 @@ import settings = require('./settings');
  * 
  */
 interface CryptoExchangeApi {
+  fixer: FixerN.Fixer;
   populator: PopulatorN.Populator;
   rest: RestN.Rest;
   utils: UtilsN.Utils;

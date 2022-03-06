@@ -24,25 +24,25 @@ declare namespace WsN {
     price: number;
     quantity: number;
     timestamp: string;
-  }[]
+  }
   type dataCancelations = {
     id: string;
-  }[]
+  }
   type dataCreationsUpdates = {
     id: string;
     side: 'sell' | 'buy';
     price: number;
     quantity: number;
-  }[]
+  }
   type ordersEventEmitter = Events.EventEmitter & {
     // Emit 'event' functions
-    emit(event: 'executions', data: dataExecutions);
-    emit(event: 'cancelations', data: dataCancelations);
-    emit(event: 'creations-updates', data: dataCreationsUpdates);
+    emit(event: 'executions', data: dataExecutions[]);
+    emit(event: 'cancelations', data: dataCancelations[]);
+    emit(event: 'creations-updates', data: dataCreationsUpdates[]);
     // On 'event' functions
-    on(event: 'executions', listener: (data: dataExecutions) => void);
-    on(event: 'cancelations', listener: (data: dataCancelations) => void);
-    on(event: 'creations-updates', listener: (data: dataCreationsUpdates) => void);
+    on(event: 'executions', listener: (data: dataExecutions[]) => void);
+    on(event: 'cancelations', listener: (data: dataCancelations[]) => void);
+    on(event: 'creations-updates', listener: (data: dataCreationsUpdates[]) => void);
   }
   type ordersPromiseReturn = { events: ordersEventEmitter };
   /**
