@@ -15,6 +15,22 @@ const round = require('../_utils/round');
  * 
  * @param {import('../../typings/_rest').Rest} rest 
  */
+async function sendRestGetPosition(rest, errors = 0) {
+  const response = await rest.getPosition();
+  if (response.error) {
+    if (errors >= 10) { throw response.error };
+    if (response.error.type === 'request-timeout'
+      || response.error.type === 'request-not-accepted') {
+      return sendRestGetPosition(rest, errors + 1);
+    }
+    throw response.error;
+  };
+  return response.data;
+};
+/**
+ * 
+ * @param {import('../../typings/_rest').Rest} rest 
+ */
 async function sendRestCreateOrder(rest, params, errors = 0) {
   const response = await rest.createOrder(params);
   if (response.error) {
@@ -68,48 +84,43 @@ async function sendRestCancelOrder(rest, params, errors = 0) {
  * @param {number} fixQtyS 
  * @param {number} fixQtyB
  * @param {'limit' | 'market'} fixType 
+ * @param {number} positionQtyS 
+ * @param {number} positionQtyB 
  * @param {import('../../typings/_ws').Ws} ws 
  * @param {import('../../typings/_utils').Utils} utils 
- * @param {import('../../typings/_rest').getPositionResponseData} position 
  * @param {import('../../typings/settings')} settings 
  * @returns {import('../../typings/_rest').createOrderParams}
  */
-function getFixOrder(fixQtyS, fixQtyB, fixType, ws, utils, position, settings) {
+function getFixOrder(fixQtyS, fixQtyB, fixType, positionQtyS, positionQtyB, ws, utils, settings) {
   /** @type {'sell' | 'buy'} */
   let side = 'sell';
   /** @type {number} */
   let quantity = 0;
   /** @type {'open' | 'close'} */
   let direction = 'open';
-  // SELL
-  if (position.qtyS) {
-    // OPEN SELL
-    if (fixQtyS > position.qtyS) {
-      side = 'sell';
-      quantity = round.normal(fixQtyS - position.qtyS, settings.INSTRUMENT.QUANTITY_PRECISION);
-      direction = 'open';
-    }
-    // CLOSE SELL
-    if (fixQtyS < position.qtyS) {
-      side = 'buy';
-      quantity = round.normal(position.qtyS - fixQtyS, settings.INSTRUMENT.QUANTITY_PRECISION);
-      direction = 'close';
-    }
+  // OPEN SELL
+  if (fixQtyS > positionQtyS) {
+    side = 'sell';
+    quantity = round.normal(fixQtyS - positionQtyS, settings.INSTRUMENT.QUANTITY_PRECISION);
+    direction = 'open';
   }
-  // BUY
-  if (position.qtyB) {
-    // OPEN BUY
-    if (fixQtyB > position.qtyB) {
-      side = 'buy';
-      quantity = round.normal(fixQtyB - position.qtyB, settings.INSTRUMENT.QUANTITY_PRECISION);
-      direction = 'open';
-    }
-    // CLOSE BUY
-    if (fixQtyB < position.qtyB) {
-      side = 'sell';
-      quantity = round.normal(position.qtyB - fixQtyB, settings.INSTRUMENT.QUANTITY_PRECISION);
-      direction = 'close';
-    }
+  // CLOSE SELL
+  if (fixQtyS < positionQtyS) {
+    side = 'buy';
+    quantity = round.normal(positionQtyS - fixQtyS, settings.INSTRUMENT.QUANTITY_PRECISION);
+    direction = 'close';
+  }
+  // OPEN BUY
+  if (fixQtyB > positionQtyB) {
+    side = 'buy';
+    quantity = round.normal(fixQtyB - positionQtyB, settings.INSTRUMENT.QUANTITY_PRECISION);
+    direction = 'open';
+  }
+  // CLOSE BUY
+  if (fixQtyB < positionQtyB) {
+    side = 'sell';
+    quantity = round.normal(positionQtyB - fixQtyB, settings.INSTRUMENT.QUANTITY_PRECISION);
+    direction = 'close';
   }
   if (!quantity) { return };
   // HANDLE MIN QUANTITY
@@ -187,6 +198,7 @@ function Fixer(settings) {
       const qtyB = params.qtyB;
       const type = params.type;
       return new Promise(async resolve => {
+        const initialPosition = await sendRestGetPosition(rest);
         /** @type {import('../../typings/_ws').dataCreationsUpdates} */
         let order = null;
         let orderQtyF = 0;
@@ -196,6 +208,8 @@ function Fixer(settings) {
         let creatingTimeout = null;
         let updatingTimeout = null;
         let cancelingTimeout = null;
+        let positionQtyS = initialPosition.qtyS;
+        let positionQtyB = initialPosition.qtyB;
         const creationsUpdatesFunc = (messages) => {
           console.log('creations-updates'); console.log(messages);
           if (creating) {
@@ -215,6 +229,8 @@ function Fixer(settings) {
             const message = messages[i];
             if (message.id === order.id) {
               orderQtyF = round.normal(orderQtyF + message.quantity, settings.INSTRUMENT.QUANTITY_PRECISION);
+              positionQtyS = round.normal(positionQtyS + (message.side === 'sell' ? message.quantity : 0), settings.INSTRUMENT.QUANTITY_PRECISION);
+              positionQtyB = round.normal(positionQtyB + (message.side === 'buy' ? message.quantity : 0), settings.INSTRUMENT.QUANTITY_PRECISION);
             }
             if (orderQtyF >= order.quantity) {
               order = null;
@@ -243,12 +259,10 @@ function Fixer(settings) {
         ws.orders.events.on('cancelations', cancelationsFunc);
         (async function main() {
           if (!order && !creating && !updating && !canceling) {
-            await wait(1000);
-            const position = ws.position.info;
-            if (qtyS !== position.qtyS || qtyB !== position.qtyB) {
+            if (qtyS !== positionQtyS || qtyB !== positionQtyB) {
               creating = true;
               creatingTimeout = setTimeout(() => { throw new Error('creatingTimeout') }, 10000);
-              sendRestCreateOrder(rest, getFixOrder(qtyS, qtyB, type, ws, utils, position, settings));
+              sendRestCreateOrder(rest, getFixOrder(qtyS, qtyB, type, positionQtyS, positionQtyB, ws, utils, settings));
             }
           } else if (order && !creating && !updating && !canceling && type === 'limit'
             && ((order.side === 'sell' && order.price > ws.orderBook.info.asks[0].price)
@@ -263,14 +277,13 @@ function Fixer(settings) {
               sendRestCancelOrder(rest, getFixOrderCancel(order));
             }
           }
-          const position = ws.position.info;
-          if (qtyS === position.qtyS && qtyB === position.qtyB) {
+          if (qtyS === positionQtyS && qtyB === positionQtyB) {
             resolve();
             ws.orders.events.removeListener('creations-updates', creationsUpdatesFunc);
             ws.orders.events.removeListener('executions', executionsFunc);
             ws.orders.events.removeListener('cancelations', cancelationsFunc);
           } else {
-            await wait(100); main();
+            await wait(1000); main();
           }
         })();
       });
