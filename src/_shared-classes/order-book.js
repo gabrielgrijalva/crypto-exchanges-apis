@@ -159,8 +159,6 @@ function getConnectClient(asks, bids) {
       messageParsed.asks.forEach(v => asks.push(v));
       messageParsed.bids.forEach(v => bids.push(v));
     });
-    webSocket.addOnError(() => console.log('Websocket connection error.'));
-    webSocket.addOnClose(() => console.log('Websocket connection closed.'));
     webSocket.addOnClose(() => { webSocket.connect(url) });
   };
   return connectClient;
