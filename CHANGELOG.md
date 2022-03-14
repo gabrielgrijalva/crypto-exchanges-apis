@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.5.2] - 2022-03-14
+- Corrected rest error handlers in okex.
 ## [1.5.1] - 2022-03-10
 - Changed deribit api requests limits.
 ## [1.5.0] - 2022-03-06
