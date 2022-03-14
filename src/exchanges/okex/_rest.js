@@ -37,7 +37,8 @@ function handleResponseError(params, responseData) {
       type = 'insufficient-funds';
     }
     if (errorCode === '51400' || errorCode === '51401' || errorCode === '51402' || errorCode === '51405'
-      || errorCode === '51410' || errorCode === '51509' || errorCode === '51510' || errorCode === '51603') {
+      || errorCode === '51410' || errorCode === '51503' || errorCode === '51509' || errorCode === '51510'
+      || errorCode === '51603') {
       type = 'order-not-found';
     }
   }
@@ -322,7 +323,7 @@ function Rest(settings) {
       }
       const response = await request.private('POST', '/api/v5/trade/amend-order', data);
       if (response.data.code !== '0') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data.data[0]);
       }
       return { data: params };
     },
