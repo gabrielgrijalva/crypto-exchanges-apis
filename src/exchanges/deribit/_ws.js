@@ -358,13 +358,13 @@ function Ws(settings) {
             return synchronizeOrderBookSnapshot(messageParse.params.data, ws.orderBook.info);
           }
           if (prevChangeId && prevChangeId !== messageParse.params.data.prev_change_id) {
-            return webSocket.disconnect();
+            return webSocket.close();
           }
           prevChangeId = messageParse.params.data.change_id;
           const timestamp = Date.now();
           const orderBookTimestamp = +messageParse.params.data.timestamp;
           if (timestamp - orderBookTimestamp > 5000) {
-            return webSocket.disconnect();
+            return webSocket.close();
           }
           messageParse.params.data.asks.forEach(v => {
             const update = { id: +v[1], price: +v[1], quantity: +v[2] };

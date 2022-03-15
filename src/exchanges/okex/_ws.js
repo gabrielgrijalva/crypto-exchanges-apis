@@ -381,7 +381,7 @@ function Ws(settings) {
             const timestamp = Date.now();
             const orderBookTimestamp = +messageParse.data[0].ts;
             if (timestamp - orderBookTimestamp > 5000) {
-              return webSocket.disconnect();
+              return webSocket.close();
             }
             messageParse.data[0].asks.forEach(v => {
               ws.orderBook.info._updateOrderByPriceAsk({ id: +v[0], price: +v[0], quantity: +v[1] });
