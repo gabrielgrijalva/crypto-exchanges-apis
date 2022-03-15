@@ -139,6 +139,7 @@ declare namespace WsN {
     // Util functions
     send(data: string): void;
     connect(url: string, options?: Object): void;
+    close(): void,
     disconnect(): void;
     // Add function listener;
     addOnOpen(listener: () => void): void;
