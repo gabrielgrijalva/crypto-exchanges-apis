@@ -300,7 +300,7 @@ function Ws(settings) {
           const timestamp = Date.now();
           const orderBookTimestamp = +messageParse.E;
           if (timestamp - orderBookTimestamp > 5000) {
-            webSocket.disconnect();
+            webSocket.close();
           }
           messageParse.a.forEach(v => {
             const update = { id: +v[0], price: +v[0], quantity: +v[1] };
