@@ -5,10 +5,8 @@ const wait = require('../_utils/wait');
 function WebSocket() {
   /** @type {ws.WebSocket} */
   let wsInstance = null;
-  let wsInstanceErrors = 0;
-  let wsInstanceTimeout = null;
-  let wsInstanceInterval = null;
-  let wsInstanceErrorInterval = null;
+  let webSocketErrors = 0;
+  let websocketErrorsInterval = null;
   /**
    * 
    * 
@@ -18,36 +16,53 @@ function WebSocket() {
    * 
    * 
    */
-  const pingPongFunction = () => {
-    wsInstance.ping();
-    wsInstance.on('pong', async () => {
-      clearTimeout(wsInstanceTimeout);
+  /**
+   * @param {ws.WebSocket} localWsInstance 
+   */
+  const pingPongFunction = (localWsInstance) => () => {
+    let timeout = null;
+    localWsInstance.ping();
+    localWsInstance.on('pong', async () => {
+      clearTimeout(timeout);
       await wait(1000);
-      wsInstance.ping();
-      wsInstanceTimeout = setTimeout(disconnectFunction, 1000);
+      if (localWsInstance.readyState === localWsInstance.OPEN) {
+        localWsInstance.ping();
+        timeout = setTimeout(disconnect, 1000);
+      }
     });
-    wsInstanceTimeout = setTimeout(disconnectFunction, 1000);
+    const disconnect = () => {
+      if (localWsInstance.readyState === localWsInstance.OPEN) {
+        localWsInstance.terminate();
+      }
+    };
+    timeout = setTimeout(disconnect, 1000);
   };
-  const disconnectFunction = () => {
-    clearTimeout(wsInstanceTimeout);
-    clearInterval(wsInstanceInterval);
-    clearInterval(wsInstanceErrorInterval);
-    if (wsInstance && wsInstance.readyState === wsInstance.OPEN) {
+  const closeFunction = () => {
+    clearInterval(websocketErrorsInterval);
+    if (!wsInstance) { return };
+    if (wsInstance.readyState === wsInstance.OPEN) {
       wsInstance.terminate();
     }
-    wsInstance = null;
-    wsInstanceTimeout = null;
-    wsInstanceInterval = null;
-    wsInstanceErrorInterval = null;
   };
+  const disconnectFunction = () => {
+    clearInterval(websocketErrorsInterval);
+    if (!wsInstance) { return };
+    wsInstance.removeAllListeners('open');
+    wsInstance.removeAllListeners('close');
+    wsInstance.removeAllListeners('error');
+    wsInstance.removeAllListeners('message');
+    if (wsInstance.readyState === wsInstance.OPEN) {
+      wsInstance.terminate();
+    }
+  }
   const errorResetFunction = () => {
-    wsInstanceErrorInterval = setInterval(() => {
-      wsInstanceErrors = 0;
+    websocketErrorsInterval = setInterval(() => {
+      webSocketErrors = 0;
     }, 120000);
   };
   const errorHandlerFunction = () => {
-    wsInstanceErrors += 1;
-    if (wsInstanceErrors <= 4) { return };
+    webSocketErrors += 1;
+    if (webSocketErrors <= 4) { return };
     throw new Error('Too many websocket errors in a short period of time.');
   };
   const wsEventLogFunction = (url, eventType) => (err) => {
@@ -72,14 +87,15 @@ function WebSocket() {
     connect: (url, options) => {
       if (wsInstance) { webSocket.disconnect() };
       wsInstance = new ws(url, options);
-      wsInstance.on('open', pingPongFunction);
       wsInstance.on('open', errorResetFunction);
+      wsInstance.on('open', pingPongFunction(wsInstance));
       wsInstance.on('open', wsEventLogFunction(url, 'open'));
-      wsInstance.on('close', disconnectFunction);
+      wsInstance.on('close', closeFunction);
       wsInstance.on('close', wsEventLogFunction(url, 'close'));
       wsInstance.on('error', errorHandlerFunction);
       wsInstance.on('error', wsEventLogFunction(url, 'error'));
     },
+    close: closeFunction,
     disconnect: disconnectFunction,
     // Add function listener
     addOnOpen: (listener) => {
