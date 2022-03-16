@@ -36,8 +36,6 @@ async function sendRestCreateOrder(rest, params, errors = 0) {
   if (response.error) {
     if (errors >= 10) { throw response.error };
     if (response.error.type === 'request-timeout'
-      || response.error.type === 'post-only-reject'
-      || response.error.type === 'insufficient-funds'
       || response.error.type === 'request-not-accepted') {
       return sendRestCreateOrder(rest, params, errors + 1);
     }
@@ -54,8 +52,6 @@ async function sendRestUpdateOrder(rest, params, errors = 0) {
   if (response.error) {
     if (errors >= 10) { throw response.error };
     if (response.error.type === 'request-timeout'
-      || response.error.type === 'post-only-reject'
-      || response.error.type === 'insufficient-funds'
       || response.error.type === 'request-not-accepted') {
       return sendRestUpdateOrder(rest, params, errors + 1);
     }
@@ -290,7 +286,12 @@ function Fixer(settings) {
             if (shouldCreateFixOrder(qtyS, qtyB, positionQtyS, positionQtyB, settings)) {
               creating = true;
               creatingTimeout = setTimeout(() => { throw new Error('creatingTimeout') }, 10000);
-              sendRestCreateOrder(rest, getFixOrderCreate(qtyS, qtyB, type, positionQtyS, positionQtyB, ws, utils, settings));
+              try {
+                await sendRestCreateOrder(rest, getFixOrderCreate(qtyS, qtyB, type, positionQtyS, positionQtyB, ws, utils, settings));
+              } catch (error) {
+                if (error.type === 'post-only-reject') { creating = false }
+                else throw error;
+              }
             }
           } else if (order && !creating && !updating && !canceling && type === 'limit'
             && ((order.side === 'sell' && order.price > ws.orderBook.info.asks[0].price)
@@ -298,11 +299,21 @@ function Fixer(settings) {
             if (rest.updateOrder) {
               updating = true;
               updatingTimeout = setTimeout(() => { throw new Error('updatingTimeout') }, 10000);
-              sendRestUpdateOrder(rest, getFixOrderUpdate(ws, order));
+              try {
+                await sendRestUpdateOrder(rest, getFixOrderUpdate(ws, order));
+              } catch (error) {
+                if (error.type === 'post-only-reject' || error.type === 'order-not-found') { updating = false }
+                else throw error;
+              }
             } else {
               canceling = true;
               cancelingTimeout = setTimeout(() => { throw new Error('cancelingTimeout') }, 10000);
-              sendRestCancelOrder(rest, getFixOrderCancel(order));
+              try {
+                await sendRestCancelOrder(rest, getFixOrderCancel(order));
+              } catch (error) {
+                if (error.type === 'order-not-found') { canceling = false }
+                else throw error;
+              }
             }
           }
           if (!shouldCreateFixOrder(qtyS, qtyB, positionQtyS, positionQtyB, settings)) {
@@ -311,7 +322,7 @@ function Fixer(settings) {
             ws.orders.events.removeListener('executions', executionsFunc);
             ws.orders.events.removeListener('cancelations', cancelationsFunc);
           } else {
-            await wait(1000); main();
+            await wait(100); main();
           }
         })();
       });
