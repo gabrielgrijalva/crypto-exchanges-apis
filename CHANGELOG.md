@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.5.6] - 2022-03-17
+- Updated exchanges websockets events with new information.
 ## [1.5.5] - 2022-03-16
 - Corrected error handling in fixer implementation.
 ## [1.5.4] - 2022-03-15
