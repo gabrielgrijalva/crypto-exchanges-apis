@@ -17,24 +17,29 @@ const OrderBook = require('../../_shared-classes/order-book');
  */
 function createCreationUpdate(data) {
   const eventData = {};
+  eventData.event = 'creations-updates';
   eventData.id = data.clOrdId;
   eventData.side = data.side;
   eventData.price = +data.px;
   eventData.quantity = +data.sz;
+  eventData.timestamp = moment(+data.uTime).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
   return eventData;
 };
 function createExecution(data) {
   const eventData = {};
+  eventData.event = 'executions';
   eventData.id = data.clOrdId;
   eventData.side = data.side;
   eventData.price = +data.fillPx;
   eventData.quantity = +data.fillSz;
-  eventData.timestamp = moment(+data.fillTime).utc().format('YYYY-MM-DD HH:mm:ss');
+  eventData.timestamp = moment(+data.fillTime).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
   return eventData;
 };
 function createCancelation(data) {
   const eventData = {};
+  eventData.event = 'cancelations';
   eventData.id = data.clOrdId;
+  eventData.timestamp = moment(+data.uTime).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
   return eventData;
 };
 /** 
