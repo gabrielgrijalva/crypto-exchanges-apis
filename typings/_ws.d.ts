@@ -18,7 +18,16 @@ declare namespace WsN {
    * 
    * 
    */
+  type dataCreationsUpdates = {
+    event: 'creations-updates';
+    id: string;
+    side: 'sell' | 'buy';
+    price: number;
+    quantity: number;
+    timestamp: string;
+  }
   type dataExecutions = {
+    event: 'executions';
     id: string;
     side: 'sell' | 'buy';
     price: number;
@@ -26,13 +35,9 @@ declare namespace WsN {
     timestamp: string;
   }
   type dataCancelations = {
+    event: 'cancelations';
     id: string;
-  }
-  type dataCreationsUpdates = {
-    id: string;
-    side: 'sell' | 'buy';
-    price: number;
-    quantity: number;
+    timestamp: string;
   }
   type ordersEventEmitter = Events.EventEmitter & {
     // Emit 'event' functions
