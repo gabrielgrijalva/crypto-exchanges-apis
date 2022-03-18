@@ -204,7 +204,7 @@ function Ws(settings) {
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message.toString());
           console.log(messageParse);
-          if (!messageParse.arg || messageParse.arg.channel !== channel) { return };
+          if (messageParse.event === 'subscribe' || !messageParse.arg || messageParse.arg.channel !== channel) { return };
           const creationOrders = [];
           const executionOrders = [];
           const cancelationOrders = [];
@@ -279,7 +279,7 @@ function Ws(settings) {
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message.toString());
           console.log(messageParse);
-          if (!messageParse.arg || messageParse.arg.channel !== channel) { return };
+          if (messageParse.event === 'subscribe' || !messageParse.arg || messageParse.arg.channel !== channel) { return };
           const positionEvent = messageParse.data.find(v => v.instId === symbol);
           if (!positionEvent) { return };
           ws.position.info.pxS = positionEvent && +positionEvent.pos < 0 ? +positionEvent.avgPx : 0;
@@ -326,7 +326,7 @@ function Ws(settings) {
         webSocketMark.addOnMessage((message) => {
           const messageParse = JSON.parse(message.toString());
           console.log(messageParse);
-          if (!messageParse.arg || messageParse.arg.channel !== channelMark) { return };
+          if (messageParse.event === 'subscribe' || !messageParse.arg || messageParse.arg.channel !== channelMark) { return };
           const instrumentEvent = messageParse.data.find(v => v.instId === symbol);
           if (!instrumentEvent) { return };
           ws.liquidation.info.markPx = +instrumentEvent.markPx;
@@ -335,7 +335,7 @@ function Ws(settings) {
         webSocketPosition.addOnMessage((message) => {
           const messageParse = JSON.parse(message.toString());
           console.log(messageParse);
-          if (!messageParse.arg || messageParse.arg.channel !== channelPosition) { return };
+          if (messageParse.event === 'subscribe' || !messageParse.arg || messageParse.arg.channel !== channelPosition) { return };
           const positionEvent = messageParse.data.find(v => v.instId === symbol);
           if (!positionEvent) { return };
           ws.liquidation.info.pxS = positionEvent && +positionEvent.pos < 0 ? +positionEvent.avgPx : 0;
@@ -378,7 +378,7 @@ function Ws(settings) {
         // Order book functionality
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message.toString());
-          if (!messageParse.arg || messageParse.arg.channel !== channel) { return };
+          if (messageParse.event === 'subscribe' || !messageParse.arg || messageParse.arg.channel !== channel) { return };
           if (messageParse.action === 'snapshot') {
             return synchronizeOrderBookSnapshot(messageParse, ws.orderBook.info);
           }
