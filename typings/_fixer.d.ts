@@ -24,9 +24,9 @@ declare namespace FixerN {
     ws: Ws;
     rest: Rest;
     utils: Utils;
-    qtyS: number;
-    qtyB: number;
-    type: 'limit' | 'market';
+    fixPositionQtyS: number;
+    fixPositionQtyB: number;
+    fixPositionType: 'limit' | 'market';
   };
   /**
    * 
