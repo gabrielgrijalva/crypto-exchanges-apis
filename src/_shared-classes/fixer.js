@@ -142,7 +142,7 @@ function getFixOrderCreate(fixPositionQtyS, fixPositionQtyB, fixPositionType, cu
 /**
  * 
  * @param {import('../../typings/_ws').Ws} ws 
- * @param {import('../../typings/_ws').dataCreationsUpdates} order 
+ * @param {import('../../typings/_rest').createOrderParams} order 
  * @returns {import('../../typings/_rest').updateOrderParams}
  */
 function getFixOrderUpdate(ws, order) {
@@ -151,7 +151,7 @@ function getFixOrderUpdate(ws, order) {
 };
 /**
  * 
- * @param {import('../../typings/_ws').dataCreationsUpdates} order 
+ * @param {import('../../typings/_rest').createOrderParams} order 
  * @returns {import('../../typings/_rest').cancelOrderParams}
  */
 function getFixOrderCancel(order) {
@@ -163,24 +163,13 @@ function getFixOrderCancel(order) {
  * @param {number} fixPositionQtyB
  * @param {number} currentPositionQtyS 
  * @param {number} currentPositionQtyB 
- * @param {import('../../typings/settings')} settings 
  * @returns {boolean}
  */
-function shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB, settings) {
-  const instruType = settings.INSTRUMENT.TYPE;
-  const qtyPrecision = instruType === 'future' ? settings.INSTRUMENT.QUANTITY_PRECISION : settings.INSTRUMENT.BALANCE_PRECISION;
-  const fixQtyAbs = round.normal(fixPositionQtyB - fixPositionQtyS, qtyPrecision);
-  const positionQtyAbs = round.normal(currentPositionQtyB - currentPositionQtyS, qtyPrecision);
-  if (fixQtyAbs === positionQtyAbs) {
-    return false;
+function shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB) {
+  if (fixPositionQtyS === currentPositionQtyS && fixPositionQtyB === currentPositionQtyB) {
+    return true;
   }
-  const fixQtyDiffS = Math.abs(fixPositionQtyS - currentPositionQtyS);
-  const fixQtyDiffB = Math.abs(fixPositionQtyB - currentPositionQtyB);
-  const quantityMinDiff = settings.INSTRUMENT.QUANTITY_MIN * 0.50;
-  if (instruType === 'spot' && (fixQtyDiffS <= quantityMinDiff || fixQtyDiffB <= quantityMinDiff)) {
-    return false;
-  }
-  return true;
+  return false;
 }
 /**
  * 
@@ -223,12 +212,15 @@ function Fixer(settings) {
       const fixPositionQtyB = params.fixPositionQtyB;
       return new Promise(async resolve => {
         const currentPosition = await sendRestGetPosition(rest);
-        /** @type {import('../../typings/_ws').dataCreationsUpdates} */
+        /** @type {import('../../typings/_rest').createOrderParams} */
         let order = null;
+        /** @type {import('../../typings/_rest').createOrderParams} */
+        let creating = null;
+        /** @type {import('../../typings/_rest').updateOrderParams} */
+        let updating = null;
+        /** @type {import('../../typings/_rest').cancelOrderParams} */
+        let canceling = null;
         let orderQtyF = 0;
-        let creating = false;
-        let updating = false;
-        let canceling = false;
         let creatingTimeout = null;
         let updatingTimeout = null;
         let cancelingTimeout = null;
@@ -236,60 +228,81 @@ function Fixer(settings) {
         let currentPositionQtyB = currentPosition.qtyB;
         const creationsUpdatesFunc = (messages) => {
           console.log('creations-updates'); console.log(messages);
-          if (creating) {
-            creating = false;
-            clearTimeout(creatingTimeout);
-          };
-          if (updating) {
-            updating = false;
-            clearTimeout(updatingTimeout);
-          }
-          messages.forEach(v => order = v);
+          messages.forEach(message => {
+            if (creating && creating.id === message.id) {
+              order = creating;
+              creating = null;
+              clearTimeout(creatingTimeout);
+            };
+            if (updating && updating.id === message.id) {
+              order.price = message.price;
+              order.quantity = message.quantity;
+              updating = null;
+              clearTimeout(updatingTimeout);
+            }
+          });
         };
         ws.orders.events.on('creations-updates', creationsUpdatesFunc);
         const executionsFunc = (messages) => {
           console.log('executions'); console.log(messages);
-          for (let i = 0; messages[i]; i += 1) {
-            const message = messages[i];
+          messages.forEach(message => {
             if (message.id === order.id) {
               orderQtyF = round.normal(orderQtyF + message.quantity, settings.INSTRUMENT.QUANTITY_PRECISION);
-              currentPositionQtyS = round.normal(currentPositionQtyS + (message.side === 'sell' ? message.quantity : 0), settings.INSTRUMENT.QUANTITY_PRECISION);
-              currentPositionQtyB = round.normal(currentPositionQtyB + (message.side === 'buy' ? message.quantity : 0), settings.INSTRUMENT.QUANTITY_PRECISION);
+              if (order.direction === 'open') {
+                if (order.side === 'sell') {
+                  currentPositionQtyS = round.normal(currentPositionQtyS + message.quantity, settings.INSTRUMENT.QUANTITY_PRECISION);
+                }
+                if (order.side === 'buy') {
+                  currentPositionQtyB = round.normal(currentPositionQtyB + message.quantity, settings.INSTRUMENT.QUANTITY_PRECISION);
+                }
+              }
+              if (order.direction === 'close') {
+                if (order.side === 'sell') {
+                  currentPositionQtyB = round.normal(currentPositionQtyB - message.quantity, settings.INSTRUMENT.QUANTITY_PRECISION);
+                }
+                if (order.side === 'buy') {
+                  currentPositionQtyS = round.normal(currentPositionQtyS - message.quantity, settings.INSTRUMENT.QUANTITY_PRECISION);
+                }
+              }
             }
             if (orderQtyF >= order.quantity) {
               order = null;
               orderQtyF = 0;
-              creating = false;
-              updating = false;
-              canceling = false;
+              creating = null;
+              updating = null;
+              canceling = null;
               clearTimeout(creatingTimeout);
               clearTimeout(updatingTimeout);
               clearTimeout(cancelingTimeout);
             }
-          }
+          });
         };
         ws.orders.events.on('executions', executionsFunc);
         const cancelationsFunc = (messages) => {
           console.log('cancelations'); console.log(messages);
-          order = null;
-          orderQtyF = 0;
-          creating = false;
-          updating = false;
-          canceling = false;
-          clearTimeout(creatingTimeout);
-          clearTimeout(updatingTimeout);
-          clearTimeout(cancelingTimeout);
+          messages.forEach(message => {
+            if (message.id === order.id) {
+              order = null;
+              orderQtyF = 0;
+              creating = null;
+              updating = null;
+              canceling = null;
+              clearTimeout(creatingTimeout);
+              clearTimeout(updatingTimeout);
+              clearTimeout(cancelingTimeout);
+            }
+          });
         };
         ws.orders.events.on('cancelations', cancelationsFunc);
         (async function main() {
           if (!order && !creating && !updating && !canceling) {
-            if (shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB, settings)) {
-              creating = true;
+            if (shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB)) {
+              creating = getFixOrderCreate(fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, ws, utils, settings);
               creatingTimeout = setTimeout(() => { throw new Error('creatingTimeout') }, 10000);
               try {
-                await sendRestCreateOrder(rest, getFixOrderCreate(fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, ws, utils, settings));
+                await sendRestCreateOrder(rest, creating);
               } catch (error) {
-                if (error.type === 'post-only-reject') { creating = false }
+                if (error.type === 'post-only-reject') { creating = null }
                 else throw error;
               }
             }
@@ -297,26 +310,26 @@ function Fixer(settings) {
             && ((order.side === 'sell' && order.price > ws.orderBook.info.asks[0].price)
               || (order.side === 'buy' && order.price < ws.orderBook.info.bids[0].price))) {
             if (rest.updateOrder) {
-              updating = true;
+              updating = getFixOrderUpdate(ws, order);
               updatingTimeout = setTimeout(() => { throw new Error('updatingTimeout') }, 10000);
               try {
-                await sendRestUpdateOrder(rest, getFixOrderUpdate(ws, order));
+                await sendRestUpdateOrder(rest, updating);
               } catch (error) {
-                if (error.type === 'post-only-reject' || error.type === 'order-not-found') { updating = false }
+                if (error.type === 'post-only-reject' || error.type === 'order-not-found') { updating = null }
                 else throw error;
               }
             } else {
-              canceling = true;
+              canceling = getFixOrderCancel(order);
               cancelingTimeout = setTimeout(() => { throw new Error('cancelingTimeout') }, 10000);
               try {
-                await sendRestCancelOrder(rest, getFixOrderCancel(order));
+                await sendRestCancelOrder(rest, canceling);
               } catch (error) {
-                if (error.type === 'order-not-found') { canceling = false }
+                if (error.type === 'order-not-found') { canceling = null }
                 else throw error;
               }
             }
           }
-          if (!shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB, settings)) {
+          if (!shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB)) {
             resolve();
             ws.orders.events.removeListener('creations-updates', creationsUpdatesFunc);
             ws.orders.events.removeListener('executions', executionsFunc);
