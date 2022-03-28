@@ -163,13 +163,19 @@ function getFixOrderCancel(order) {
  * @param {number} fixPositionQtyB
  * @param {number} currentPositionQtyS 
  * @param {number} currentPositionQtyB 
+ * @param {import('../../typings/settings')} settings
  * @returns {boolean}
  */
-function shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB) {
+function shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB, settings) {
   if (fixPositionQtyS === currentPositionQtyS && fixPositionQtyB === currentPositionQtyB) {
-    return true;
+    return false;
   }
-  return false;
+  if (settings.INSTRUMENT.TYPE === 'spot'
+    && (Math.abs(fixPositionQtyS - currentPositionQtyS) < settings.INSTRUMENT.QUANTITY_MIN)
+    && (Math.abs(fixPositionQtyB - currentPositionQtyB) < settings.INSTRUMENT.QUANTITY_MIN)) {
+    return false;
+  }
+  return true;
 }
 /**
  * 
@@ -296,7 +302,7 @@ function Fixer(settings) {
         ws.orders.events.on('cancelations', cancelationsFunc);
         (async function main() {
           if (!order && !creating && !updating && !canceling) {
-            if (shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB)) {
+            if (shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB, settings)) {
               creating = getFixOrderCreate(fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, ws, utils, settings);
               creatingTimeout = setTimeout(() => { throw new Error('creatingTimeout') }, 10000);
               try {
@@ -329,7 +335,7 @@ function Fixer(settings) {
               }
             }
           }
-          if (!shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB)) {
+          if (!shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB, settings)) {
             resolve();
             ws.orders.events.removeListener('creations-updates', creationsUpdatesFunc);
             ws.orders.events.removeListener('executions', executionsFunc);
