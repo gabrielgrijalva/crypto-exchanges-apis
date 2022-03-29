@@ -287,7 +287,10 @@ function Fixer(settings) {
         const cancelationsFunc = (messages) => {
           console.log('cancelations'); console.log(messages);
           messages.forEach(message => {
-            if (message.id === order.id) {
+            if ((order && message.id === order.id)
+              || (creating && message.id === creating.id)
+              || (updating && message.id === updating.id)
+              || (canceling && message.id === canceling.id)) {
               order = null;
               orderQtyF = 0;
               creating = null;
