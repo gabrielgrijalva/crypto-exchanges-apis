@@ -311,24 +311,24 @@ function Rest(settings) {
      * 
      * 
      */
-    updateOrder: async (params) => {
-      const data = {};
-      data.cliOrdId = params.id;
-      if (params.price) {
-        data.limitPrice = params.price;
-      }
-      if (params.quantity) {
-        data.size = params.quantity - params.fQuantity;
-      }
-      const response = await request.private('POST', '/api/v3/editorder', data);
-      if (response.status >= 400
-        || response.data.error
-        || !response.data.editStatus
-        || response.data.editStatus.status !== 'edited') {
-        return handleResponseError(params, response.data);
-      }
-      return { data: params };
-    },
+    // updateOrder: async (params) => {
+    //   const data = {};
+    //   data.cliOrdId = params.id;
+    //   if (params.price) {
+    //     data.limitPrice = params.price;
+    //   }
+    //   if (params.quantity) {
+    //     data.size = params.quantity - params.fQuantity;
+    //   }
+    //   const response = await request.private('POST', '/api/v3/editorder', data);
+    //   if (response.status >= 400
+    //     || response.data.error
+    //     || !response.data.editStatus
+    //     || response.data.editStatus.status !== 'edited') {
+    //     return handleResponseError(params, response.data);
+    //   }
+    //   return { data: params };
+    // },
     /**
      * 
      * 
@@ -336,34 +336,34 @@ function Rest(settings) {
      * 
      * 
      */
-    updateOrders: async (params) => {
-      const data = {};
-      data.batchOrder = params.map(v => {
-        const orderData = {};
-        orderData.order = 'edit';
-        orderData.cliOrdId = v.id;
-        if (v.price) {
-          orderData.limitPrice = v.price;
-        }
-        if (v.quantity) {
-          orderData.size = v.quantity - v.fQuantity;
-        }
-        return orderData;
-      });
-      const dataStr = `json=${JSON.stringify(data)}`;
-      const response = await request.private('POST', '/api/v3/batchorder', dataStr);
-      if (response.status >= 400
-        || response.data.error
-        || !response.data.batchStatus) {
-        return params.map(v => handleResponseError(v, response.data));
-      }
-      return response.data.batchStatus.map((v, i) => {
-        if (v.status !== 'edited') {
-          return handleResponseError(params[i], v);
-        }
-        return { data: params[i] };
-      });
-    },
+    // updateOrders: async (params) => {
+    //   const data = {};
+    //   data.batchOrder = params.map(v => {
+    //     const orderData = {};
+    //     orderData.order = 'edit';
+    //     orderData.cliOrdId = v.id;
+    //     if (v.price) {
+    //       orderData.limitPrice = v.price;
+    //     }
+    //     if (v.quantity) {
+    //       orderData.size = v.quantity - v.fQuantity;
+    //     }
+    //     return orderData;
+    //   });
+    //   const dataStr = `json=${JSON.stringify(data)}`;
+    //   const response = await request.private('POST', '/api/v3/batchorder', dataStr);
+    //   if (response.status >= 400
+    //     || response.data.error
+    //     || !response.data.batchStatus) {
+    //     return params.map(v => handleResponseError(v, response.data));
+    //   }
+    //   return response.data.batchStatus.map((v, i) => {
+    //     if (v.status !== 'edited') {
+    //       return handleResponseError(params[i], v);
+    //     }
+    //     return { data: params[i] };
+    //   });
+    // },
     /**
      * 
      * 
