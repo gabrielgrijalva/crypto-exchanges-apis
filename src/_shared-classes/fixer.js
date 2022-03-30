@@ -77,6 +77,7 @@ async function sendRestCancelOrder(rest, params, errors = 0) {
 };
 /**
  * 
+ * @param {number} hedgePercentage
  * @param {number} fixPositionQtyS 
  * @param {number} fixPositionQtyB
  * @param {'limit' | 'market'} fixPositionType 
@@ -87,7 +88,7 @@ async function sendRestCancelOrder(rest, params, errors = 0) {
  * @param {import('../../typings/settings')} settings 
  * @returns {import('../../typings/_rest').createOrderParams}
  */
-function getFixOrderCreate(fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, ws, utils, settings) {
+function getFixOrderCreate(hedgePercentage, fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, ws, utils, settings) {
   /** @type {'sell' | 'buy'} */
   let side = 'sell';
   /** @type {number} */
@@ -100,25 +101,25 @@ function getFixOrderCreate(fixPositionQtyS, fixPositionQtyB, fixPositionType, cu
   // OPEN SELL
   if (fixPositionQtyS > currentPositionQtyS) {
     side = 'sell';
-    quantity = round.normal((fixPositionQtyS - currentPositionQtyS) / (type === 'spot' ? bestAsk : 1), settings.INSTRUMENT.QUANTITY_PRECISION);
+    quantity = round.normal(((fixPositionQtyS - currentPositionQtyS) / (type === 'spot' ? bestAsk : 1)) * hedgePercentage, settings.INSTRUMENT.QUANTITY_PRECISION);
     direction = 'open';
   }
   // CLOSE SELL
   if (fixPositionQtyS < currentPositionQtyS) {
     side = 'buy';
-    quantity = round.normal((currentPositionQtyS - fixPositionQtyS) / (type === 'spot' ? bestBid : 1), settings.INSTRUMENT.QUANTITY_PRECISION);
+    quantity = round.normal(((currentPositionQtyS - fixPositionQtyS) / (type === 'spot' ? bestBid : 1)) * hedgePercentage, settings.INSTRUMENT.QUANTITY_PRECISION);
     direction = 'close';
   }
   // OPEN BUY
   if (fixPositionQtyB > currentPositionQtyB) {
     side = 'buy';
-    quantity = round.normal(fixPositionQtyB - currentPositionQtyB, settings.INSTRUMENT.QUANTITY_PRECISION);
+    quantity = round.normal((fixPositionQtyB - currentPositionQtyB) * hedgePercentage, settings.INSTRUMENT.QUANTITY_PRECISION);
     direction = 'open';
   }
   // CLOSE BUY
   if (fixPositionQtyB < currentPositionQtyB) {
     side = 'sell';
-    quantity = round.normal(currentPositionQtyB - fixPositionQtyB, settings.INSTRUMENT.QUANTITY_PRECISION);
+    quantity = round.normal((currentPositionQtyB - fixPositionQtyB) * hedgePercentage, settings.INSTRUMENT.QUANTITY_PRECISION);
     direction = 'close';
   }
   if (!quantity) { return };
@@ -143,11 +144,14 @@ function getFixOrderCreate(fixPositionQtyS, fixPositionQtyB, fixPositionType, cu
  * 
  * @param {import('../../typings/_ws').Ws} ws 
  * @param {import('../../typings/_rest').createOrderParams} order 
+ * @param {import('../../typings/settings')} settings
  * @returns {import('../../typings/_rest').updateOrderParams}
  */
-function getFixOrderUpdate(ws, order) {
+function getFixOrderUpdate(ws, order, settings) {
   const price = order.side === 'sell' ? ws.orderBook.info.asks[0].price : ws.orderBook.info.bids[0].price;
-  return { id: order.id, price: price };
+  const quantity = settings.INSTRUMENT.TYPE === 'spot' && order.side === 'buy' ?
+    round.down((order.price * order.quantity) / price, settings.INSTRUMENT.QUANTITY_PRECISION) : order.quantity;
+  return { id: order.id, price: price, quantity: quantity };
 };
 /**
  * 
@@ -227,6 +231,7 @@ function Fixer(settings) {
         /** @type {import('../../typings/_rest').cancelOrderParams} */
         let canceling = null;
         let orderQtyF = 0;
+        let hedgePercentage = 1;
         let creatingTimeout = null;
         let updatingTimeout = null;
         let cancelingTimeout = null;
@@ -304,14 +309,16 @@ function Fixer(settings) {
         };
         ws.orders.events.on('cancelations', cancelationsFunc);
         (async function main() {
+          if (hedgePercentage < 0.80) { throw new Error('hedgePercentage less than 0.80') };
           if (!order && !creating && !updating && !canceling) {
             if (shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB, settings)) {
-              creating = getFixOrderCreate(fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, ws, utils, settings);
+              creating = getFixOrderCreate(hedgePercentage, fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, ws, utils, settings);
               creatingTimeout = setTimeout(() => { throw new Error('creatingTimeout') }, 10000);
               try {
                 await sendRestCreateOrder(rest, creating);
               } catch (error) {
                 if (error.type === 'post-only-reject') { creating = null }
+                else if (error.type === 'insufficient-funds') { creating = null; hedgePercentage -= 0.0050; }
                 else throw error;
               }
             }
@@ -319,12 +326,12 @@ function Fixer(settings) {
             && ((order.side === 'sell' && order.price > ws.orderBook.info.asks[0].price)
               || (order.side === 'buy' && order.price < ws.orderBook.info.bids[0].price))) {
             if (rest.updateOrder) {
-              updating = getFixOrderUpdate(ws, order);
+              updating = getFixOrderUpdate(ws, order, settings);
               updatingTimeout = setTimeout(() => { throw new Error('updatingTimeout') }, 10000);
               try {
                 await sendRestUpdateOrder(rest, updating);
               } catch (error) {
-                if (error.type === 'post-only-reject' || error.type === 'order-not-found') { updating = null }
+                if (error.type === 'post-only-reject' || error.type === 'order-not-found' || error.type === 'insufficient-funds') { updating = null }
                 else throw error;
               }
             } else {
