@@ -87,6 +87,7 @@ declare namespace RestN {
     current: number;
     estimated: number;
   };
+  type getInstrumentsSymbolsResponseData = string[];
   type getListenKeyResponseData = string;
   type orderBookOrder = { id: number, price: number, quantity: number };
   type getOrderBookResponseData = { asks: orderBookOrder[], bids: orderBookOrder[], lastUpdateId: number, };
@@ -191,6 +192,7 @@ declare namespace RestN {
     getLastPrice(): Promise<RestResponse<getLastPriceResponseData>>;
     getLiquidation(): Promise<RestResponse<getLiquidationResponseData>>;
     getFundingRates(): Promise<RestResponse<getFundingRatesResponseData>>;
+    getInstrumentsSymbols?(): Promise<RestResponse<getInstrumentsSymbolsResponseData>>
     /**
      * CUSTOM EXCHANGE FUNCTIONS
      */

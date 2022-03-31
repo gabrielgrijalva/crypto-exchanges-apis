@@ -387,6 +387,22 @@ function Rest(settings) {
       const fundings = { current, estimated, };
       return { data: fundings };
     },
+    /**
+     * 
+     * 
+     * GET INSTRUMENTS SYMBOLS
+     * 
+     * 
+     */
+    getInstrumentsSymbols: async () => {
+      const data = {};
+      data.currency = settings.ASSET;
+      const response = await request.public('GET', '/api/v2/public/get_instruments', data);
+      if (response.status >= 400) {
+        return handleResponseError({}, response.data);
+      }
+      return response.data.result.map(v => v.instrument_name);
+    },
   };
   return rest;
 };
