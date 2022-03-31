@@ -16,7 +16,7 @@ type settings = {
   API_SECRET?: string,
   API_PASSPHRASE?: string,
   INSTRUMENT?: {
-    TYPE?: 'spot' | 'future',
+    TYPE?: 'spot' | 'future' | 'option',
     BALANCE_TYPE?: 'base' | 'quote',
     QUANTITY_TYPE?: 'base' | 'quote',
     PRICE_STEP?: number,
