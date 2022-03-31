@@ -76,7 +76,7 @@ function Utils(settings) {
           return (px, qty, rnd) => round[rnd](qty, QUANTITY_PRECISION);
         }
       }
-      if (INSTRUMENT_TYPE === 'future') {
+      if (INSTRUMENT_TYPE === 'future' || INSTRUMENT_TYPE === 'option') {
         return (px, qty, rnd) => round[rnd](qty, QUANTITY_PRECISION);
       }
       throw new Error('Could not find function of getCloseOrderQtyFromOpenPosition');
@@ -97,7 +97,7 @@ function Utils(settings) {
           return (px, qty, rnd) => round[rnd](qty, QUANTITY_PRECISION);
         }
       }
-      if (INSTRUMENT_TYPE === 'future') {
+      if (INSTRUMENT_TYPE === 'future' || INSTRUMENT_TYPE === 'option') {
         return (px, qty, rnd) => round[rnd](qty, QUANTITY_PRECISION);
       }
       throw new Error('Could not find function of getOpenPositionQtyFromOpenExecution');
@@ -130,7 +130,7 @@ function Utils(settings) {
           }
         }
       }
-      if (INSTRUMENT_TYPE === 'future') {
+      if (INSTRUMENT_TYPE === 'future' || INSTRUMENT_TYPE === 'option') {
         if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
           return (qty, side, entPx, extPx, entFee, extFee) => {
             if (!qty) { return 0 };
@@ -296,7 +296,7 @@ function Utils(settings) {
           }
         }
       }
-      if (INSTRUMENT_TYPE === 'future') {
+      if (INSTRUMENT_TYPE === 'future' || INSTRUMENT_TYPE === 'option') {
         if (BALANCE_TYPE === 'base' && QUANTITY_TYPE === 'base') {
           return (px, qty) => {
             if (!qty) { return 0 };
@@ -340,7 +340,7 @@ function Utils(settings) {
           }
         }
       }
-      if (INSTRUMENT_TYPE === 'future') {
+      if (INSTRUMENT_TYPE === 'future' || INSTRUMENT_TYPE === 'option') {
         if (QUANTITY_TYPE === 'base') {
           return (px, qty) => {
             if (!qty) { return 0 };
@@ -378,7 +378,7 @@ function Utils(settings) {
           }
         }
       }
-      if (INSTRUMENT_TYPE === 'future') {
+      if (INSTRUMENT_TYPE === 'future' || INSTRUMENT_TYPE === 'option') {
         if (QUANTITY_TYPE === 'base') {
           return (px, qty) => {
             if (!qty) { return 0 };
