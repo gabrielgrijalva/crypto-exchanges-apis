@@ -113,8 +113,8 @@ function connectWebSocket(channel, method, webSocket, settings) {
         webSocket.removeOnMessage(connectOnMessageFunction);
       };
     };
-    webSocket.addOnOpen(connectOnOpenFunction);
-    webSocket.addOnMessage(connectOnMessageFunction);
+    webSocket.addOnOpen(connectOnOpenFunction, false);
+    webSocket.addOnMessage(connectOnMessageFunction, false);
   });
 };
 /**

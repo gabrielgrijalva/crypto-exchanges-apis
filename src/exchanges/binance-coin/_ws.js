@@ -57,7 +57,7 @@ function connectWebSocket(stream, webSocket, settings) {
       clearTimeout(connectTimeout);
       webSocket.removeOnOpen(connectFunction);
     };
-    webSocket.addOnOpen(connectFunction);
+    webSocket.addOnOpen(connectFunction, false);
   });
 };
 /**

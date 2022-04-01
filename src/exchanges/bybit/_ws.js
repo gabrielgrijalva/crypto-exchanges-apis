@@ -87,8 +87,8 @@ function connectWebSocket(topic, webSocket, settings) {
         }
       }
     };
-    webSocket.addOnOpen(connnectOnOpenFunction);
-    webSocket.addOnMessage(connectOnMessageFunction);
+    webSocket.addOnOpen(connnectOnOpenFunction, false);
+    webSocket.addOnMessage(connectOnMessageFunction, false);
   });
 };
 /**

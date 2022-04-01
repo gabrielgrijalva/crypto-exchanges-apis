@@ -96,8 +96,8 @@ function connectWebSocket(type, symbol, channel, webSocket, settings) {
         webSocket.removeOnMessage(connectOnMessageFunction);
       }
     };
-    webSocket.addOnOpen(connnectOnOpenFunction);
-    webSocket.addOnMessage(connectOnMessageFunction);
+    webSocket.addOnOpen(connnectOnOpenFunction, false);
+    webSocket.addOnMessage(connectOnMessageFunction, false);
   });
 };
 /**
