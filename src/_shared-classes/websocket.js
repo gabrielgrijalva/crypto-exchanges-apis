@@ -108,20 +108,20 @@ function WebSocket() {
     close: closeFunction,
     disconnect: disconnectFunction,
     // Add function listener
-    addOnOpen: (listener) => {
-      onOpenFunctions.push(listener);
+    addOnOpen: (listener, persistent = true) => {
+      persistent ? onOpenFunctions.push(listener) : null;
       wsInstance ? wsInstance.on('open', listener) : null;
     },
-    addOnClose: (listener) => {
-      onCloseFunctions.push(listener);
+    addOnClose: (listener, persistent = true) => {
+      persistent ? onCloseFunctions.push(listener) : null;
       wsInstance ? wsInstance.on('close', listener) : null;
     },
-    addOnError: (listener) => {
-      onErrorFunctions.push(listener);
+    addOnError: (listener, persistent = true) => {
+      persistent ? onErrorFunctions.push(listener) : null;
       wsInstance ? wsInstance.on('error', listener) : null;
     },
-    addOnMessage: (listener) => {
-      onMessageFunctions.push(listener);
+    addOnMessage: (listener, persistent = true) => {
+      persistent ? onMessageFunctions.push(listener) : null;
       wsInstance ? wsInstance.on('message', listener) : null;
     },
     // Remove function listener

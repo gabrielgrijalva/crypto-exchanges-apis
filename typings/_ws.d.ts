@@ -147,10 +147,10 @@ declare namespace WsN {
     close(): void,
     disconnect(): void;
     // Add function listener;
-    addOnOpen(listener: () => void): void;
-    addOnClose(listener: () => void): void;
-    addOnError(listener: (error: string) => void): void;
-    addOnMessage(listener: (message: string) => void): void;
+    addOnOpen(listener: () => void, persistent: boolen): void;
+    addOnClose(listener: () => void, persistent: boolen): void;
+    addOnError(listener: (error: string) => void, persistent: boolen): void;
+    addOnMessage(listener: (message: string) => void, persistent: boolen): void;
     // Remove function listener;
     removeOnOpen(listener: () => void): void;
     removeOnClose(listener: () => void): void;
