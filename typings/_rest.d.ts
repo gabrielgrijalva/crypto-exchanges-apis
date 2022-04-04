@@ -77,6 +77,9 @@ declare namespace RestN {
     fQuantity?: number;
   }
   type updateOrdersParams = updateOrderParams[];
+  type getEquityParams = {
+    asset: string;
+  }
   type getCandlesParams = {
     start: string;
     symbol: string;
@@ -88,14 +91,17 @@ declare namespace RestN {
   type getLastPriceParams = {
     symbol: string;
   }
+  type getLiquidationParams = {
+    symbol: string;
+  }
   type getFundingRatesParams = {
     symbol: string;
   }
-  type getOrderBookParams = {
+  type _getOrderBookParams = {
     symbol: string;
   }
-  type params = cancelOrderParams | cancelOrdersAllParams | updateOrderParams | createOrderParams | getPositionParams
-    | getLastPriceParams | getFundingRatesParams | updateOrdersParams | cancelOrdersParams | createOrdersParams | getOrderBookParams | null;
+  type params = createOrderParams | createOrdersParams | cancelOrderParams | cancelOrdersParams | cancelOrdersAllParams | updateOrderParams | updateOrdersParams
+    | getEquityParams | getCandlesParams | getPositionParams | getLastPriceParams | getLiquidationParams | getFundingRatesParams | _getOrderBookParams | null;
   /**
    * 
    * 
@@ -135,9 +141,9 @@ declare namespace RestN {
     estimated: number;
   };
   type getInstrumentsSymbolsResponseData = string[];
-  type getListenKeyResponseData = string;
-  type orderBookOrder = { id: number, price: number, quantity: number };
-  type getOrderBookResponseData = { asks: orderBookOrder[], bids: orderBookOrder[], lastUpdateId: number, };
+  type _getListenKeyResponseData = string;
+  type _orderBookOrder = { id: number, price: number, quantity: number };
+  type _getOrderBookResponseData = { asks: _orderBookOrder[], bids: _orderBookOrder[], lastUpdateId: number, };
   /**
    * 
    * 
@@ -218,7 +224,7 @@ declare namespace RestN {
      */
     cancelOrder(params: cancelOrderParams): Promise<RestResponse<cancelOrderResponseData>>;
     cancelOrders(params: cancelOrdersParams): Promise<RestResponse<cancelOrderResponseData>[]>;
-    cancelOrdersAll(): Promise<RestResponse<cancelOrdersAllResponseData>>;
+    cancelOrdersAll(params: cancelOrdersAllParams): Promise<RestResponse<cancelOrdersAllResponseData>>;
     /**
      * UPDATE FUNCTIONS
      */
@@ -227,18 +233,18 @@ declare namespace RestN {
     /**
      * INFORMATION FUNCTIONS
      */
-    getEquity(): Promise<RestResponse<getEquityResponseData>>;
+    getEquity(params: getEquityParams): Promise<RestResponse<getEquityResponseData>>;
     getCandles(params: getCandlesParams): Promise<RestResponse<getCandlesResponseData>>;
-    getPosition(): Promise<RestResponse<getPositionResponseData>>;
-    getLastPrice(): Promise<RestResponse<getLastPriceResponseData>>;
-    getLiquidation(): Promise<RestResponse<getLiquidationResponseData>>;
-    getFundingRates(): Promise<RestResponse<getFundingRatesResponseData>>;
-    getInstrumentsSymbols?(): Promise<RestResponse<getInstrumentsSymbolsResponseData>>
+    getPosition(params: getPositionParams): Promise<RestResponse<getPositionResponseData>>;
+    getLastPrice(params: getLastPriceParams): Promise<RestResponse<getLastPriceResponseData>>;
+    getLiquidation(params: getLiquidationParams): Promise<RestResponse<getLiquidationResponseData>>;
+    getFundingRates(params: getFundingRatesParams): Promise<RestResponse<getFundingRatesResponseData>>;
+    getInstrumentsSymbols(): Promise<RestResponse<getInstrumentsSymbolsResponseData>>
     /**
      * CUSTOM EXCHANGE FUNCTIONS
      */
-    _getListenKey?(): Promise<RestResponse<getListenKeyResponseData>> // binance-coin
-    _getOrderBook?(): Promise<RestResponse<getOrderBookResponseData>> // binance-coint
+    _getListenKey?(): Promise<RestResponse<_getListenKeyResponseData>> // binance-coin
+    _getOrderBook?(params: _getOrderBookParams): Promise<RestResponse<_getOrderBookResponseData>> // binance-coin
   }
 }
 export = RestN;
