@@ -343,16 +343,16 @@ function Ws(settings) {
       info: null,
       events: null,
       connect: async (params) => {
+        const webSocket = WebSocket('deribit:order-book:order-book');
         ws.orderBook.info = OrderBook();
         if (params && params.type === 'server') {
           ws.orderBook.info._createServer(params);
         }
         if (params && params.type === 'client') {
-          ws.orderBook.info._connectClient(params); return;
+          ws.orderBook.info._connectClient(webSocket, params); return;
         }
         // Connect websocket
         const channel = `book.${settings.SYMBOL}.100ms`;
-        const webSocket = WebSocket('deribit:order-book:order-book');
         await connectWebSocket(channel, 'public', webSocket, settings);
         // Order book functionality
         let prevChangeId = null;
