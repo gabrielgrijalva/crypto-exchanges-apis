@@ -162,10 +162,10 @@ function Ws(settings) {
         ws.orders.events = new Events.EventEmitter();
         // Orders websocket
         const topicOrders = 'order';
-        const webSocketOrders = WebSocket();
+        const webSocketOrders = WebSocket('bybit:orders:orders');
         // Executions websocket
         const topicExecutions = 'execution';
-        const webSocketExecutions = WebSocket();
+        const webSocketExecutions = WebSocket('bybit:orders:executions');
         await Promise.all([
           connectWebSocket(topicOrders, webSocketOrders, settings),
           connectWebSocket(topicExecutions, webSocketExecutions, settings),
@@ -230,7 +230,7 @@ function Ws(settings) {
         /** @type {import('../../../typings/_ws').positionEventEmitter} */
         ws.position.events = new Events.EventEmitter();
         const topic = 'position';
-        const webSocket = WebSocket();
+        const webSocket = WebSocket('bybit:position:position');
         await connectWebSocket(topic, webSocket, settings);
         // Load rest info
         const positionRestData = (await rest.getPosition()).data;
@@ -268,10 +268,10 @@ function Ws(settings) {
         ws.liquidation.events = new Events.EventEmitter();
         // Instrument websocket
         const topicInstrument = `instrument_info.100ms.${settings.SYMBOL}`;
-        const webSocketInstrument = WebSocket();
+        const webSocketInstrument = WebSocket('bybit:liquidation:instrument');
         // Position websocket
         const topicPosition = 'position';
-        const webSocketPosition = WebSocket();
+        const webSocketPosition = WebSocket('bybit:liquidation:position');
         await Promise.all([
           connectWebSocket(topicInstrument, webSocketInstrument, settings),
           connectWebSocket(topicPosition, webSocketPosition, settings),
@@ -332,7 +332,7 @@ function Ws(settings) {
         }
         // Connect websocket
         const topic = `orderBook_200.100ms.${settings.SYMBOL}`;
-        const webSocket = WebSocket();
+        const webSocket = WebSocket('bybit:order-book:order-book');
         await connectWebSocket(topic, webSocket, settings);
         // Order book functionality
         webSocket.addOnMessage((message) => {

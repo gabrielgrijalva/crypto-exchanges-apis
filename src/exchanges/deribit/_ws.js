@@ -184,10 +184,10 @@ function Ws(settings) {
         ws.orders.events = new Events.EventEmitter();
         // Open orders websocket
         const channelOpenOrders = `user.orders.${settings.SYMBOL}.raw`;
-        const webSocketOpenOrders = WebSocket();
+        const webSocketOpenOrders = WebSocket('deribit:orders:orders');
         // Executions websocket
         const channelExecutions = `user.trades.${settings.SYMBOL}.raw`;
-        const webSocketExecutions = WebSocket();
+        const webSocketExecutions = WebSocket('deribit:orders:executions');
         await Promise.all([
           connectWebSocket(channelOpenOrders, 'private', webSocketOpenOrders, settings),
           connectWebSocket(channelExecutions, 'private', webSocketExecutions, settings),
@@ -239,7 +239,7 @@ function Ws(settings) {
         /** @type {import('../../../typings/_ws').positionEventEmitter} */
         ws.position.events = new Events.EventEmitter();
         const channel = `user.changes.${settings.SYMBOL}.raw`;
-        const webSocket = WebSocket();
+        const webSocket = WebSocket('deribit:position:position');
         await connectWebSocket(channel, 'private', webSocket, settings);
         // Load rest info
         const positionRestData = (await rest.getPosition()).data;
@@ -277,13 +277,13 @@ function Ws(settings) {
         ws.liquidation.events = new Events.EventEmitter();
         // Instrument websocket
         const channelInstrument = `ticker.${settings.SYMBOL}.raw`;
-        const webSocketInstrument = WebSocket();
+        const webSocketInstrument = WebSocket('deribit:liquidation:instrument');
         // Position websocket
         const channelPosition = `user.changes.${settings.SYMBOL}.raw`;
-        const webSocketPosition = WebSocket();
+        const webSocketPosition = WebSocket('deribit:liquidation:position');
         // Portfolio websocket
         const channelPortfolio = `user.portfolio.${settings.ASSET}`;
-        const webSocketPortfolio = WebSocket();
+        const webSocketPortfolio = WebSocket('deribit:liquidation:portfolio');
         await Promise.all([
           connectWebSocket(channelInstrument, 'public', webSocketInstrument, settings),
           connectWebSocket(channelPosition, 'private', webSocketPosition, settings),
@@ -352,7 +352,7 @@ function Ws(settings) {
         }
         // Connect websocket
         const channel = `book.${settings.SYMBOL}.100ms`;
-        const webSocket = WebSocket();
+        const webSocket = WebSocket('deribit:order-book:order-book');
         await connectWebSocket(channel, 'public', webSocket, settings);
         // Order book functionality
         let prevChangeId = null;

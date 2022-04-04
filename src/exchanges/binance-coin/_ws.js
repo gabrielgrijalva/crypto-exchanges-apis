@@ -137,7 +137,7 @@ function Ws(settings) {
       events: new Events.EventEmitter(),
       connect: async () => {
         const stream = (await rest._getListenKey()).data;
-        const webSocket = WebSocket();
+        const webSocket = WebSocket('binance-coin:orders:orders');
         setInterval(() => rest._getListenKey(), 1800000);
         await connectWebSocket(stream, webSocket, settings);
         webSocket.addOnMessage((message) => {
@@ -171,7 +171,7 @@ function Ws(settings) {
       events: new Events.EventEmitter(),
       connect: async () => {
         const stream = (await rest._getListenKey()).data;
-        const webSocket = WebSocket();
+        const webSocket = WebSocket('binance-coin:position:position');
         setInterval(() => rest._getListenKey(), 1800000);
         await connectWebSocket(stream, webSocket, settings);
         // Load rest info
@@ -208,10 +208,10 @@ function Ws(settings) {
       connect: async () => {
         // Mark price websocket
         const streamMarkPrice = `${settings.SYMBOL.toLowerCase()}@markPrice@1s`;
-        const webSocketMarkPrice = WebSocket();
+        const webSocketMarkPrice = WebSocket('binance-coin:liquidation:mark-price');
         // Position websocket
         const streamPosition = (await rest._getListenKey()).data;
-        const webSocketPosition = WebSocket();
+        const webSocketPosition = WebSocket('binance-coin:liquidation:position');
         setInterval(() => rest._getListenKey(), 1800000);
         await Promise.all([
           connectWebSocket(streamMarkPrice, webSocketMarkPrice, settings),
@@ -277,7 +277,7 @@ function Ws(settings) {
         }
         // Connect websocket
         const stream = `${settings.SYMBOL.toLowerCase()}@depth`;
-        const webSocket = WebSocket();
+        const webSocket = WebSocket('binance-coin:order-book:order-book');
         await connectWebSocket(stream, webSocket, settings);
         // Order book functionality
         const flags = { synchronized: false, synchronizing: false, snapshot: null };

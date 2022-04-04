@@ -153,7 +153,7 @@ function getConnectClient(asks, bids) {
     const port = orderBookClientParams.port;
     const host = orderBookClientParams.host;
     const url = `ws://${host}:${port}`;
-    const webSocket = WebSocket();
+    const webSocket = WebSocket('order-book-client');
     webSocket.connect(url);
     webSocket.addOnMessage((message) => {
       const messageParsed = JSON.parse(message);

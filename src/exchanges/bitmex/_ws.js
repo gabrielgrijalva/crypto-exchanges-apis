@@ -155,7 +155,7 @@ function Ws(settings) {
         /** @type {import('../../../typings/_ws').ordersEventEmitter} */
         ws.orders.events = new Events.EventEmitter();
         const topic = `execution:${settings.SYMBOL}`;
-        const webSocket = WebSocket();
+        const webSocket = WebSocket('bitmex:orders:orders');
         await connectWebSocket(topic, webSocket, settings);
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message);
@@ -205,7 +205,7 @@ function Ws(settings) {
         /** @type {import('../../../typings/_ws').positionEventEmitter} */
         ws.position.events = new Events.EventEmitter();
         const topic = `position:${settings.SYMBOL}`;
-        const webSocket = WebSocket();
+        const webSocket = WebSocket('bitmex:position:position');
         await connectWebSocket(topic, webSocket, settings);
         // Load rest info
         const positionRestData = (await rest.getPosition()).data;
@@ -243,10 +243,10 @@ function Ws(settings) {
         ws.liquidation.events = new Events.EventEmitter();
         // Instrument websocket
         const topicInstrument = `instrument:${settings.SYMBOL}`;
-        const webSocketInstrument = WebSocket();
+        const webSocketInstrument = WebSocket('bitmex:liquidation:instrument');
         // Position websocket
         const topicPosition = `position:${settings.SYMBOL}`;
-        const webSocketPosition = WebSocket();
+        const webSocketPosition = WebSocket('bitmex:liquidation:position');
         await Promise.all([
           connectWebSocket(topicInstrument, webSocketInstrument, settings),
           connectWebSocket(topicPosition, webSocketPosition, settings),
@@ -305,7 +305,7 @@ function Ws(settings) {
         }
         // Connect websocket
         const topic = `orderBookL2:${settings.SYMBOL}`;
-        const webSocket = WebSocket();
+        const webSocket = WebSocket('bitmex:order-book:order-book');
         await connectWebSocket(topic, webSocket, settings);
         // Order book functionality
         webSocket.addOnMessage((message) => {

@@ -199,7 +199,7 @@ function Ws(settings) {
         // Orders websocket
         const symbol = settings.SYMBOL;
         const channel = 'orders';
-        const webSocket = WebSocket();
+        const webSocket = WebSocket('okex:orders:orders');
         await connectWebSocket('private', symbol, channel, webSocket, settings);
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message.toString());
@@ -270,7 +270,7 @@ function Ws(settings) {
         ws.position.events = new Events.EventEmitter();
         const symbol = settings.SYMBOL;
         const channel = 'positions';
-        const webSocket = WebSocket();
+        const webSocket = WebSocket('okex:position:position');
         await connectWebSocket('private', symbol, channel, webSocket, settings);
         // Load rest info
         const positionRestData = (await rest.getPosition()).data;
@@ -309,10 +309,10 @@ function Ws(settings) {
         const symbol = settings.SYMBOL;
         // Instrument websocket
         const channelMark = 'mark-price';
-        const webSocketMark = WebSocket();
+        const webSocketMark = WebSocket('okex:liquidation:mark-price');
         // Position websocket
         const channelPosition = 'positions';
-        const webSocketPosition = WebSocket();
+        const webSocketPosition = WebSocket('okex:liquidation:position');
         await Promise.all([
           connectWebSocket('public', symbol, channelMark, webSocketMark, settings),
           connectWebSocket('private', symbol, channelPosition, webSocketPosition, settings),
@@ -373,7 +373,7 @@ function Ws(settings) {
         // Connect websocket
         const channel = 'books-l2-tbt';
         const symbol = settings.SYMBOL;
-        const webSocket = WebSocket();
+        const webSocket = WebSocket('okex:order-book:order-book');
         await connectWebSocket('public', symbol, channel, webSocket, settings);
         // Order book functionality
         webSocket.addOnMessage((message) => {

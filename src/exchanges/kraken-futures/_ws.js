@@ -166,10 +166,10 @@ function Ws(settings) {
         ws.orders.events = new Events.EventEmitter();
         // Open orders websocket
         const feedOpenOrders = 'open_orders';
-        const webSocketOpenOrders = WebSocket();
+        const webSocketOpenOrders = WebSocket('kraken-futures:orders:orders');
         // Executions websocket
         const feedFills = 'fills';
-        const webSocketFills = WebSocket();
+        const webSocketFills = WebSocket('kraken-futures:orders:executions');
         await Promise.all([
           connectWebSocket(feedOpenOrders, null, webSocketOpenOrders, settings),
           connectWebSocket(feedFills, null, webSocketFills, settings),
@@ -229,7 +229,7 @@ function Ws(settings) {
         /** @type {import('../../../typings/_ws').positionEventEmitter} */
         ws.position.events = new Events.EventEmitter();
         const feed = 'open_positions';
-        const webSocket = WebSocket();
+        const webSocket = WebSocket('kraken-futures:position:position');
         await connectWebSocket(feed, null, webSocket, settings);
         // Load rest info
         const positionRestData = (await rest.getPosition()).data;
@@ -274,10 +274,10 @@ function Ws(settings) {
         // Ticker websocket
         const feedTicker = 'ticker';
         const symbolTicker = settings.SYMBOL;
-        const webSocketTicker = WebSocket();
+        const webSocketTicker = WebSocket('kraken-futures:liquidation:instrument');
         // Position websocket
         const feedPosition = 'open_positions';
-        const webSocketPosition = WebSocket();
+        const webSocketPosition = WebSocket('kraken-futures:liquidation:position');
         await Promise.all([
           connectWebSocket(feedTicker, symbolTicker, webSocketTicker, settings),
           connectWebSocket(feedPosition, null, webSocketPosition, settings),
@@ -344,7 +344,7 @@ function Ws(settings) {
         // Connect websocket
         const feed = 'book';
         const symbol = settings.SYMBOL;
-        const webSocket = WebSocket();
+        const webSocket = WebSocket('kraken-futures:order-book:order-book');
         await connectWebSocket(feed, symbol, webSocket, settings);
         // Order book functionality
         webSocket.addOnMessage((message) => {
