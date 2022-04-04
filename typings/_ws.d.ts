@@ -121,7 +121,7 @@ declare namespace WsN {
     bids: orderBookOrder[];
     // Private data
     _createServer(params: orderBookServerParams): void;
-    _connectClient(params: orderBookClientParams): void;
+    _connectClient(webSocket: WebSocket, params: orderBookClientParams): void;
     _deleteOrderByIdAsk(update: orderBookOrder): void;
     _deleteOrderByIdBid(update: orderBookOrder): void;
     _updateOrderByIdAsk(update: orderBookOrder): void;

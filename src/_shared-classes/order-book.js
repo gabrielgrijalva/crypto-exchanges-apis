@@ -1,6 +1,5 @@
 const ws = require('ws');
 const moment = require('moment');
-const WebSocket = require('./websocket');
 /**
   * 
   * 
@@ -147,13 +146,13 @@ function getCreateServer(asks, bids) {
  */
 function getConnectClient(asks, bids) {
   /**
+   * @param {import('../../typings/_ws').WebSocket} webSocket
    * @param {import('../../typings/_ws').orderBookClientParams} orderBookClientParams 
    */
-  function connectClient(orderBookClientParams) {
+  function connectClient(webSocket, orderBookClientParams) {
     const port = orderBookClientParams.port;
     const host = orderBookClientParams.host;
     const url = `ws://${host}:${port}`;
-    const webSocket = WebSocket('order-book-client');
     webSocket.connect(url);
     webSocket.addOnMessage((message) => {
       const messageParsed = JSON.parse(message);
