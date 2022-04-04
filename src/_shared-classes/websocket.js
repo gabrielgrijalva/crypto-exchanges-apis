@@ -2,7 +2,11 @@ const ws = require('ws');
 const moment = require('moment');
 const wait = require('../_utils/wait');
 
-function WebSocket() {
+/**
+ * 
+ * @param {string} name 
+ */
+function WebSocket(name) {
   /** @type {ws.WebSocket} */
   let wsInstance = null;
   let webSocketErrors = 0;
@@ -69,9 +73,9 @@ function WebSocket() {
     if (webSocketErrors <= 4) { return };
     throw new Error('Too many websocket errors in a short period of time.');
   };
-  const wsEventLogFunction = (url, eventType) => (err) => {
+  const wsEventLogFunction = (eventType) => (err) => {
     const timestamp = moment.utc().format('YYYY-MM-DD HH:mm:ss');
-    console.log(`Websocket ${eventType} event: ${timestamp} (${url})`);
+    console.log(`Websocket ${eventType} event: ${timestamp} (${name})`);
     if (err) console.log(err);
   }
   /**
@@ -94,11 +98,11 @@ function WebSocket() {
       // Default Functions
       wsInstance.on('open', errorResetFunction);
       wsInstance.on('open', pingPongFunction(wsInstance));
-      wsInstance.on('open', wsEventLogFunction(url, 'open'));
+      wsInstance.on('open', wsEventLogFunction('open'));
       wsInstance.on('close', closeFunction);
-      wsInstance.on('close', wsEventLogFunction(url, 'close'));
+      wsInstance.on('close', wsEventLogFunction('close'));
       wsInstance.on('error', errorHandlerFunction);
-      wsInstance.on('error', wsEventLogFunction(url, 'error'));
+      wsInstance.on('error', wsEventLogFunction('error'));
       // WebSocket added functions
       onOpenFunctions.forEach(v => wsInstance.on('open', v));
       onCloseFunctions.forEach(v => wsInstance.on('close', v));
