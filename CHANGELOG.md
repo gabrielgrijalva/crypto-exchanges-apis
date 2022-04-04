@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - 2022-04-04
+- Made general improvements and error corrections.
 ## [1.5.9] - 2022-03-30
 - Removed kraken-futures update functionality.
 ## [1.5.8] - 2022-03-30
