@@ -80,9 +80,9 @@ function getCandleResolution(interval) {
  * 
  */
 /**
- * @param {import('../../../typings/settings')} settings 
+ * @param {import('../../../typings/_rest').restSettings} restSettings 
  */
-function getPublicFunction(settings) {
+function getPublicFunction(restSettings) {
   /** 
    * @this {import('../../../typings/_rest').Request} 
    * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
@@ -99,9 +99,9 @@ function getPublicFunction(settings) {
   return public;
 };
 /**
- * @param {import('../../../typings/settings')} settings 
+ * @param {import('../../../typings/_rest').restSettings} restSettings 
  */
-function getPrivateFunction(settings) {
+function getPrivateFunction(restSettings) {
   /** 
    * @this {import('../../../typings/_rest').Request} 
    * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
@@ -114,12 +114,12 @@ function getPrivateFunction(settings) {
     const dataStringified = typeof data === 'string' ? data : qs.stringify(data);
     const digest = dataStringified + nonce + path;
     const hash = crypto.createHash('sha256').update(utf8.encode(digest)).digest();
-    const decoded = Buffer.from(settings.API_SECRET, 'base64');
+    const decoded = Buffer.from(restSettings.API_SECRET, 'base64');
     const authent = crypto.createHmac('sha512', decoded).update(hash).digest('base64');
     const requestSendParams = {
-      url: `${settings.REST.URL}${path}?${encodeURI(dataStringified)}`,
+      url: `${restSettings.URL}${path}?${encodeURI(dataStringified)}`,
       method: method,
-      headers: { 'Accept': 'application/json', 'APIKey': settings.API_KEY, 'Nonce': nonce, 'Authent': authent },
+      headers: { 'Accept': 'application/json', 'APIKey': restSettings.API_KEY, 'Nonce': nonce, 'Authent': authent },
     };
     const response = await this.send(requestSendParams);
     return response;
@@ -138,19 +138,20 @@ function getPrivateFunction(settings) {
  * 
  */
 /** 
- * @param {import('../../../typings/settings')} settings
+ * @param {import('../../../typings/_rest').restSettings} restSettings
  */
-function Rest(settings) {
-  // Default rest settings values
-  settings.REST.URL = settings.REST.URL || 'https://api.futures.kraken.com/derivatives';
-  settings.REST.REQUESTS_LIMIT = settings.REST.REQUESTS_LIMIT || 50;
-  settings.REST.REQUESTS_REFILL = settings.REST.REQUESTS_REFILL || 50;
-  settings.REST.REQUESTS_REFILL_INTERVAL = settings.REST.REQUESTS_REFILL_INTERVAL || 10000;
-  settings.REST.REQUESTS_TIMESTAMPS = settings.REST.REQUESTS_TIMESTAMPS || 10;
+function Rest(restSettings) {
+  // Default rest restSettings values
+  restSettings.URL = restSettings.URL || 'https://api.futures.kraken.com/derivatives';
+  restSettings.REQUESTS_LIMIT = restSettings.REQUESTS_LIMIT || 50;
+  restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || 50;
+  restSettings.REQUESTS_REFILL_INTERVAL = restSettings.REQUESTS_REFILL_INTERVAL || 10000;
+  restSettings.REQUESTS_TIMESTAMPS = restSettings.REQUESTS_TIMESTAMPS || 10;
   // Request creation
-  const public = getPublicFunction(settings);
-  const private = getPrivateFunction(settings);
-  const request = Request({ settings, public, private });
+  const REST_SETTINGS = restSettings;
+  const PUBLIC = getPublicFunction(restSettings);
+  const PRIVATE = getPrivateFunction(restSettings);
+  const request = Request({ REST_SETTINGS, PUBLIC, PRIVATE });
   /** 
    * 
    * 
@@ -178,7 +179,7 @@ function Rest(settings) {
       const data = {};
       data.side = params.side;
       data.size = params.quantity;
-      data.symbol = settings.SYMBOL;
+      data.symbol = params.symbol;
       data.cliOrdId = params.id;
       if (params.type === 'market') {
         data.orderType = 'mkt';
@@ -211,7 +212,7 @@ function Rest(settings) {
         orderData.order_tag = 'ardaga';
         orderData.side = v.side;
         orderData.size = v.quantity;
-        orderData.symbol = settings.SYMBOL;
+        orderData.symbol = v.symbol;
         orderData.cliOrdId = v.id;
         if (v.type === 'market') {
           orderData.orderType = 'mkt';
@@ -292,17 +293,17 @@ function Rest(settings) {
      * 
      * 
      */
-    cancelOrdersAll: async () => {
+    cancelOrdersAll: async (params) => {
       const data = {};
-      data.symbol = settings.SYMBOL;
+      data.symbol = params.symbol;
       const response = await request.private('POST', '/api/v3/cancelallorders', data);
       if (response.status >= 400
         || response.data.error
         || !response.data.cancelStatus
         || response.data.cancelStatus.status !== 'cancelled') {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
-      return { data: {} };
+      return { data: params };
     },
     /**
      * 
@@ -371,13 +372,13 @@ function Rest(settings) {
      * 
      * 
      */
-    getEquity: async () => {
+    getEquity: async (params) => {
       const data = {};
       const response = await request.private('GET', '/api/v3/accounts', data);
       if (response.status >= 400) {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
-      const equity = response.data.accounts[settings.ASSET].auxiliary.pv;
+      const equity = response.data.accounts[params.asset].auxiliary.pv;
       return { data: equity };
     },
     /**
@@ -390,7 +391,7 @@ function Rest(settings) {
     getCandles: async (params) => {
       const timestamp = moment.utc().startOf('minute').unix();
       const data = {};
-      const symbol = settings.SYMBOL;
+      const symbol = params.symbol;
       const interval = getCandleResolution(params.interval);
       data.from = moment.utc(params.start).unix();
       data.to = moment.utc(params.start).add(5000 * params.interval, 'milliseconds').unix();
@@ -418,14 +419,14 @@ function Rest(settings) {
      * 
      * 
      */
-    getPosition: async () => {
+    getPosition: async (params) => {
       const data = {};
       const response = await request.private('GET', '/api/v3/openpositions', data);
       if (response.status >= 400) {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
       const positionResult = Array.isArray(response.data.openPositions)
-        ? response.data.openPositions.find(v => v.symbol === settings.SYMBOL.toLowerCase()) : null;
+        ? response.data.openPositions.find(v => params.symbol.toLowerCase() === v.symbol.toLowerCase()) : null;
       const qtyS = positionResult && positionResult.side === 'short' ? +positionResult.size : 0;
       const qtyB = positionResult && positionResult.side === 'long' ? +positionResult.size : 0;
       const pxS = positionResult && positionResult.side === 'short' ? +positionResult.price : 0;
@@ -440,13 +441,13 @@ function Rest(settings) {
      * 
      * 
      */
-    getLastPrice: async () => {
+    getLastPrice: async (params) => {
       const data = {};
-      const response = await request.public('GET', `${settings.REST.URL}/api/v3/tickers`, data);
+      const response = await request.public('GET', `${restSettings.URL}/api/v3/tickers`, data);
       if (response.status >= 400) {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
-      const price = +response.data.tickers.find(v => v.symbol === v.symbol.toLowerCase()).last;
+      const price = +response.data.tickers.find(v => params.symbol.toLowerCase() === v.symbol.toLowerCase()).last;
       return { data: price };
     },
     /**
@@ -456,30 +457,30 @@ function Rest(settings) {
      * 
      * 
      */
-    getLiquidation: async () => {
+    getLiquidation: async (params) => {
       // Get tickers 
       const tickersData = {};
-      const tickersResponse = await request.public('GET', `${settings.REST.URL}/api/v3/tickers`, tickersData);
+      const tickersResponse = await request.public('GET', `${restSettings.URL}/api/v3/tickers`, tickersData);
       if (tickersResponse.status >= 400) {
-        return handleResponseError({}, tickersResponse.data);
+        return handleResponseError(params, tickersResponse.data);
       }
       // Get accounts
       const accountsData = {};
       const accountsResponse = await request.private('GET', '/api/v3/accounts', accountsData);
       if (accountsResponse.status >= 400) {
-        return handleResponseError({}, accountsResponse.data);
+        return handleResponseError(params, accountsResponse.data);
       }
       // Get positions
       const positionsData = {};
       const positionsResponse = await request.private('GET', '/api/v3/openpositions', positionsData);
       if (positionsResponse.status >= 400) {
-        return handleResponseError({}, positionsResponse.data);
+        return handleResponseError(params, positionsResponse.data);
       }
       // Calculate liquidation
-      const ticker = tickersResponse.data.tickers.find(v => v.symbol === settings.SYMBOL.toLowerCase());
-      const account = accountsResponse.data.accounts[settings.ASSET];
+      const ticker = tickersResponse.data.tickers.find(v => params.symbol.toLowerCase() === v.symbol.toLowerCase());
+      const account = accountsResponse.data.accounts[params.asset];
       const position = Array.isArray(positionsResponse.data.openPositions) ? positionsResponse
-        .data.openPositions.find(v => v.symbol === settings.SYMBOL.toLowerCase()) : null;
+        .data.openPositions.find(v => params.symbol.toLowerCase() === v.symbol.toLowerCase()) : null;
       const markPx = +ticker.markPrice;
       const liqPxS = position && position.side === 'short' && +position.size ? +account.triggerEstimates.lt : 0;
       const liqPxB = position && position.side === 'long' && +position.size ? +account.triggerEstimates.lt : 0;
@@ -493,17 +494,33 @@ function Rest(settings) {
      * 
      * 
      */
-    getFundingRates: async () => {
+    getFundingRates: async (params) => {
       const data = {};
-      const response = await request.public('GET', `${settings.REST.URL}/api/v3/tickers`, data);
+      const response = await request.public('GET', `${restSettings.URL}/api/v3/tickers`, data);
       if (response.status >= 400) {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
-      const ticker = response.data.tickers.find(v => v.symbol === settings.SYMBOL.toLowerCase());
+      const ticker = response.data.tickers.find(v => params.symbol.toLowerCase() === v.symbol.toLowerCase());
       const current = +ticker.fundingRate / (1 / +ticker.last);
       const estimated = +ticker.fundingRatePrediction / (1 / +ticker.last);
       const fundings = { current, estimated };
       return { data: fundings };
+    },
+    /**
+     * 
+     * 
+     * GET INSTRUMENTS SYMBOLS
+     * 
+     * 
+     */
+    getInstrumentsSymbols: async () => {
+      const data = {};
+      const response = await request.public('GET', `${restSettings.URL}/api/v3/tickers`, data);
+      if (response.status >= 400) {
+        return handleResponseError(null, response.data);
+      }
+      const symbols = response.data.tickers.map(v => v.symbol.toUpperCase());
+      return { data: symbols };
     },
   };
   return rest;
