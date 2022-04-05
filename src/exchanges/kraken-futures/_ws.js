@@ -66,13 +66,13 @@ function getSingatureParams(challenge, apiKey, apiSecret) {
  * @param {string} feed
  * @param {string} symbol
  * @param {import('../../../typings/_ws').WebSocket} webSocket 
- * @param {import('../../../typings/settings')} settings
+ * @param {import('../../../typings/_ws').wsSettings} wsSettings
  */
-function connectWebSocket(feed, symbol, webSocket, settings) {
+function connectWebSocket(feed, symbol, webSocket, wsSettings) {
   return new Promise((resolve) => {
-    const url = settings.WS.URL;
-    const apiKey = settings.API_KEY;
-    const apiSecret = settings.API_SECRET;
+    const url = wsSettings.URL;
+    const apiKey = wsSettings.API_KEY;
+    const apiSecret = wsSettings.API_SECRET;
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
     webSocket.connect(url);
     function connectOnOpenFunction() {
@@ -132,14 +132,13 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  * 
  */
 /**
- * @param {import('../../../typings/settings')} settings
+ * @param {import('../../../typings/_ws').wsSettings} wsSettings
  */
-function Ws(settings) {
-  // Default ws settings values
-  settings.REST = settings.REST || {};
-  settings.WS.URL = settings.WS.URL || 'wss://api.futures.kraken.com/ws/v1';
+function Ws(wsSettings) {
+  // Default ws wsSettings values
+  wsSettings.URL = wsSettings.URL || 'wss://api.futures.kraken.com/ws/v1';
   // Rest creation
-  const rest = Rest(settings);
+  const rest = Rest(wsSettings);
   // Websocket creation
   /** 
    * 
@@ -161,7 +160,7 @@ function Ws(settings) {
     orders: {
       info: null,
       events: null,
-      connect: async () => {
+      connect: async (params) => {
         /** @type {import('../../../typings/_ws').ordersEventEmitter} */
         ws.orders.events = new Events.EventEmitter();
         // Open orders websocket
@@ -171,8 +170,8 @@ function Ws(settings) {
         const feedFills = 'fills';
         const webSocketFills = WebSocket('kraken-futures:orders:executions');
         await Promise.all([
-          connectWebSocket(feedOpenOrders, null, webSocketOpenOrders, settings),
-          connectWebSocket(feedFills, null, webSocketFills, settings),
+          connectWebSocket(feedOpenOrders, null, webSocketOpenOrders, wsSettings),
+          connectWebSocket(feedFills, null, webSocketFills, wsSettings),
         ]);
         webSocketOpenOrders.addOnMessage((message) => {
           const messageParse = JSON.parse(message);
@@ -180,7 +179,7 @@ function Ws(settings) {
           if (messageParse.feed !== 'open_orders') { return };
           if (messageParse.reason === 'edited_by_user'
             || messageParse.reason === 'new_placed_order_by_user') {
-            if (messageParse.order.instrument === settings.SYMBOL) {
+            if (messageParse.order.instrument === params.symbol) {
               ws.orders.events.emit('creations-updates', [createCreationUpdate(messageParse.order)]);
             }
           }
@@ -189,7 +188,7 @@ function Ws(settings) {
             || messageParse.reason === 'post_order_failed_because_it_would_filled'
             || messageParse.reason === 'ioc_order_failed_because_it_would_not_be_executed') {
             const ordSymbol = messageParse.cli_ord_id.split('-')[0];
-            if (ordSymbol === settings.SYMBOL) {
+            if (ordSymbol === params.symbol) {
               ws.orders.events.emit('cancelations', [createCancelation(messageParse)]);
             }
           }
@@ -201,7 +200,7 @@ function Ws(settings) {
           const executionOrders = [];
           for (let i = 0; messageParse.fills[i]; i += 1) {
             const fill = messageParse.fills[i];
-            if (fill.instrument === settings.SYMBOL) {
+            if (fill.instrument === params.symbol) {
               executionOrders.push(createExecution(fill));
             }
           }
@@ -209,8 +208,8 @@ function Ws(settings) {
             ws.orders.events.emit('executions', executionOrders);
           }
         });
-        webSocketOpenOrders.addOnClose(() => { connectWebSocket(feedOpenOrders, null, webSocketOpenOrders, settings) });
-        webSocketFills.addOnClose(() => { connectWebSocket(feedFills, null, webSocketFills, settings) });
+        webSocketOpenOrders.addOnClose(() => { connectWebSocket(feedOpenOrders, null, webSocketOpenOrders, wsSettings) });
+        webSocketFills.addOnClose(() => { connectWebSocket(feedFills, null, webSocketFills, wsSettings) });
       }
     },
     /**
@@ -225,21 +224,21 @@ function Ws(settings) {
     position: {
       info: null,
       events: null,
-      connect: async () => {
+      connect: async (params) => {
         /** @type {import('../../../typings/_ws').positionEventEmitter} */
         ws.position.events = new Events.EventEmitter();
         const feed = 'open_positions';
         const webSocket = WebSocket('kraken-futures:position:position');
-        await connectWebSocket(feed, null, webSocket, settings);
+        await connectWebSocket(feed, null, webSocket, wsSettings);
         // Load rest info
-        const positionRestData = (await rest.getPosition()).data;
+        const positionRestData = (await rest.getPosition(params)).data;
         /** @type {import('../../../typings/_ws').dataPosition} */
         ws.position.info = Object.assign({}, positionRestData);
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message);
           console.log(messageParse);
           if (messageParse.feed !== 'open_positions' || !messageParse.positions) { return };
-          const positionEvent = messageParse.positions.find(v => v.instrument === settings.SYMBOL);
+          const positionEvent = messageParse.positions.find(v => v.instrument === params.symbol);
           if (positionEvent) {
             ws.position.info.pxS = positionEvent.balance < 0 ? positionEvent.entry_price : 0;
             ws.position.info.qtyS = positionEvent.balance < 0 ? Math.abs(positionEvent.balance) : 0;
@@ -253,7 +252,7 @@ function Ws(settings) {
           }
           ws.position.events.emit('update', ws.position.info);
         });
-        webSocket.addOnClose(() => { connectWebSocket(feed, null, webSocket, settings) });
+        webSocket.addOnClose(() => { connectWebSocket(feed, null, webSocket, wsSettings) });
       }
     },
     /**
@@ -268,30 +267,30 @@ function Ws(settings) {
     liquidation: {
       info: null,
       events: null,
-      connect: async () => {
+      connect: async (params) => {
         /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
         ws.liquidation.events = new Events.EventEmitter();
         // Ticker websocket
         const feedTicker = 'ticker';
-        const symbolTicker = settings.SYMBOL;
+        const symbolTicker = params.symbol;
         const webSocketTicker = WebSocket('kraken-futures:liquidation:instrument');
         // Position websocket
         const feedPosition = 'open_positions';
         const webSocketPosition = WebSocket('kraken-futures:liquidation:position');
         await Promise.all([
-          connectWebSocket(feedTicker, symbolTicker, webSocketTicker, settings),
-          connectWebSocket(feedPosition, null, webSocketPosition, settings),
+          connectWebSocket(feedTicker, symbolTicker, webSocketTicker, wsSettings),
+          connectWebSocket(feedPosition, null, webSocketPosition, wsSettings),
         ]);
         // Load rest info
-        const positionRestData = (await rest.getPosition()).data;
-        const liquidationRestData = (await rest.getLiquidation()).data;
+        const positionRestData = (await rest.getPosition(params)).data;
+        const liquidationRestData = (await rest.getLiquidation(params)).data;
         // Liquidation info
         /** @type {import('../../../typings/_ws').dataLiquidation} */
         ws.liquidation.info = Object.assign({}, positionRestData, liquidationRestData);
         webSocketTicker.addOnMessage((message) => {
           const messageParse = JSON.parse(message);
           console.log(messageParse);
-          if (messageParse.product_id !== settings.SYMBOL) { return };
+          if (messageParse.product_id !== params.symbol) { return };
           ws.liquidation.info.markPx = +messageParse.markPrice ? +messageParse.markPrice : 0;
           ws.liquidation.events.emit('update', ws.liquidation.info);
         });
@@ -299,7 +298,7 @@ function Ws(settings) {
           const messageParsed = JSON.parse(message);
           console.log(messageParsed);
           if (messageParsed.feed !== 'open_positions' || !messageParsed.positions) { return };
-          const positionEvent = messageParsed.positions.find(v => v.instrument === settings.SYMBOL);
+          const positionEvent = messageParsed.positions.find(v => v.instrument === params.symbol);
           if (positionEvent) {
             ws.liquidation.info.pxS = positionEvent.balance < 0 ? positionEvent.entry_price : 0;
             ws.liquidation.info.qtyS = positionEvent.balance < 0 ? Math.abs(positionEvent.balance) : 0;
@@ -317,8 +316,8 @@ function Ws(settings) {
           }
           ws.liquidation.events.emit('update', ws.liquidation.info);
         });
-        webSocketTicker.addOnClose(() => connectWebSocket(feedTicker, symbolTicker, webSocketTicker, settings));
-        webSocketPosition.addOnClose(() => connectWebSocket(feedPosition, null, webSocketPosition, settings));
+        webSocketTicker.addOnClose(() => connectWebSocket(feedTicker, symbolTicker, webSocketTicker, wsSettings));
+        webSocketPosition.addOnClose(() => connectWebSocket(feedPosition, null, webSocketPosition, wsSettings));
       }
     },
     /**
@@ -344,8 +343,8 @@ function Ws(settings) {
         }
         // Connect websocket
         const feed = 'book';
-        const symbol = settings.SYMBOL;
-        await connectWebSocket(feed, symbol, webSocket, settings);
+        const symbol = params.symbol;
+        await connectWebSocket(feed, symbol, webSocket, wsSettings);
         // Order book functionality
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message);
@@ -369,7 +368,7 @@ function Ws(settings) {
         });
         webSocket.addOnClose(() => {
           desynchronizeOrderBook(ws.orderBook.info);
-          connectWebSocket(feed, symbol, webSocket, settings);
+          connectWebSocket(feed, symbol, webSocket, wsSettings);
         });
         await (new Promise(resolve => {
           let counter = 0;
