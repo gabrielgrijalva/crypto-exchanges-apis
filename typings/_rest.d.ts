@@ -18,14 +18,14 @@ declare namespace RestN {
    * 
    */
   type restSettings = {
-    URL?: string,
-    API_KEY?: string,
-    API_SECRET?: string,
-    API_PASSPHRASE?: string,
-    REQUESTS_LIMIT?: number,
-    REQUESTS_REFILL?: number,
-    REQUESTS_REFILL_INTERVAL?: number,
-    REQUESTS_TIMESTAMPS?: number,
+    URL?: string;
+    API_KEY?: string;
+    API_SECRET?: string;
+    API_PASSPHRASE?: string;
+    REQUESTS_LIMIT?: number;
+    REQUESTS_REFILL?: number;
+    REQUESTS_REFILL_INTERVAL?: number;
+    REQUESTS_TIMESTAMPS?: number;
   }
   /**
    * 
@@ -37,7 +37,7 @@ declare namespace RestN {
    * 
    */
   type requestSettings = {
-    REST_SETTINGS: restSettings,
+    REST_SETTINGS: restSettings;
     KEY?(method: string, path: string, data: any): Promise<requestSendReturn>;
     PUBLIC?(method: string, path: string, data: any): Promise<requestSendReturn>;
     PRIVATE?(method: string, path: string, data: any, query?: any): Promise<requestSendReturn>;
@@ -184,7 +184,7 @@ declare namespace RestN {
   type requestSendParams = {
     url: string;
     data?: string;
-    method: string,
+    method: string;
     headers?: any;
   }
   type requestSendReturn = {

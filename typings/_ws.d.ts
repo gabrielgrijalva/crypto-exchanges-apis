@@ -19,10 +19,10 @@ declare namespace WsN {
    * 
    */
   type wsSettings = {
-    URL?: string,
-    API_KEY?: string,
-    API_SECRET?: string,
-    API_PASSPHRASE?: string,
+    URL?: string;
+    API_KEY?: string;
+    API_SECRET?: string;
+    API_PASSPHRASE?: string;
   }
   /**
    * 
