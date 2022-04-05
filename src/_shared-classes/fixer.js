@@ -13,15 +13,16 @@ const round = require('../_utils/round');
  */
 /**
  * 
+ * @param {string} symbol
  * @param {import('../../typings/_rest').Rest} rest 
  */
-async function sendRestGetPosition(rest, errors = 0) {
-  const response = await rest.getPosition();
+async function sendRestGetPosition(symbol, rest, errors = 0) {
+  const response = await rest.getPosition({ symbol });
   if (response.error) {
     if (errors >= 10) { throw response.error };
     if (response.error.type === 'request-timeout'
       || response.error.type === 'request-not-accepted') {
-      return sendRestGetPosition(rest, errors + 1);
+      return sendRestGetPosition(symbol, rest, errors + 1);
     }
     throw response.error;
   };
@@ -78,6 +79,7 @@ async function sendRestCancelOrder(rest, params, errors = 0) {
 /**
  * 
  * @param {number} hedgePercentage
+ * @param {string} fixSymbol
  * @param {number} fixPositionQtyS 
  * @param {number} fixPositionQtyB
  * @param {'limit' | 'market'} fixPositionType 
@@ -85,48 +87,48 @@ async function sendRestCancelOrder(rest, params, errors = 0) {
  * @param {number} currentPositionQtyB 
  * @param {import('../../typings/_ws').Ws} ws 
  * @param {import('../../typings/_utils').Utils} utils 
- * @param {import('../../typings/settings')} settings 
+ * @param {import('../../typings/_fixer').fixerSettings} fixerSettings
  * @returns {import('../../typings/_rest').createOrderParams}
  */
-function getFixOrderCreate(hedgePercentage, fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, ws, utils, settings) {
+function getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, ws, utils, fixerSettings) {
   /** @type {'sell' | 'buy'} */
   let side = 'sell';
   /** @type {number} */
   let quantity = 0;
   /** @type {'open' | 'close'} */
   let direction = 'open';
-  const type = settings.INSTRUMENT.TYPE;
+  const type = fixerSettings.TYPE;
   const bestAsk = ws.orderBook.info.asks[0].price;
   const bestBid = ws.orderBook.info.bids[0].price;
   // OPEN SELL
   if (fixPositionQtyS > currentPositionQtyS) {
     side = 'sell';
-    quantity = round.normal(((fixPositionQtyS - currentPositionQtyS) / (type === 'spot' ? bestAsk : 1)) * hedgePercentage, settings.INSTRUMENT.QUANTITY_PRECISION);
+    quantity = round.normal(((fixPositionQtyS - currentPositionQtyS) / (type === 'spot' ? bestAsk : 1)) * hedgePercentage, fixerSettings.QUANTITY_PRECISION);
     direction = 'open';
   }
   // CLOSE SELL
   if (fixPositionQtyS < currentPositionQtyS) {
     side = 'buy';
-    quantity = round.normal(((currentPositionQtyS - fixPositionQtyS) / (type === 'spot' ? bestBid : 1)) * hedgePercentage, settings.INSTRUMENT.QUANTITY_PRECISION);
+    quantity = round.normal(((currentPositionQtyS - fixPositionQtyS) / (type === 'spot' ? bestBid : 1)) * hedgePercentage, fixerSettings.QUANTITY_PRECISION);
     direction = 'close';
   }
   // OPEN BUY
   if (fixPositionQtyB > currentPositionQtyB) {
     side = 'buy';
-    quantity = round.normal((fixPositionQtyB - currentPositionQtyB) * hedgePercentage, settings.INSTRUMENT.QUANTITY_PRECISION);
+    quantity = round.normal((fixPositionQtyB - currentPositionQtyB) * hedgePercentage, fixerSettings.QUANTITY_PRECISION);
     direction = 'open';
   }
   // CLOSE BUY
   if (fixPositionQtyB < currentPositionQtyB) {
     side = 'sell';
-    quantity = round.normal((currentPositionQtyB - fixPositionQtyB) * hedgePercentage, settings.INSTRUMENT.QUANTITY_PRECISION);
+    quantity = round.normal((currentPositionQtyB - fixPositionQtyB) * hedgePercentage, fixerSettings.QUANTITY_PRECISION);
     direction = 'close';
   }
   if (!quantity) { return };
   // HANDLE MIN QUANTITY
-  if (quantity < settings.INSTRUMENT.QUANTITY_MIN) {
+  if (quantity < fixerSettings.QUANTITY_MIN) {
     side = direction === 'open' ? side : (side === 'sell' ? 'buy' : 'sell');
-    quantity = round.normal(quantity + settings.INSTRUMENT.QUANTITY_MIN, settings.INSTRUMENT.QUANTITY_PRECISION);
+    quantity = round.normal(quantity + fixerSettings.QUANTITY_MIN, fixerSettings.QUANTITY_PRECISION);
     direction = 'open';
   };
   const orderParams = {};
@@ -136,6 +138,7 @@ function getFixOrderCreate(hedgePercentage, fixPositionQtyS, fixPositionQtyB, fi
   if (orderParams.type === 'limit') {
     orderParams.price = orderParams.side === 'sell' ? bestAsk : bestBid;
   }
+  orderParams.symbol = fixSymbol;
   orderParams.quantity = quantity;
   orderParams.direction = direction;
   return orderParams;
@@ -144,14 +147,14 @@ function getFixOrderCreate(hedgePercentage, fixPositionQtyS, fixPositionQtyB, fi
  * 
  * @param {import('../../typings/_ws').Ws} ws 
  * @param {import('../../typings/_rest').createOrderParams} order 
- * @param {import('../../typings/settings')} settings
+ * @param {import('../../typings/_fixer').fixerSettings} fixerSettings
  * @returns {import('../../typings/_rest').updateOrderParams}
  */
-function getFixOrderUpdate(ws, order, settings) {
+function getFixOrderUpdate(ws, order, fixerSettings) {
   const price = order.side === 'sell' ? ws.orderBook.info.asks[0].price : ws.orderBook.info.bids[0].price;
-  const quantity = settings.INSTRUMENT.TYPE === 'spot' && order.side === 'buy' ?
-    round.down((order.price * order.quantity) / price, settings.INSTRUMENT.QUANTITY_PRECISION) : order.quantity;
-  return { id: order.id, price: price, quantity: quantity };
+  const quantity = fixerSettings.TYPE === 'spot' && order.side === 'buy' ?
+    round.down((order.price * order.quantity) / price, fixerSettings.QUANTITY_PRECISION) : order.quantity;
+  return { id: order.id, price: price, symbol: order.symbol, quantity: quantity };
 };
 /**
  * 
@@ -159,7 +162,7 @@ function getFixOrderUpdate(ws, order, settings) {
  * @returns {import('../../typings/_rest').cancelOrderParams}
  */
 function getFixOrderCancel(order) {
-  return { id: order.id };
+  return { id: order.id, symbol: order.symbol };
 };
 /**
  * 
@@ -167,16 +170,16 @@ function getFixOrderCancel(order) {
  * @param {number} fixPositionQtyB
  * @param {number} currentPositionQtyS 
  * @param {number} currentPositionQtyB 
- * @param {import('../../typings/settings')} settings
+ * @param {import('../../typings/_fixer').fixerSettings} fixerSettings
  * @returns {boolean}
  */
-function shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB, settings) {
+function shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB, fixerSettings) {
   if (fixPositionQtyS === currentPositionQtyS && fixPositionQtyB === currentPositionQtyB) {
     return false;
   }
-  if (settings.INSTRUMENT.TYPE === 'spot'
-    && (Math.abs(fixPositionQtyS - currentPositionQtyS) < settings.INSTRUMENT.QUANTITY_MIN)
-    && (Math.abs(fixPositionQtyB - currentPositionQtyB) < settings.INSTRUMENT.QUANTITY_MIN)) {
+  if (fixerSettings.TYPE === 'spot'
+    && (Math.abs(fixPositionQtyS - currentPositionQtyS) < fixerSettings.QUANTITY_MIN)
+    && (Math.abs(fixPositionQtyB - currentPositionQtyB) < fixerSettings.QUANTITY_MIN)) {
     return false;
   }
   return true;
@@ -193,9 +196,9 @@ function shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQ
  * 
  */
 /** 
- * @param {import('../../typings/settings')} settings
+ * @param {import('../../typings/_fixer').fixerSettings} fixerSettings
  */
-function Fixer(settings) {
+function Fixer(fixerSettings) {
   /**
    * 
    * 
@@ -217,11 +220,12 @@ function Fixer(settings) {
       const ws = params.ws;
       const rest = params.rest;
       const utils = params.utils;
+      const fixSymbol = params.fixSymbol;
       const fixPositionType = params.fixPositionType;
       const fixPositionQtyS = params.fixPositionQtyS;
       const fixPositionQtyB = params.fixPositionQtyB;
       return new Promise(async resolve => {
-        const currentPosition = await sendRestGetPosition(rest);
+        const currentPosition = await sendRestGetPosition(fixSymbol, rest);
         /** @type {import('../../typings/_rest').createOrderParams} */
         let order = null;
         /** @type {import('../../typings/_rest').createOrderParams} */
@@ -258,21 +262,21 @@ function Fixer(settings) {
           console.log('executions'); console.log(messages);
           messages.forEach(message => {
             if (message.id === order.id) {
-              orderQtyF = round.normal(orderQtyF + message.quantity, settings.INSTRUMENT.QUANTITY_PRECISION);
+              orderQtyF = round.normal(orderQtyF + message.quantity, fixerSettings.QUANTITY_PRECISION);
               if (order.direction === 'open') {
                 if (order.side === 'sell') {
-                  currentPositionQtyS = round.normal(currentPositionQtyS + message.quantity, settings.INSTRUMENT.QUANTITY_PRECISION);
+                  currentPositionQtyS = round.normal(currentPositionQtyS + message.quantity, fixerSettings.QUANTITY_PRECISION);
                 }
                 if (order.side === 'buy') {
-                  currentPositionQtyB = round.normal(currentPositionQtyB + message.quantity, settings.INSTRUMENT.QUANTITY_PRECISION);
+                  currentPositionQtyB = round.normal(currentPositionQtyB + message.quantity, fixerSettings.QUANTITY_PRECISION);
                 }
               }
               if (order.direction === 'close') {
                 if (order.side === 'sell') {
-                  currentPositionQtyB = round.normal(currentPositionQtyB - message.quantity, settings.INSTRUMENT.QUANTITY_PRECISION);
+                  currentPositionQtyB = round.normal(currentPositionQtyB - message.quantity, fixerSettings.QUANTITY_PRECISION);
                 }
                 if (order.side === 'buy') {
-                  currentPositionQtyS = round.normal(currentPositionQtyS - message.quantity, settings.INSTRUMENT.QUANTITY_PRECISION);
+                  currentPositionQtyS = round.normal(currentPositionQtyS - message.quantity, fixerSettings.QUANTITY_PRECISION);
                 }
               }
             }
@@ -311,8 +315,8 @@ function Fixer(settings) {
         (async function main() {
           if (hedgePercentage < 0.80) { throw new Error('hedgePercentage less than 0.80') };
           if (!order && !creating && !updating && !canceling) {
-            if (shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB, settings)) {
-              creating = getFixOrderCreate(hedgePercentage, fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, ws, utils, settings);
+            if (shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB, fixerSettings)) {
+              creating = getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, ws, utils, fixerSettings);
               creatingTimeout = setTimeout(() => { throw new Error('creatingTimeout') }, 10000);
               try {
                 await sendRestCreateOrder(rest, creating);
@@ -326,7 +330,7 @@ function Fixer(settings) {
             && ((order.side === 'sell' && order.price > ws.orderBook.info.asks[0].price)
               || (order.side === 'buy' && order.price < ws.orderBook.info.bids[0].price))) {
             if (rest.updateOrder) {
-              updating = getFixOrderUpdate(ws, order, settings);
+              updating = getFixOrderUpdate(ws, order, fixerSettings);
               updatingTimeout = setTimeout(() => { throw new Error('updatingTimeout') }, 10000);
               try {
                 await sendRestUpdateOrder(rest, updating);
@@ -345,7 +349,7 @@ function Fixer(settings) {
               }
             }
           }
-          if (!shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB, settings)) {
+          if (!shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB, fixerSettings)) {
             resolve();
             ws.orders.events.removeListener('creations-updates', creationsUpdatesFunc);
             ws.orders.events.removeListener('executions', executionsFunc);
