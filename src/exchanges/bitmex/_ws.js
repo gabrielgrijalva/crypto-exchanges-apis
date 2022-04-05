@@ -63,13 +63,13 @@ function getSignedHeaders(apiKey, apiSecret) {
  * 
  * @param {string} topic
  * @param {import('../../../typings/_ws').WebSocket} webSocket 
- * @param {import('../../../typings/settings')} settings
+ * @param {import('../../../typings/_ws').wsSettings} wsSettings
  */
-function connectWebSocket(topic, webSocket, settings) {
+function connectWebSocket(topic, webSocket, wsSettings) {
   return new Promise((resolve) => {
-    const url = settings.WS.URL;
-    const apiKey = settings.API_KEY;
-    const apiSecret = settings.API_SECRET;
+    const url = wsSettings.URL;
+    const apiKey = wsSettings.API_KEY;
+    const apiSecret = wsSettings.API_SECRET;
     const signedHeaders = getSignedHeaders(apiKey, apiSecret);
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
     webSocket.connect(`${url}?subscribe=${topic}`, { headers: signedHeaders });
@@ -122,14 +122,13 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  * 
  */
 /**
- * @param {import('../../../typings/settings')} settings
+ * @param {import('../../../typings/_ws').wsSettings} wsSettings
  */
-function Ws(settings) {
-  // Default ws settings values
-  settings.REST = settings.REST || {};
-  settings.WS.URL = settings.WS.URL || 'wss://ws.bitmex.com/realtime';
+function Ws(wsSettings) {
+  // Default ws wsSettings values
+  wsSettings.URL = wsSettings.URL || 'wss://ws.bitmex.com/realtime';
   // Rest creation
-  const rest = Rest(settings);
+  const rest = Rest(wsSettings);
   // Websocket creation
   /** 
    * 
@@ -151,12 +150,12 @@ function Ws(settings) {
     orders: {
       info: null,
       events: null,
-      connect: async () => {
+      connect: async (params) => {
         /** @type {import('../../../typings/_ws').ordersEventEmitter} */
         ws.orders.events = new Events.EventEmitter();
-        const topic = `execution:${settings.SYMBOL}`;
+        const topic = `execution:${params.symbol}`;
         const webSocket = WebSocket('bitmex:orders:orders');
-        await connectWebSocket(topic, webSocket, settings);
+        await connectWebSocket(topic, webSocket, wsSettings);
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message);
           console.log(messageParse);
@@ -186,7 +185,7 @@ function Ws(settings) {
             ws.orders.events.emit('cancelations', cancelationOrders);
           }
         });
-        webSocket.addOnClose(() => { connectWebSocket(topic, webSocket, settings) });
+        webSocket.addOnClose(() => { connectWebSocket(topic, webSocket, wsSettings) });
       },
     },
     /**
@@ -201,14 +200,14 @@ function Ws(settings) {
     position: {
       info: null,
       events: null,
-      connect: async () => {
+      connect: async (params) => {
         /** @type {import('../../../typings/_ws').positionEventEmitter} */
         ws.position.events = new Events.EventEmitter();
-        const topic = `position:${settings.SYMBOL}`;
+        const topic = `position:${params.symbol}`;
         const webSocket = WebSocket('bitmex:position:position');
-        await connectWebSocket(topic, webSocket, settings);
+        await connectWebSocket(topic, webSocket, wsSettings);
         // Load rest info
-        const positionRestData = (await rest.getPosition()).data;
+        const positionRestData = (await rest.getPosition(params)).data;
         /** @type {import('../../../typings/_ws').dataPosition} */
         ws.position.info = Object.assign({}, positionRestData);
         webSocket.addOnMessage((message) => {
@@ -223,7 +222,7 @@ function Ws(settings) {
           ws.position.info.qtyB = +positionEvent.currentQty > 0 ? Math.abs(+positionEvent.currentQty) : 0;
           ws.position.events.emit('update', ws.position.info);
         });
-        webSocket.addOnClose(() => { connectWebSocket(topic, webSocket, settings) });
+        webSocket.addOnClose(() => { connectWebSocket(topic, webSocket, wsSettings) });
       },
     },
     /**
@@ -238,22 +237,22 @@ function Ws(settings) {
     liquidation: {
       info: null,
       events: null,
-      connect: async () => {
+      connect: async (params) => {
         /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
         ws.liquidation.events = new Events.EventEmitter();
         // Instrument websocket
-        const topicInstrument = `instrument:${settings.SYMBOL}`;
+        const topicInstrument = `instrument:${params.symbol}`;
         const webSocketInstrument = WebSocket('bitmex:liquidation:instrument');
         // Position websocket
-        const topicPosition = `position:${settings.SYMBOL}`;
+        const topicPosition = `position:${params.symbol}`;
         const webSocketPosition = WebSocket('bitmex:liquidation:position');
         await Promise.all([
-          connectWebSocket(topicInstrument, webSocketInstrument, settings),
-          connectWebSocket(topicPosition, webSocketPosition, settings),
+          connectWebSocket(topicInstrument, webSocketInstrument, wsSettings),
+          connectWebSocket(topicPosition, webSocketPosition, wsSettings),
         ]);
         // Load rest info
-        const positionRestData = (await rest.getPosition()).data;
-        const liquidationRestData = (await rest.getLiquidation()).data;
+        const positionRestData = (await rest.getPosition(params)).data;
+        const liquidationRestData = (await rest.getLiquidation(params)).data;
         // Liquidation info
         /** @type {import('../../../typings/_ws').dataLiquidation} */
         ws.liquidation.info = Object.assign({}, positionRestData, liquidationRestData);
@@ -279,8 +278,8 @@ function Ws(settings) {
           ws.liquidation.info.liqPxB = +positionEvent.currentQty > 0 ? (+positionEvent.liquidationPrice ? +positionEvent.liquidationPrice : ws.liquidation.info.liqPxB) : 0;
           ws.liquidation.events.emit('update', ws.liquidation.info);
         });
-        webSocketInstrument.addOnClose(() => connectWebSocket(topicInstrument, webSocketInstrument, settings));
-        webSocketPosition.addOnClose(() => connectWebSocket(topicPosition, webSocketPosition, settings));
+        webSocketInstrument.addOnClose(() => connectWebSocket(topicInstrument, webSocketInstrument, wsSettings));
+        webSocketPosition.addOnClose(() => connectWebSocket(topicPosition, webSocketPosition, wsSettings));
       }
     },
     /**
@@ -305,8 +304,8 @@ function Ws(settings) {
           ws.orderBook.info._connectClient(webSocket, params); return;
         }
         // Connect websocket
-        const topic = `orderBookL2:${settings.SYMBOL}`;
-        await connectWebSocket(topic, webSocket, settings);
+        const topic = `orderBookL2:${params.symbol}`;
+        await connectWebSocket(topic, webSocket, wsSettings);
         // Order book functionality
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message);
@@ -349,7 +348,7 @@ function Ws(settings) {
         });
         webSocket.addOnClose(() => {
           desynchronizeOrderBook(ws.orderBook.info);
-          connectWebSocket(topic, webSocket, settings);
+          connectWebSocket(topic, webSocket, wsSettings);
         });
         await (new Promise(resolve => {
           let counter = 0;
