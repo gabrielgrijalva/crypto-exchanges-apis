@@ -1,3 +1,4 @@
+import RestN = require('./_rest');
 /**
  * 
  * 
@@ -12,21 +13,42 @@ declare namespace PopulatorN {
    * 
    * 
    * 
+   * POPULATOR SETTINGS
+   * 
+   * 
+   * 
+   */
+  type populatorSettings = {
+    PORT?: number;
+    HOST?: string;
+    USER?: string;
+    DATABASE?: string;
+    PASSWORD?: string;
+    TIMEZONE?: string;
+  }
+  /**
+   * 
+   * 
+   * 
    * POPULATOR PARAMS
    * 
    * 
    * 
    */
   type candlesParams = {
-    table: string,
-    interval: number,
-    start: string,
-    finish: string,
+    rest: RestN.Rest;
+    symbol: string;
+    table: string;
+    interval: number;
+    start: string;
+    finish: string;
     waitRequest: number;
   };
   type candlesCronParams = {
-    table: string,
-    interval: number,
+    rest: RestN.Rest;
+    symbol: string;
+    table: string;
+    interval: number;
   };
   /**
    * 
