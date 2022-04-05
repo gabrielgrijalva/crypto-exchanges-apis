@@ -11,18 +11,18 @@ const round = require('../_utils/round');
  * 
  */
 /**
- * @param {import('../../typings/settings')} settings
+ * @param {import('../../typings/_utils').utilsSettings} utilsSettings
  */
-function Utils(settings) {
-  const INSTRUMENT_TYPE = settings.INSTRUMENT.TYPE;
-  const BALANCE_TYPE = settings.INSTRUMENT.BALANCE_TYPE;
-  const QUANTITY_TYPE = settings.INSTRUMENT.QUANTITY_TYPE;
-  const PRICE_STEP = settings.INSTRUMENT.PRICE_STEP;
-  const QUANTITY_VALUE = settings.INSTRUMENT.QUANTITY_VALUE;
-  const BASE_PRECISION = settings.INSTRUMENT.BASE_PRECISION;
-  const QUOTE_PRECISION = settings.INSTRUMENT.QUOTE_PRECISION;
-  const PRICE_PRECISION = settings.INSTRUMENT.PRICE_PRECISION;
-  const QUANTITY_PRECISION = settings.INSTRUMENT.QUANTITY_PRECISION;
+function Utils(utilsSettings) {
+  const INSTRUMENT_TYPE = utilsSettings.TYPE;
+  const BALANCE_TYPE = utilsSettings.BALANCE_TYPE;
+  const QUANTITY_TYPE = utilsSettings.QUANTITY_TYPE;
+  const PRICE_STEP = utilsSettings.PRICE_STEP;
+  const QUANTITY_VALUE = utilsSettings.QUANTITY_VALUE;
+  const BASE_PRECISION = utilsSettings.BASE_PRECISION;
+  const QUOTE_PRECISION = utilsSettings.QUOTE_PRECISION;
+  const PRICE_PRECISION = utilsSettings.PRICE_PRECISION;
+  const QUANTITY_PRECISION = utilsSettings.QUANTITY_PRECISION;
   /**
    * 
    * 
