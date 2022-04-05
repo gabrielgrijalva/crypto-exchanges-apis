@@ -67,7 +67,7 @@ declare namespace WsN {
     on(event: 'cancelations', listener: (data: dataCancelations[]) => void);
     on(event: 'creations-updates', listener: (data: dataCreationsUpdates[]) => void);
   }
-  type ordersPromiseReturn = { events: ordersEventEmitter };
+  type ordersWsObjectReturn = { data: null; events: ordersEventEmitter; connect(): Promise<void>; };
   /**
    * 
    * 
@@ -92,7 +92,7 @@ declare namespace WsN {
     // On 'event' functions
     on(event: 'update', listener: (data: dataPosition) => void);
   }
-  type positionPromiseReturn = { info: dataPosition, events: positionEventEmitter };
+  type positionWsObjectReturn = { data: dataPosition; events: positionEventEmitter; connect(): Promise<void>; };
   /**
    * 
    * 
@@ -117,6 +117,7 @@ declare namespace WsN {
     // On 'event' functions
     on(event: 'update', listener: (data: dataLiquidation) => void);
   }
+  type liquidationWsObjectReturn = { data: dataLiquidation; events: liquidationEventEmitter; connect(): Promise<void>; };
   /**
    * 
    * 
@@ -158,6 +159,7 @@ declare namespace WsN {
     _insertSnapshotAsks(snapshot: orderBookOrder[]): void;
     _insertSnapshotBids(snapshot: orderBookOrder[]): void;
   };
+  type orderBookWsObjectReturn = { data: dataOrderBook; events: null; connect(): Promise<void>; };
   /**
    * 
    * 
@@ -193,16 +195,11 @@ declare namespace WsN {
    * 
    * 
    */
-  type wsObject<I, E, P> = {
-    info: I;
-    events: E;
-    connect(params?: P): Promise<void>;
-  }
   interface Ws {
-    orders: wsObject<null, ordersEventEmitter, ordersParams>;
-    position: wsObject<dataPosition, positionEventEmitter, positionParams>;
-    liquidation: wsObject<dataLiquidation, liquidationEventEmitter, liquidationParams>;
-    orderBook: wsObject<dataOrderBook, null, orderBookParams>;
+    orders(params: ordersParams): ordersWsObjectReturn;
+    position(params: positionParams): positionWsObjectReturn;
+    liquidation(params: liquidationParams): liquidationWsObjectReturn;
+    orderBook(params: orderBookParams): orderBookWsObjectReturn;
   }
 }
 export = WsN;
