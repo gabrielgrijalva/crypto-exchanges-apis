@@ -15,6 +15,20 @@ declare namespace FixerN {
    * 
    * 
    * 
+   * FIXER SETTINGS
+   * 
+   * 
+   * 
+   */
+  type fixerSettings = {
+    TYPE: 'spot' | 'future' | 'option';
+    QUANTITY_MIN: number;
+    QUANTITY_PRECISION: number;
+  }
+  /**
+   * 
+   * 
+   * 
    * FIXER PARAMS
    * 
    * 
@@ -24,6 +38,7 @@ declare namespace FixerN {
     ws: Ws;
     rest: Rest;
     utils: Utils;
+    fixSymbol: string;
     fixPositionQtyS: number;
     fixPositionQtyB: number;
     fixPositionType: 'limit' | 'market';
