@@ -72,9 +72,9 @@ function getCandleResolution(interval) {
  * 
  */
 /**
- * @param {import('../../../typings/settings')} settings 
+ * @param {import('../../../typings/_rest').restSettings} restSettings
  */
-function getPublicFunction(settings) {
+function getPublicFunction(restSettings) {
   /** 
    * @this {import('../../../typings/_rest').Request} 
    * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
@@ -82,7 +82,7 @@ function getPublicFunction(settings) {
   async function public(method, path, data) {
     const dataStringified = qs.stringify(data);
     const requestSendParams = {
-      url: `${settings.REST.URL}${path}?${dataStringified}`,
+      url: `${restSettings.URL}${path}?${dataStringified}`,
       method: method,
     };
     const response = await this.send(requestSendParams);
@@ -91,9 +91,9 @@ function getPublicFunction(settings) {
   return public;
 };
 /**
- * @param {import('../../../typings/settings')} settings 
+ * @param {import('../../../typings/_rest').restSettings} restSettings 
  */
-function getKeyFunction(settings) {
+function getKeyFunction(restSettings) {
   /** 
    * @this {import('../../../typings/_rest').Request} 
    * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
@@ -101,9 +101,9 @@ function getKeyFunction(settings) {
   async function key(method, path, data) {
     const dataStringified = qs.stringify(data);
     const requestSendParams = {
-      url: `${settings.REST.URL}${path}?${dataStringified}`,
+      url: `${restSettings.URL}${path}?${dataStringified}`,
       method: method,
-      headers: { 'X-MBX-APIKEY': settings.API_KEY },
+      headers: { 'X-MBX-APIKEY': restSettings.API_KEY },
     };
     const response = await this.send(requestSendParams);
     return response;
@@ -111,9 +111,9 @@ function getKeyFunction(settings) {
   return key;
 };
 /**
- * @param {import('../../../typings/settings')} settings 
+ * @param {import('../../../typings/_rest').restSettings} restSettings
  */
-function getPrivateFunction(settings) {
+function getPrivateFunction(restSettings) {
   /** 
    * @this {import('../../../typings/_rest').Request} 
    * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
@@ -123,14 +123,14 @@ function getPrivateFunction(settings) {
     privateData.timestamp = Date.now() - 500;
     privateData.recWindow = 5000;
     const preSignatureData = Object.assign(data, privateData);
-    const signature = crypto.createHmac('sha256', settings.API_SECRET)
+    const signature = crypto.createHmac('sha256', restSettings.API_SECRET)
       .update(qs.stringify(preSignatureData)).digest('hex');
     const dataSignature = Object.assign(preSignatureData, { signature });
     const dataStringified = qs.stringify(dataSignature);
     const requestSendParams = {
-      url: `${settings.REST.URL}${path}?${dataStringified}`,
+      url: `${restSettings.URL}${path}?${dataStringified}`,
       method: method,
-      headers: { 'X-MBX-APIKEY': settings.API_KEY },
+      headers: { 'X-MBX-APIKEY': restSettings.API_KEY },
     };
     const response = await this.send(requestSendParams);
     return response;
@@ -149,20 +149,21 @@ function getPrivateFunction(settings) {
  * 
  */
 /** 
- * @param {import('../../../typings/settings')} settings
+ * @param {import('../../../typings/_rest').restSettings} restSettings
  */
-function Rest(settings) {
-  // Default rest settings values
-  settings.REST.URL = settings.REST.URL || 'https://dapi.binance.com';
-  settings.REST.REQUESTS_LIMIT = settings.REST.REQUESTS_LIMIT || 1200;
-  settings.REST.REQUESTS_REFILL = settings.REST.REQUESTS_REFILL || 1200;
-  settings.REST.REQUESTS_REFILL_INTERVAL = settings.REST.REQUESTS_REFILL_INTERVAL || 60000;
-  settings.REST.REQUESTS_TIMESTAMPS = settings.REST.REQUESTS_TIMESTAMPS || 10;
+function Rest(restSettings = {}) {
+  // Default rest restSettings values
+  restSettings.URL = restSettings.URL || 'https://dapi.binance.com';
+  restSettings.REQUESTS_LIMIT = restSettings.REQUESTS_LIMIT || 1200;
+  restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || 1200;
+  restSettings.REQUESTS_REFILL_INTERVAL = restSettings.REQUESTS_REFILL_INTERVAL || 60000;
+  restSettings.REQUESTS_TIMESTAMPS = restSettings.REQUESTS_TIMESTAMPS || 10;
   // Request creation
-  const key = getKeyFunction(settings);
-  const public = getPublicFunction(settings);
-  const private = getPrivateFunction(settings);
-  const request = Request({ settings, public, key, private });
+  const REST_SETTINGS = restSettings;
+  const KEY = getKeyFunction(restSettings);
+  const PUBLIC = getPublicFunction(restSettings);
+  const PRIVATE = getPrivateFunction(restSettings);
+  const request = Request({ REST_SETTINGS, PUBLIC, KEY, PRIVATE });
   /** 
    * 
    * 
@@ -190,7 +191,7 @@ function Rest(settings) {
       const data = {};
       data.side = params.side.toUpperCase();
       data.type = params.type.toUpperCase();
-      data.symbol = settings.SYMBOL;
+      data.symbol = params.symbol;
       data.quantity = `${params.quantity}`;
       data.newClientOrderId = params.id;
       if (params.type === 'limit') {
@@ -216,7 +217,7 @@ function Rest(settings) {
         const orderData = {};
         orderData.side = v.side.toUpperCase();
         orderData.type = v.type.toUpperCase();
-        orderData.symbol = settings.SYMBOL;
+        orderData.symbol = v.symbol;
         orderData.quantity = `${v.quantity}`;
         orderData.newClientOrderId = v.id;
         if (v.type === 'limit') {
@@ -245,7 +246,7 @@ function Rest(settings) {
      */
     cancelOrder: async (params) => {
       const data = {};
-      data.symbol = settings.SYMBOL;
+      data.symbol = params.symbol;
       data.origClientOrderId = params.id;
       const response = await request.private('DELETE', '/dapi/v1/order', data);
       if (response.status >= 400) {
@@ -262,7 +263,7 @@ function Rest(settings) {
      */
     cancelOrders: async (params) => {
       const data = {};
-      data.symbol = settings.SYMBOL;
+      data.symbol = params[0].symbol;
       data.origClientOrderIdList = `[${params.reduce((a, v) => `${!a ? '' : `${a},`}"${v.id}"`, '')}]`;
       const response = await request.private('DELETE', '/dapi/v1/batchOrders', data);
       if (response.status >= 400) {
@@ -282,14 +283,14 @@ function Rest(settings) {
      * 
      * 
      */
-    cancelOrdersAll: async () => {
+    cancelOrdersAll: async (params) => {
       const data = {};
-      data.symbol = settings.SYMBOL;
+      data.symbol = params.symbol;
       const response = await request.private('DELETE', '/dapi/v1/allOpenOrders', data);
       if (response.status >= 400) {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
-      return { data: {} };
+      return { data: params };
     },
     /**
      * 
@@ -314,14 +315,13 @@ function Rest(settings) {
      * 
      * 
      */
-    getEquity: async () => {
+    getEquity: async (params) => {
       const data = {};
       const response = await request.private('GET', '/dapi/v1/account', data);
       if (response.status >= 400) {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
-      const equity = +response.data.assets.find(v => v.asset
-        === settings.ASSET).marginBalance;
+      const equity = +response.data.assets.find(v => v.asset === params.asset).marginBalance;
       return { data: equity };
     },
     /**
@@ -334,7 +334,7 @@ function Rest(settings) {
     getCandles: async (params) => {
       const timestamp = moment.utc().startOf('minute').valueOf();
       const data = {};
-      data.symbol = settings.SYMBOL;
+      data.symbol = params.symbol;
       data.interval = getCandleResolution(params.interval);
       data.startTime = moment.utc(params.start).valueOf();
       data.endTime = moment.utc(params.start).add(params.interval * 1499, 'milliseconds').valueOf();
@@ -365,13 +365,13 @@ function Rest(settings) {
      * 
      * 
      */
-    getPosition: async () => {
+    getPosition: async (params) => {
       const data = {};
       const response = await request.private('GET', '/dapi/v1/positionRisk', data);
       if (response.status >= 400) {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
-      const positionData = response.data.find(v => v.symbol === settings.SYMBOL);
+      const positionData = response.data.find(v => v.symbol === params.symbol);
       const qtyS = positionData && +positionData.positionAmt < 0 ? Math.abs(+positionData.positionAmt) : 0;
       const qtyB = positionData && +positionData.positionAmt > 0 ? Math.abs(+positionData.positionAmt) : 0;
       const pxS = qtyS ? +positionData.entryPrice : 0;
@@ -386,12 +386,12 @@ function Rest(settings) {
      * 
      * 
      */
-    getLastPrice: async () => {
+    getLastPrice: async (params) => {
       const data = {};
-      data.symbol = settings.SYMBOL;
+      data.symbol = params.symbol;
       const response = await request.public('GET', '/dapi/v1/trades', data);
       if (response.status >= 400) {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
       const price = +response.data[response.data.length - 1].price;
       return { data: price };
@@ -403,22 +403,22 @@ function Rest(settings) {
      * 
      * 
      */
-    getLiquidation: async () => {
+    getLiquidation: async (params) => {
       // Get premium index 
       const premiumIndexData = {};
-      premiumIndexData.symbol = settings.SYMBOL;
+      premiumIndexData.symbol = params.symbol;
       const premiumIndexResponse = await request.public('GET', '/dapi/v1/premiumIndex', premiumIndexData);
       if (premiumIndexResponse.status >= 400) {
-        return handleResponseError({}, premiumIndexResponse.data);
+        return handleResponseError(params, premiumIndexResponse.data);
       }
       // Get position
       const positionData = {};
       const positionResponse = await request.private('GET', '/dapi/v1/positionRisk', positionData);
       if (positionResponse.status >= 400) {
-        return handleResponseError({}, positionResponse.data);
+        return handleResponseError(params, positionResponse.data);
       }
       // Calculate liquidation
-      const position = positionResponse.data.find(v => v.symbol === settings.SYMBOL);
+      const position = positionResponse.data.find(v => v.symbol === params.symbol);
       const markPx = +premiumIndexResponse.data[0].markPrice;
       const liqPxS = position && +position.positionAmt < 0 ? +position.liquidationPrice : 0;
       const liqPxB = position && +position.positionAmt > 0 ? +position.liquidationPrice : 0;
@@ -432,18 +432,34 @@ function Rest(settings) {
      * 
      * 
      */
-    getFundingRates: async () => {
+    getFundingRates: async (params) => {
       const data = {};
-      data.symbol = settings.SYMBOL;
+      data.symbol = params.symbol;
       const response = await request.public('GET', '/dapi/v1/premiumIndex', data);
       if (response.status >= 400) {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
       const responseData = response.data[0];
       const current = responseData ? +responseData.lastFundingRate : 0;
       const estimated = responseData ? +responseData.lastFundingRate : 0;
       const fundings = { current, estimated, };
       return { data: fundings };
+    },
+    /**
+     * 
+     * 
+     * GET FUNDING RATES
+     * 
+     * 
+     */
+    getInstrumentsSymbols: async () => {
+      const data = {};
+      const response = await request.public('GET', '/dapi/v1/exchangeInfo', data);
+      if (response.status >= 400) {
+        return handleResponseError(null, response.data);
+      }
+      const symbols = response.data.symbols.map(v => v.symbol);
+      return { data: symbols };
     },
     /**
      * 
@@ -468,12 +484,12 @@ function Rest(settings) {
      * 
      * 
      */
-    _getOrderBook: async () => {
+    _getOrderBook: async (params) => {
       const data = {};
-      data.symbol = settings.SYMBOL;
+      data.symbol = params.symbol;
       const response = await request.public('GET', '/dapi/v1/depth', data);
       if (response.status >= 400) {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
       const lastUpdateId = response.data.lastUpdateId;
       const asks = response.data.asks.map(v => {
