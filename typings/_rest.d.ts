@@ -92,6 +92,7 @@ declare namespace RestN {
     symbol: string;
   }
   type getLiquidationParams = {
+    asset: string;
     symbol: string;
   }
   type getFundingRatesParams = {

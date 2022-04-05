@@ -40,6 +40,9 @@ type settings = {
   },
   REST?: {
     URL?: string,
+    API_KEY?: string,
+    API_SECRET?: string,
+    API_PASSPHRASE?: string,
     REQUESTS_LIMIT?: number,
     REQUESTS_REFILL?: number,
     REQUESTS_REFILL_INTERVAL?: number,
@@ -51,4 +54,14 @@ type settings = {
     URL?: string,
   },
 }
-export = settings;
+export interface REST {
+  URL?: string,
+  API_KEY?: string,
+  API_SECRET?: string,
+  API_PASSPHRASE?: string,
+  REQUESTS_LIMIT?: number,
+  REQUESTS_REFILL?: number,
+  REQUESTS_REFILL_INTERVAL?: number,
+  REQUESTS_TIMESTAMPS?: number,
+}
+// export = settings;
