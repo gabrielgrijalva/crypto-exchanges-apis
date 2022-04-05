@@ -14,6 +14,26 @@ declare namespace UtilsN {
    * 
    * 
    * 
+   * UTILS SETTINGS
+   * 
+   * 
+   * 
+   */
+  type utilsSettings = {
+    TYPE: 'spot' | 'future' | 'option',
+    BALANCE_TYPE: 'base' | 'quote',
+    QUANTITY_TYPE: 'base' | 'quote',
+    PRICE_STEP: number,
+    QUANTITY_VALUE: number,
+    BASE_PRECISION: number,
+    QUOTE_PRECISION: number,
+    PRICE_PRECISION: number,
+    QUANTITY_PRECISION: number,
+  }
+  /**
+   * 
+   * 
+   * 
    * UTILS INTERFACE
    * 
    * 
