@@ -77,9 +77,9 @@ function getCandleResolution(interval) {
  * 
  */
 /**
- * @param {import('../../../typings/settings')} settings 
+ * @param {import('../../../typings/_rest').restSettings} restSettings
  */
-function getPrivateFunction(settings) {
+function getPrivateFunction(restSettings) {
   /** 
    * @this {import('../../../typings/_rest').Request} 
    * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
@@ -87,16 +87,16 @@ function getPrivateFunction(settings) {
   async function private(method, path, data) {
     const headers = {};
     const dataStringified = qs.stringify(data);
-    if (settings.API_KEY && settings.API_SECRET) {
+    if (restSettings.API_KEY && restSettings.API_SECRET) {
       const expires = Math.floor(Date.now() / 1000 + 60).toString();
       const digest = `${method}${path}?${dataStringified}${expires}`;
-      const signature = crypto.createHmac('sha256', settings.API_SECRET).update(digest).digest('hex');
+      const signature = crypto.createHmac('sha256', restSettings.API_SECRET).update(digest).digest('hex');
       headers['api-expires'] = expires;
-      headers['api-key'] = settings.API_KEY;
+      headers['api-key'] = restSettings.API_KEY;
       headers['api-signature'] = signature;
     }
     const requestSendParams = {
-      url: `${settings.REST.URL}${path}?${dataStringified}`,
+      url: `${restSettings.URL}${path}?${dataStringified}`,
       method: method,
       headers: headers,
     };
@@ -117,18 +117,19 @@ function getPrivateFunction(settings) {
  * 
  */
 /** 
- * @param {import('../../../typings/settings')} settings
+ * @param {import('../../../typings/_rest').restSettings} restSettings
  */
-function Rest(settings) {
-  // Default rest settings values
-  settings.REST.URL = settings.REST.URL || 'https://www.bitmex.com';
-  settings.REST.REQUESTS_LIMIT = settings.REST.REQUESTS_LIMIT || 120;
-  settings.REST.REQUESTS_REFILL = settings.REST.REQUESTS_REFILL || 2;
-  settings.REST.REQUESTS_REFILL_INTERVAL = settings.REST.REQUESTS_REFILL_INTERVAL || 1000;
-  settings.REST.REQUESTS_TIMESTAMPS = settings.REST.REQUESTS_TIMESTAMPS || 10;
+function Rest(restSettings) {
+  // Default rest restSettings values
+  restSettings.URL = restSettings.URL || 'https://www.bitmex.com';
+  restSettings.REQUESTS_LIMIT = restSettings.REQUESTS_LIMIT || 120;
+  restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || 2;
+  restSettings.REQUESTS_REFILL_INTERVAL = restSettings.REQUESTS_REFILL_INTERVAL || 1000;
+  restSettings.REQUESTS_TIMESTAMPS = restSettings.REQUESTS_TIMESTAMPS || 10;
   // Request creation
-  const private = getPrivateFunction(settings);
-  const request = Request({ settings, private });
+  const REST_SETTINGS = restSettings;
+  const PRIVATE = getPrivateFunction(restSettings);
+  const request = Request({ REST_SETTINGS, PRIVATE });
   /** 
    * 
    * 
@@ -155,7 +156,7 @@ function Rest(settings) {
     createOrder: async (params) => {
       const data = {};
       data.side = params.side === 'sell' ? 'Sell' : 'Buy';
-      data.symbol = settings.SYMBOL;
+      data.symbol = params.symbol;
       data.clOrdID = params.id;
       data.ordType = params.type === 'limit' ? 'Limit' : 'Market';
       data.orderQty = params.quantity;
@@ -221,14 +222,14 @@ function Rest(settings) {
      * 
      * 
      */
-    cancelOrdersAll: async () => {
+    cancelOrdersAll: async (params) => {
       const data = {};
-      data.symbol = settings.SYMBOL;
+      data.symbol = params.symbol;
       const response = await request.private('DELETE', '/api/v1/order/all', data);
       if (response.status >= 400) {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
-      return { data: {} };
+      return { data: params };
     },
     /**
      * 
@@ -267,12 +268,12 @@ function Rest(settings) {
      * 
      * 
      */
-    getEquity: async () => {
+    getEquity: async (params) => {
       const data = {};
-      data.currency = settings.ASSET;
+      data.currency = params.asset;
       const response = await request.private('GET', '/api/v1/user/margin', data);
       if (response.status >= 400) {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
       const equity = round.normal(response.data.marginBalance / 100000000, 8);
       return { data: equity };
@@ -288,7 +289,7 @@ function Rest(settings) {
       const data = {};
       data.to = moment.utc(params.start).add(params.interval * 10080, 'milliseconds').unix();
       data.from = moment.utc(params.start).add(params.interval, 'milliseconds').unix();
-      data.symbol = settings.SYMBOL;
+      data.symbol = params;
       data.resolution = getCandleResolution(params.interval);
       const response = await request.private('GET', '/api/udf/history', data);
       if (response.status >= 400) {
@@ -313,12 +314,12 @@ function Rest(settings) {
      * 
      * 
      */
-    getPosition: async () => {
+    getPosition: async (params) => {
       const data = {};
-      data.filter = { symbol: settings.SYMBOL };
+      data.filter = { symbol: params.symbol };
       const response = await request.private('GET', '/api/v1/position', data);
       if (response.status >= 400) {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
       const qtyS = Math.abs(response.data[0] && +response.data[0].currentQty < 0 ? +response.data[0].currentQty : 0);
       const qtyB = Math.abs(response.data[0] && +response.data[0].currentQty > 0 ? +response.data[0].currentQty : 0);
@@ -335,13 +336,13 @@ function Rest(settings) {
      * 
      * 
      */
-    getLastPrice: async () => {
+    getLastPrice: async (params) => {
       const data = {};
-      data.symbol = settings.SYMBOL;
+      data.symbol = params.symbol;
       data.reverse = true;
       const response = await request.private('GET', '/api/v1/trade', data);
       if (response.status >= 400) {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
       const price = +response.data[0].price;
       return { data: price };
@@ -353,20 +354,20 @@ function Rest(settings) {
      * 
      * 
      */
-    getLiquidation: async () => {
+    getLiquidation: async (params) => {
       // Get position 
       const positionData = {};
-      positionData.filter = { symbol: settings.SYMBOL };
+      positionData.filter = { symbol: params.symbol };
       const positionResponse = await request.private('GET', '/api/v1/position', positionData);
       if (positionResponse.status >= 400) {
-        return handleResponseError({}, positionResponse.data);
+        return handleResponseError(params, positionResponse.data);
       }
       // Get instrument
       const instrumentData = {};
-      instrumentData.symbol = settings.SYMBOL;
+      instrumentData.symbol = params.symbol;
       const instrumentResponse = await request.private('GET', '/api/v1/instrument', instrumentData);
       if (instrumentResponse.status >= 400) {
-        return handleResponseError({}, instrumentResponse.data);
+        return handleResponseError(params, instrumentResponse.data);
       }
       // Calculate liquidation
       const markPx = +instrumentResponse.data[0].markPrice;
@@ -382,18 +383,34 @@ function Rest(settings) {
      * 
      * 
      */
-    getFundingRates: async () => {
+    getFundingRates: async (params) => {
       const data = {};
-      data.symbol = settings.SYMBOL;
+      data.symbol = params.symbol;
       const response = await request.private('GET', '/api/v1/instrument', data);
       if (response.status >= 400) {
-        return handleResponseError({}, response.data);
+        return handleResponseError(params, response.data);
       }
       const fundings = {
         current: +response.data[0].fundingRate,
         estimated: +response.data[0].indicativeFundingRate,
       };
       return { data: fundings };
+    },
+    /**
+     * 
+     * 
+     * GET INSTRUMENT SYMBOLS
+     * 
+     * 
+     */
+    getInstrumentsSymbols: async () => {
+      const data = {};
+      const response = await request.private('GET', '/api/v1/instrument', data);
+      if (response.status >= 400) {
+        return handleResponseError(null, response.data);
+      }
+      const symbols = response.data.map(v => v.symbol);
+      return { data: symbols };
     },
   };
   return rest;
