@@ -1,6 +1,6 @@
-import { Ws } from './_ws';
-import { Rest } from './_rest';
-import { Utils } from './_utils';
+import WsN from './_ws';
+import RestN from './_rest';
+import UtilsN from './_utils';
 /**
  * 
  * 
@@ -35,9 +35,10 @@ declare namespace FixerN {
    * 
    */
   type executeParams = {
-    ws: Ws;
-    rest: Rest;
-    utils: Utils;
+    rest: RestN.Rest;
+    utils: UtilsN.Utils;
+    ordersWsObject: WsN.ordersWsObjectReturn;
+    orderBookWsObject: WsN.orderBookWsObjectReturn;
     fixSymbol: string;
     fixPositionQtyS: number;
     fixPositionQtyB: number;
