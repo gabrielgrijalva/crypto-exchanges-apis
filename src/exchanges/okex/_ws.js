@@ -62,14 +62,14 @@ function getSignedRequest(apiKey, apiSecret, apiPassphrase) {
  * @param {string} symbol
  * @param {string} channel
  * @param {import('../../../typings/_ws').WebSocket} webSocket 
- * @param {import('../../../typings/settings')} settings
+ * @param {import('../../../typings/_ws').wsSettings} wsSettings
  */
-function connectWebSocket(type, symbol, channel, webSocket, settings) {
+function connectWebSocket(type, symbol, channel, webSocket, wsSettings) {
   return new Promise((resolve) => {
-    const url = settings.WS.URL;
-    const apiKey = settings.API_KEY;
-    const apiSecret = settings.API_SECRET;
-    const apiPassphrase = settings.API_PASSPHRASE;
+    const url = wsSettings.URL;
+    const apiKey = wsSettings.API_KEY;
+    const apiSecret = wsSettings.API_SECRET;
+    const apiPassphrase = wsSettings.API_PASSPHRASE;
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
     webSocket.connect(`${url}/${type}`);
     function connnectOnOpenFunction() {
@@ -163,14 +163,13 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  * 
  */
 /**
- * @param {import('../../../typings/settings')} settings
+ * @param {import('../../../typings/_ws').wsSettings} wsSettings
  */
-function Ws(settings) {
-  // Default ws settings values
-  settings.REST = settings.REST || {};
-  settings.WS.URL = settings.WS.URL || 'wss://ws.okex.com:8443/ws/v5';
+function Ws(wsSettings) {
+  // Default ws wsSettings values
+  wsSettings.URL = wsSettings.URL || 'wss://ws.okex.com:8443/ws/v5';
   // Rest creation
-  const rest = Rest(settings);
+  const rest = Rest(wsSettings);
   // Websocket creation
   /** 
    * 
@@ -192,15 +191,15 @@ function Ws(settings) {
     orders: {
       info: null,
       events: null,
-      connect: async () => {
+      connect: async (params) => {
         /** @type {import('../../../typings/_ws').ordersEventEmitter} */
         ws.orders.events = new Events.EventEmitter();
         const openOrders = [];
         // Orders websocket
-        const symbol = settings.SYMBOL;
+        const symbol = params.symbol;
         const channel = 'orders';
         const webSocket = WebSocket('okex:orders:orders');
-        await connectWebSocket('private', symbol, channel, webSocket, settings);
+        await connectWebSocket('private', symbol, channel, webSocket, wsSettings);
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message.toString());
           console.log(messageParse);
@@ -210,7 +209,7 @@ function Ws(settings) {
           const cancelationOrders = [];
           for (let i = 0; messageParse.data[i]; i += 1) {
             const order = messageParse.data[i];
-            if (order.instId === settings.SYMBOL) {
+            if (order.instId === params.symbol) {
               if (order.state === 'live') {
                 if (order.amendResult === '-1') {
                   removeOpenOrders(openOrders, order);
@@ -250,7 +249,7 @@ function Ws(settings) {
             ws.orders.events.emit('cancelations', cancelationOrders);
           }
         });
-        webSocket.addOnClose(() => connectWebSocket('private', symbol, channel, webSocket, settings));
+        webSocket.addOnClose(() => connectWebSocket('private', symbol, channel, webSocket, wsSettings));
       }
     },
     /**
@@ -265,15 +264,15 @@ function Ws(settings) {
     position: {
       info: null,
       events: null,
-      connect: async () => {
+      connect: async (params) => {
         /** @type {import('../../../typings/_ws').positionEventEmitter} */
         ws.position.events = new Events.EventEmitter();
-        const symbol = settings.SYMBOL;
+        const symbol = params.symbol;
         const channel = 'positions';
         const webSocket = WebSocket('okex:position:position');
-        await connectWebSocket('private', symbol, channel, webSocket, settings);
+        await connectWebSocket('private', symbol, channel, webSocket, wsSettings);
         // Load rest info
-        const positionRestData = (await rest.getPosition()).data;
+        const positionRestData = (await rest.getPosition(params)).data;
         /** @type {import('../../../typings/_ws').dataPosition} */
         ws.position.info = Object.assign({}, positionRestData);
         webSocket.addOnMessage((message) => {
@@ -288,7 +287,7 @@ function Ws(settings) {
           ws.position.info.qtyB = positionEvent && +positionEvent.pos > 0 ? Math.abs(+positionEvent.pos) : 0;
           ws.position.events.emit('update', ws.position.info);
         });
-        webSocket.addOnClose(() => connectWebSocket('private', symbol, channel, webSocket, settings));
+        webSocket.addOnClose(() => connectWebSocket('private', symbol, channel, webSocket, wsSettings));
       }
     },
     /**
@@ -303,10 +302,10 @@ function Ws(settings) {
     liquidation: {
       info: null,
       events: null,
-      connect: async () => {
+      connect: async (params) => {
         /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
         ws.liquidation.events = new Events.EventEmitter();
-        const symbol = settings.SYMBOL;
+        const symbol = params.symbol;
         // Instrument websocket
         const channelMark = 'mark-price';
         const webSocketMark = WebSocket('okex:liquidation:mark-price');
@@ -314,12 +313,12 @@ function Ws(settings) {
         const channelPosition = 'positions';
         const webSocketPosition = WebSocket('okex:liquidation:position');
         await Promise.all([
-          connectWebSocket('public', symbol, channelMark, webSocketMark, settings),
-          connectWebSocket('private', symbol, channelPosition, webSocketPosition, settings),
+          connectWebSocket('public', symbol, channelMark, webSocketMark, wsSettings),
+          connectWebSocket('private', symbol, channelPosition, webSocketPosition, wsSettings),
         ]);
         // Load rest info
-        const positionRestData = (await rest.getPosition()).data;
-        const liquidationRestData = (await rest.getLiquidation()).data;
+        const positionRestData = (await rest.getPosition(params)).data;
+        const liquidationRestData = (await rest.getLiquidation(params)).data;
         // Liquidation info
         /** @type {import('../../../typings/_ws').dataLiquidation} */
         ws.liquidation.info = Object.assign({}, positionRestData, liquidationRestData);
@@ -346,8 +345,8 @@ function Ws(settings) {
           ws.liquidation.info.liqPxB = positionEvent && +positionEvent.pos > 0 ? +positionEvent.liqPx : 0;
           ws.liquidation.events.emit('update', ws.liquidation.info);
         });
-        webSocketMark.addOnClose(() => connectWebSocket('public', symbol, channelMark, webSocketMark, settings));
-        webSocketPosition.addOnClose(() => connectWebSocket('private', symbol, channelPosition, webSocketPosition, settings));
+        webSocketMark.addOnClose(() => connectWebSocket('public', symbol, channelMark, webSocketMark, wsSettings));
+        webSocketPosition.addOnClose(() => connectWebSocket('private', symbol, channelPosition, webSocketPosition, wsSettings));
       }
     },
     /**
@@ -373,8 +372,8 @@ function Ws(settings) {
         }
         // Connect websocket
         const channel = 'books-l2-tbt';
-        const symbol = settings.SYMBOL;
-        await connectWebSocket('public', symbol, channel, webSocket, settings);
+        const symbol = params.symbol;
+        await connectWebSocket('public', symbol, channel, webSocket, wsSettings);
         // Order book functionality
         webSocket.addOnMessage((message) => {
           const messageParse = JSON.parse(message.toString());
@@ -398,7 +397,7 @@ function Ws(settings) {
         });
         webSocket.addOnClose(() => {
           desynchronizeOrderBook(ws.orderBook.info);
-          connectWebSocket('public', symbol, channel, webSocket, settings);
+          connectWebSocket('public', symbol, channel, webSocket, wsSettings);
         });
         await (new Promise(resolve => {
           let counter = 0;
