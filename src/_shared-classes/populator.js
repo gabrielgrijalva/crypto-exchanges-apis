@@ -42,27 +42,24 @@ function saveCandles(connection, candles, table) {
  */
 /** 
  * @this import('../../typings/index')
- * @param {import('../../typings/settings')} settings
+ * @param {import('../../typings/_populator').populatorSettings} populatorSettings
  */
-function Populator(settings) {
-  // Default populator settings values
-  settings.POPULATOR.PORT = settings.POPULATOR.PORT || 3306;
-  settings.POPULATOR.HOST = settings.POPULATOR.HOST || 'localhost';
-  settings.POPULATOR.USER = settings.POPULATOR.USER || 'root';
-  settings.POPULATOR.DATABASE = settings.POPULATOR.DATABASE || '';
-  settings.POPULATOR.PASSWORD = settings.POPULATOR.PASSWORD || '';
-  settings.POPULATOR.TIMEZONE = settings.POPULATOR.TIMEZONE || '';
-  // Create exchange
-  /** @type {import('../../typings/_rest').Rest} */
-  const rest = require(`../../src/exchanges/${settings.EXCHANGE}/_rest`)(settings);
+function Populator(populatorSettings) {
+  // Default populator populatorSettings values
+  populatorSettings.PORT = populatorSettings.PORT || 3306;
+  populatorSettings.HOST = populatorSettings.HOST || 'localhost';
+  populatorSettings.USER = populatorSettings.USER || 'root';
+  populatorSettings.DATABASE = populatorSettings.DATABASE || '';
+  populatorSettings.PASSWORD = populatorSettings.PASSWORD || '';
+  populatorSettings.TIMEZONE = populatorSettings.TIMEZONE || '';
   // Create database connection
   const connection = mysql.createConnection({
-    port: settings.POPULATOR.PORT,
-    host: settings.POPULATOR.HOST,
-    user: settings.POPULATOR.USER,
-    database: settings.POPULATOR.DATABASE,
-    password: settings.POPULATOR.PASSWORD,
-    timezone: settings.POPULATOR.TIMEZONE,
+    port: populatorSettings.PORT,
+    host: populatorSettings.HOST,
+    user: populatorSettings.USER,
+    database: populatorSettings.DATABASE,
+    password: populatorSettings.PASSWORD,
+    timezone: populatorSettings.TIMEZONE,
   });
   /**
    * 
@@ -78,7 +75,8 @@ function Populator(settings) {
       let start = moment.utc(params.start);
       const finish = moment.utc(params.finish);
       while (start.unix() < finish.unix()) {
-        const candles = (await rest.getCandles({
+        const candles = (await params.rest.getCandles({
+          symbol: params.symbol,
           start: start.format('YYYY-MM-DD HH:mm:ss'),
           interval: interval,
         })).data;
@@ -106,7 +104,8 @@ function Populator(settings) {
         let candle = null;
         for (let i = 0; i < 15 && (!candle || !candle.volume); i += 1) {
           const start = timestamp.clone().subtract(interval * 5, 'milliseconds').format('YYYY-MM-DD HH:mm:ss');
-          candle = (await rest.getCandles({
+          candle = (await params.rest.getCandles({
+            symbol: params.symbol,
             start: start,
             interval: interval,
           })).data.find(v => v.timestamp === timestamp.format('YYYY-MM-DD HH:mm:ss'));
