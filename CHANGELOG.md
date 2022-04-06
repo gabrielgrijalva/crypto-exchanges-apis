@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2022-04-06
+- Important general updates to project main implementation. 
+- Changed to modular functionality aproach for each exchange.
 ## [1.6.0] - 2022-04-04
 - Made general improvements and error corrections.
 ## [1.5.9] - 2022-03-30
