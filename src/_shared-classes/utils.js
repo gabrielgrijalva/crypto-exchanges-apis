@@ -169,26 +169,6 @@ function Utils(utilsSettings) {
     /**
      * 
      * 
-     * GET OB BEST ASK
-     * 
-     * 
-     */
-    getOBBestAsk: (() => {
-      return (ob) => round.normal(ob.asks[0].price - PRICE_STEP, PRICE_PRECISION);
-    })(),
-    /**
-     * 
-     * 
-     * GET OB BEST BID
-     * 
-     * 
-     */
-    getOBBestBid: (() => {
-      return (ob) => round.normal(ob.bids[0].price + PRICE_STEP, PRICE_PRECISION);
-    })(),
-    /**
-     * 
-     * 
      * GET OB EXECUTION PRICE
      * 
      * 

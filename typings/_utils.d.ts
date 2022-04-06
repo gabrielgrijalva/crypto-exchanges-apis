@@ -48,8 +48,6 @@ declare namespace UtilsN {
     getCloseOrderQtyFromOpenPosition(px: number, qty: number, rnd: roundTypes): number;
     getOpenPositionQtyFromOpenExecution(px: number, qty: number, rnd: roundTypes): number;
     getPnl(qty: number, side: sideTypes, entPx: number, extPx: number, entFee: number, extFee: number): number;
-    getOBBestAsk(ob: dataOrderBook): number;
-    getOBBestBid(ob: dataOrderBook): number;
     getOBExecutionPrice(ob: dataOrderBook, obType: obTypes, bal: number, skipVol: number, skipLevles: number, skipPer: number): number;
     getBalInvFromPosition(px: number, qty: number): number;
     getNBValueFromPosition(px: number, qty: number): number;
