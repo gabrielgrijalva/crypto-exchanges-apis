@@ -130,7 +130,7 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
 /**
  * @param {import('../../../typings/_ws').wsSettings} wsSettings
  */
-function Ws(wsSettings) {
+function Ws(wsSettings = {}) {
   // Default ws wsSettings values
   wsSettings.URL = wsSettings.URL || 'wss://stream.bybit.com/realtime';
   // Rest creation

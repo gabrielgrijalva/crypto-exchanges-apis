@@ -140,7 +140,7 @@ function getPrivateFunction(restSettings) {
 /** 
  * @param {import('../../../typings/_rest').restSettings} restSettings
  */
-function Rest(restSettings) {
+function Rest(restSettings = {}) {
   // Default rest restSettings values
   restSettings.URL = restSettings.URL || 'https://api.futures.kraken.com/derivatives';
   restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || false;
