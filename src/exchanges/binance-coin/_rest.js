@@ -154,8 +154,9 @@ function getPrivateFunction(restSettings) {
 function Rest(restSettings = {}) {
   // Default rest restSettings values
   restSettings.URL = restSettings.URL || 'https://dapi.binance.com';
-  restSettings.REQUESTS_LIMIT = restSettings.REQUESTS_LIMIT || 1200;
-  restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || 1200;
+  restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || false;
+  restSettings.REQUESTS_REFILL_LIMIT = restSettings.REQUESTS_REFILL_LIMIT || 1200;
+  restSettings.REQUESTS_REFILL_AMOUNT = restSettings.REQUESTS_REFILL_AMOUNT || 1200;
   restSettings.REQUESTS_REFILL_INTERVAL = restSettings.REQUESTS_REFILL_INTERVAL || 60000;
   restSettings.REQUESTS_TIMESTAMPS = restSettings.REQUESTS_TIMESTAMPS || 10;
   // Request creation

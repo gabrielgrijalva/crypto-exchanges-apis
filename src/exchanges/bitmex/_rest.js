@@ -122,8 +122,9 @@ function getPrivateFunction(restSettings) {
 function Rest(restSettings) {
   // Default rest restSettings values
   restSettings.URL = restSettings.URL || 'https://www.bitmex.com';
-  restSettings.REQUESTS_LIMIT = restSettings.REQUESTS_LIMIT || 120;
-  restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || 2;
+  restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || false;
+  restSettings.REQUESTS_REFILL_LIMIT = restSettings.REQUESTS_REFILL_LIMIT || 120;
+  restSettings.REQUESTS_REFILL_AMOUNT = restSettings.REQUESTS_REFILL_AMOUNT || 2;
   restSettings.REQUESTS_REFILL_INTERVAL = restSettings.REQUESTS_REFILL_INTERVAL || 1000;
   restSettings.REQUESTS_TIMESTAMPS = restSettings.REQUESTS_TIMESTAMPS || 10;
   // Request creation

@@ -96,8 +96,9 @@ function getPublicFunction(restSettings) {
 function Rest(restSettings) {
   // Default rest restSettings values
   restSettings.URL = restSettings.URL || 'https://www.bitstamp.net';
-  restSettings.REQUESTS_LIMIT = restSettings.REQUESTS_LIMIT || 8000;
-  restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || 8000;
+  restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || false;
+  restSettings.REQUESTS_REFILL_LIMIT = restSettings.REQUESTS_REFILL_LIMIT || 8000;
+  restSettings.REQUESTS_REFILL_AMOUNT = restSettings.REQUESTS_REFILL_AMOUNT || 8000;
   restSettings.REQUESTS_REFILL_INTERVAL = restSettings.REQUESTS_REFILL_INTERVAL || 600000;
   restSettings.REQUESTS_TIMESTAMPS = restSettings.REQUESTS_TIMESTAMPS || 10;
   // Request creation

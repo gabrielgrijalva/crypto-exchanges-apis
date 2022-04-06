@@ -129,8 +129,9 @@ function getPrivateFunction(restSettings) {
 function Rest(restSettings) {
   // Default rest restSettings values
   restSettings.URL = restSettings.URL || 'https://www.deribit.com';
-  restSettings.REQUESTS_LIMIT = restSettings.REQUESTS_LIMIT || 20;
-  restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || 20;
+  restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || false;
+  restSettings.REQUESTS_REFILL_LIMIT = restSettings.REQUESTS_REFILL_LIMIT || 20;
+  restSettings.REQUESTS_REFILL_AMOUNT = restSettings.REQUESTS_REFILL_AMOUNT || 20;
   restSettings.REQUESTS_REFILL_INTERVAL = restSettings.REQUESTS_REFILL_INTERVAL || 4000;
   restSettings.REQUESTS_TIMESTAMPS = restSettings.REQUESTS_TIMESTAMPS || 10;
   // Request creation

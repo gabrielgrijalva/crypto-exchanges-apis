@@ -147,8 +147,9 @@ function getPrivateFunction(restSettings) {
 function Rest(restSettings) {
   // Default rest restSettings values
   restSettings.URL = restSettings.URL || 'https://api.bybit.com';
-  restSettings.REQUESTS_LIMIT = restSettings.REQUESTS_LIMIT || 50;
-  restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || 50;
+  restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || false;
+  restSettings.REQUESTS_REFILL_LIMIT = restSettings.REQUESTS_REFILL_LIMIT || 50;
+  restSettings.REQUESTS_REFILL_AMOUNT = restSettings.REQUESTS_REFILL_AMOUNT || 50;
   restSettings.REQUESTS_REFILL_INTERVAL = restSettings.REQUESTS_REFILL_INTERVAL || 5000;
   restSettings.REQUESTS_TIMESTAMPS = restSettings.REQUESTS_TIMESTAMPS || 10;
   // Request creation
