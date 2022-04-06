@@ -138,7 +138,11 @@ function Ws(wsSettings) {
   // Default ws wsSettings values
   wsSettings.URL = wsSettings.URL || 'wss://api.futures.kraken.com/ws/v1';
   // Rest creation
-  const rest = Rest(wsSettings);
+  const rest = Rest({
+    API_KEY: wsSettings.API_KEY,
+    API_SECRET: wsSettings.API_SECRET,
+    API_PASSPHRASE: wsSettings.API_PASSPHRASE,
+  });
   // Websocket creation
   /** 
    * 
