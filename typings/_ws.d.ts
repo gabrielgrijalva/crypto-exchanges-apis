@@ -196,10 +196,10 @@ declare namespace WsN {
    * 
    */
   interface Ws {
-    orders(params: ordersParams): ordersWsObjectReturn;
-    position(params: positionParams): positionWsObjectReturn;
-    liquidation(params: liquidationParams): liquidationWsObjectReturn;
-    orderBook(params: orderBookParams): orderBookWsObjectReturn;
+    getOrders(params: ordersParams): ordersWsObjectReturn;
+    getPosition(params: positionParams): positionWsObjectReturn;
+    getLiquidation(params: liquidationParams): liquidationWsObjectReturn;
+    getOrderBook(params: orderBookParams): orderBookWsObjectReturn;
   }
 }
 export = WsN;
