@@ -22,8 +22,9 @@ declare namespace RestN {
     API_KEY?: string;
     API_SECRET?: string;
     API_PASSPHRASE?: string;
-    REQUESTS_LIMIT?: number;
-    REQUESTS_REFILL?: number;
+    REQUESTS_REFILL?: boolean;
+    REQUESTS_REFILL_LIMIT?: number;
+    REQUESTS_REFILL_AMOUNT?: number;
     REQUESTS_REFILL_INTERVAL?: number;
     REQUESTS_TIMESTAMPS?: number;
   }
