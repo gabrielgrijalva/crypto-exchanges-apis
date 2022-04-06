@@ -153,7 +153,7 @@ function Ws(wsSettings) {
      * 
      * 
      */
-    orders: (params) => {
+    getOrders: (params) => {
       /** @type {import('../../../typings/_ws').ordersWsObjectReturn} */
       const ordersWsObject = {
         data: null,
@@ -227,7 +227,7 @@ function Ws(wsSettings) {
      * 
      * 
      */
-    position: (params) => {
+    getPosition: (params) => {
       /** @type {import('../../../typings/_ws').positionWsObjectReturn} */
       const positionWsObject = {
         data: null,
@@ -268,7 +268,7 @@ function Ws(wsSettings) {
      * 
      * 
      */
-    liquidation: (params) => {
+    getLiquidation: (params) => {
       /** @type {import('../../../typings/_ws').liquidationWsObjectReturn} */
       const liquidationWsObject = {
         data: null,
@@ -331,7 +331,7 @@ function Ws(wsSettings) {
      * 
      * 
      */
-    orderBook: (params) => {
+    getOrderBook: (params) => {
       /** @type {import('../../../typings/_ws').orderBookWsObjectReturn} */
       const orderBookWsObject = {
         data: null,
