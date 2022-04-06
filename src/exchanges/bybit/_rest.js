@@ -2,7 +2,6 @@ const qs = require('qs');
 const crypto = require('crypto');
 const moment = require('moment');
 const Request = require('../../_shared-classes/request');
-const { initParams } = require('request');
 /**
  * 
  * 
