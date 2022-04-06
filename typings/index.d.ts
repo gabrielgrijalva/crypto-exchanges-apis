@@ -14,11 +14,11 @@ import WsN = require('./_ws');
  */
 type exchanges = 'binance-coin' | 'bitmex' | 'bitstamp' | 'bybit' | 'bybit-futures' | 'deribit' | 'kraken-futures' | 'okex';
 interface CryptoExchangeApi {
-  FIXER(settings: FixerN.fixerSettings): FixerN.Fixer;
-  POPULATOR(settings: PopulatorN.populatorSettings): PopulatorN.Populator;
-  REST(settings: RestN.restSettings): RestN.Rest;
-  UTILS(settings: UtilsN.utilsSettings): UtilsN.Utils;
-  WS(settings: WsN.wsSettings): WsN.Ws;
+  FIXER(fixerSettings: FixerN.fixerSettings): FixerN.Fixer;
+  POPULATOR(populatorSettings: PopulatorN.populatorSettings): PopulatorN.Populator;
+  REST(restSettings: RestN.restSettings): RestN.Rest;
+  UTILS(utilsSettings: UtilsN.utilsSettings): UtilsN.Utils;
+  WS(wsSettings: WsN.wsSettings): WsN.Ws;
 }
 declare function CryptoExchangesApi(exchange: exchanges): CryptoExchangeApi;
 export = CryptoExchangesApi;
