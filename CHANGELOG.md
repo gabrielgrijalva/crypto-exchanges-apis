@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.0.2] - 2022-04-06
+- Corrected error when loading modules.
 ## [2.0.1] - 2022-04-06
 - Corrected error when loading modules.
 - Corrected error in bybit implementation.
