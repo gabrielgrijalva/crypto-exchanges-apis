@@ -290,7 +290,7 @@ function Rest(restSettings) {
       const data = {};
       data.to = moment.utc(params.start).add(params.interval * 10080, 'milliseconds').unix();
       data.from = moment.utc(params.start).add(params.interval, 'milliseconds').unix();
-      data.symbol = params;
+      data.symbol = params.symbol;
       data.resolution = getCandleResolution(params.interval);
       const response = await request.private('GET', '/api/udf/history', data);
       if (response.status >= 400) {
