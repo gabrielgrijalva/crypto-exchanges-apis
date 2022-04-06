@@ -131,16 +131,16 @@ declare namespace WsN {
   type orderBookOrder = { id: number, price: number, quantity: number };
   type orderBookClientParams = {
     symbol: string;
-    type: 'client';
-    port: number;
-    host: string;
+    type?: 'client';
+    port?: number;
+    host?: string;
   };
   type orderBookServerParams = {
     symbol: string;
-    type: 'server';
-    port: number;
-    host: string;
-    broadcast: number;
+    type?: 'server';
+    port?: number;
+    host?: string;
+    broadcast?: number;
   };
   type orderBookParams = orderBookClientParams | orderBookServerParams;
   type dataOrderBook = {
