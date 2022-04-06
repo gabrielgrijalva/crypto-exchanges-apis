@@ -13,11 +13,29 @@ declare namespace WsN {
    * 
    * 
    * 
+   * WS SETTINGS
+   * 
+   * 
+   * 
+   */
+  type wsSettings = {
+    URL?: string;
+    API_KEY?: string;
+    API_SECRET?: string;
+    API_PASSPHRASE?: string;
+  }
+  /**
+   * 
+   * 
+   * 
    * WS ORDERS
    * 
    * 
    * 
    */
+  type ordersParams = {
+    symbol: string;
+  }
   type dataCreationsUpdates = {
     event: 'creations-updates';
     id: string;
@@ -49,7 +67,7 @@ declare namespace WsN {
     on(event: 'cancelations', listener: (data: dataCancelations[]) => void);
     on(event: 'creations-updates', listener: (data: dataCreationsUpdates[]) => void);
   }
-  type ordersPromiseReturn = { events: ordersEventEmitter };
+  type ordersWsObjectReturn = { data: null; events: ordersEventEmitter; connect(): Promise<void>; };
   /**
    * 
    * 
@@ -59,6 +77,9 @@ declare namespace WsN {
    * 
    * 
    */
+  type positionParams = {
+    symbol: string;
+  }
   type dataPosition = {
     pxS: number;
     pxB: number;
@@ -71,7 +92,7 @@ declare namespace WsN {
     // On 'event' functions
     on(event: 'update', listener: (data: dataPosition) => void);
   }
-  type positionPromiseReturn = { info: dataPosition, events: positionEventEmitter };
+  type positionWsObjectReturn = { data: dataPosition; events: positionEventEmitter; connect(): Promise<void>; };
   /**
    * 
    * 
@@ -81,6 +102,10 @@ declare namespace WsN {
    * 
    * 
    */
+  type liquidationParams = {
+    asset: string;
+    symbol: string;
+  }
   type dataLiquidation = dataPosition & {
     markPx: number;
     liqPxS: number;
@@ -92,6 +117,7 @@ declare namespace WsN {
     // On 'event' functions
     on(event: 'update', listener: (data: dataLiquidation) => void);
   }
+  type liquidationWsObjectReturn = { data: dataLiquidation; events: liquidationEventEmitter; connect(): Promise<void>; };
   /**
    * 
    * 
@@ -104,15 +130,17 @@ declare namespace WsN {
   type flags = { synchronizing: boolean, synchronized: boolean, snapshot: null | { asks: orderBookOrder[], bids: orderBookOrder[], lastUpdateId: number } };
   type orderBookOrder = { id: number, price: number, quantity: number };
   type orderBookClientParams = {
-    type: 'client';
-    port: number;
-    host: string;
+    symbol: string;
+    type?: 'client';
+    port?: number;
+    host?: string;
   };
   type orderBookServerParams = {
-    type: 'server';
-    port: number;
-    host: string;
-    broadcast: number;
+    symbol: string;
+    type?: 'server';
+    port?: number;
+    host?: string;
+    broadcast?: number;
   };
   type orderBookParams = orderBookClientParams | orderBookServerParams;
   type dataOrderBook = {
@@ -131,6 +159,7 @@ declare namespace WsN {
     _insertSnapshotAsks(snapshot: orderBookOrder[]): void;
     _insertSnapshotBids(snapshot: orderBookOrder[]): void;
   };
+  type orderBookWsObjectReturn = { data: dataOrderBook; events: null; connect(): Promise<void>; };
   /**
    * 
    * 
@@ -166,16 +195,11 @@ declare namespace WsN {
    * 
    * 
    */
-  type wsObject<I, E, P> = {
-    info: I;
-    events: E;
-    connect(params?: P): Promise<void>;
-  }
   interface Ws {
-    orders: wsObject<null, ordersEventEmitter, null>;
-    position: wsObject<dataPosition, positionEventEmitter, null>;
-    liquidation: wsObject<dataLiquidation, liquidationEventEmitter, null>;
-    orderBook: wsObject<dataOrderBook, null, orderBookParams>;
+    getOrders(params: ordersParams): ordersWsObjectReturn;
+    getPosition(params: positionParams): positionWsObjectReturn;
+    getLiquidation(params: liquidationParams): liquidationWsObjectReturn;
+    getOrderBook(params: orderBookParams): orderBookWsObjectReturn;
   }
 }
 export = WsN;

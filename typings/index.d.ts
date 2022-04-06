@@ -3,7 +3,6 @@ import PopulatorN = require('./_populator');
 import RestN = require('./_rest');
 import UtilsN = require('./_utils');
 import WsN = require('./_ws');
-import settings = require('./settings');
 /**
  * 
  * 
@@ -13,13 +12,13 @@ import settings = require('./settings');
  * 
  * 
  */
+type exchanges = 'binance-coin' | 'bitmex' | 'bitstamp' | 'bybit' | 'bybit-futures' | 'deribit' | 'kraken-futures' | 'okex';
 interface CryptoExchangeApi {
-  fixer: FixerN.Fixer;
-  populator: PopulatorN.Populator;
-  rest: RestN.Rest;
-  utils: UtilsN.Utils;
-  ws: WsN.Ws;
-  settings: settings;
+  FIXER(fixerSettings: FixerN.fixerSettings): FixerN.Fixer;
+  POPULATOR(populatorSettings: PopulatorN.populatorSettings): PopulatorN.Populator;
+  REST(restSettings: RestN.restSettings): RestN.Rest;
+  UTILS(utilsSettings: UtilsN.utilsSettings): UtilsN.Utils;
+  WS(wsSettings: WsN.wsSettings): WsN.Ws;
 }
-declare function CryptoExchangesApi(settings: settings): CryptoExchangeApi;
+declare function CryptoExchangesApi(exchange: exchanges): CryptoExchangeApi;
 export = CryptoExchangesApi;

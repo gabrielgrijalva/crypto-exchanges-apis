@@ -66,13 +66,13 @@ function getSingatureParams(challenge, apiKey, apiSecret) {
  * @param {string} feed
  * @param {string} symbol
  * @param {import('../../../typings/_ws').WebSocket} webSocket 
- * @param {import('../../../typings/settings')} settings
+ * @param {import('../../../typings/_ws').wsSettings} wsSettings
  */
-function connectWebSocket(feed, symbol, webSocket, settings) {
+function connectWebSocket(feed, symbol, webSocket, wsSettings) {
   return new Promise((resolve) => {
-    const url = settings.WS.URL;
-    const apiKey = settings.API_KEY;
-    const apiSecret = settings.API_SECRET;
+    const url = wsSettings.URL;
+    const apiKey = wsSettings.API_KEY;
+    const apiSecret = wsSettings.API_SECRET;
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
     webSocket.connect(url);
     function connectOnOpenFunction() {
@@ -132,14 +132,17 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  * 
  */
 /**
- * @param {import('../../../typings/settings')} settings
+ * @param {import('../../../typings/_ws').wsSettings} wsSettings
  */
-function Ws(settings) {
-  // Default ws settings values
-  settings.REST = settings.REST || {};
-  settings.WS.URL = settings.WS.URL || 'wss://api.futures.kraken.com/ws/v1';
+function Ws(wsSettings) {
+  // Default ws wsSettings values
+  wsSettings.URL = wsSettings.URL || 'wss://api.futures.kraken.com/ws/v1';
   // Rest creation
-  const rest = Rest(settings);
+  const rest = Rest({
+    API_KEY: wsSettings.API_KEY,
+    API_SECRET: wsSettings.API_SECRET,
+    API_PASSPHRASE: wsSettings.API_PASSPHRASE,
+  });
   // Websocket creation
   /** 
    * 
@@ -158,60 +161,64 @@ function Ws(settings) {
      * 
      * 
      */
-    orders: {
-      info: null,
-      events: null,
-      connect: async () => {
-        /** @type {import('../../../typings/_ws').ordersEventEmitter} */
-        ws.orders.events = new Events.EventEmitter();
-        // Open orders websocket
-        const feedOpenOrders = 'open_orders';
-        const webSocketOpenOrders = WebSocket('kraken-futures:orders:orders');
-        // Executions websocket
-        const feedFills = 'fills';
-        const webSocketFills = WebSocket('kraken-futures:orders:executions');
-        await Promise.all([
-          connectWebSocket(feedOpenOrders, null, webSocketOpenOrders, settings),
-          connectWebSocket(feedFills, null, webSocketFills, settings),
-        ]);
-        webSocketOpenOrders.addOnMessage((message) => {
-          const messageParse = JSON.parse(message);
-          console.log(messageParse);
-          if (messageParse.feed !== 'open_orders') { return };
-          if (messageParse.reason === 'edited_by_user'
-            || messageParse.reason === 'new_placed_order_by_user') {
-            if (messageParse.order.instrument === settings.SYMBOL) {
-              ws.orders.events.emit('creations-updates', [createCreationUpdate(messageParse.order)]);
+    getOrders: (params) => {
+      /** @type {import('../../../typings/_ws').ordersWsObjectReturn} */
+      const ordersWsObject = {
+        data: null,
+        events: null,
+        connect: async () => {
+          /** @type {import('../../../typings/_ws').ordersEventEmitter} */
+          ordersWsObject.events = new Events.EventEmitter();
+          // Open orders websocket
+          const feedOpenOrders = 'open_orders';
+          const webSocketOpenOrders = WebSocket('kraken-futures:orders:orders');
+          // Executions websocket
+          const feedFills = 'fills';
+          const webSocketFills = WebSocket('kraken-futures:orders:executions');
+          await Promise.all([
+            connectWebSocket(feedOpenOrders, null, webSocketOpenOrders, wsSettings),
+            connectWebSocket(feedFills, null, webSocketFills, wsSettings),
+          ]);
+          webSocketOpenOrders.addOnMessage((message) => {
+            const messageParse = JSON.parse(message);
+            console.log(messageParse);
+            if (messageParse.feed !== 'open_orders') { return };
+            if (messageParse.reason === 'edited_by_user'
+              || messageParse.reason === 'new_placed_order_by_user') {
+              if (messageParse.order.instrument === params.symbol) {
+                ordersWsObject.events.emit('creations-updates', [createCreationUpdate(messageParse.order)]);
+              }
             }
-          }
-          if (messageParse.reason === 'cancelled_by_user'
-            || messageParse.reason === 'market_inactive'
-            || messageParse.reason === 'post_order_failed_because_it_would_filled'
-            || messageParse.reason === 'ioc_order_failed_because_it_would_not_be_executed') {
-            const ordSymbol = messageParse.cli_ord_id.split('-')[0];
-            if (ordSymbol === settings.SYMBOL) {
-              ws.orders.events.emit('cancelations', [createCancelation(messageParse)]);
+            if (messageParse.reason === 'cancelled_by_user'
+              || messageParse.reason === 'market_inactive'
+              || messageParse.reason === 'post_order_failed_because_it_would_filled'
+              || messageParse.reason === 'ioc_order_failed_because_it_would_not_be_executed') {
+              const ordSymbol = messageParse.cli_ord_id.split('-')[0];
+              if (ordSymbol === params.symbol) {
+                ordersWsObject.events.emit('cancelations', [createCancelation(messageParse)]);
+              }
             }
-          }
-        });
-        webSocketFills.addOnMessage((message) => {
-          const messageParse = JSON.parse(message);
-          console.log(messageParse);
-          if (messageParse.feed !== 'fills' || !messageParse.fills) { return };
-          const executionOrders = [];
-          for (let i = 0; messageParse.fills[i]; i += 1) {
-            const fill = messageParse.fills[i];
-            if (fill.instrument === settings.SYMBOL) {
-              executionOrders.push(createExecution(fill));
+          });
+          webSocketFills.addOnMessage((message) => {
+            const messageParse = JSON.parse(message);
+            console.log(messageParse);
+            if (messageParse.feed !== 'fills' || !messageParse.fills) { return };
+            const executionOrders = [];
+            for (let i = 0; messageParse.fills[i]; i += 1) {
+              const fill = messageParse.fills[i];
+              if (fill.instrument === params.symbol) {
+                executionOrders.push(createExecution(fill));
+              }
             }
-          }
-          if (executionOrders.length) {
-            ws.orders.events.emit('executions', executionOrders);
-          }
-        });
-        webSocketOpenOrders.addOnClose(() => { connectWebSocket(feedOpenOrders, null, webSocketOpenOrders, settings) });
-        webSocketFills.addOnClose(() => { connectWebSocket(feedFills, null, webSocketFills, settings) });
-      }
+            if (executionOrders.length) {
+              ordersWsObject.events.emit('executions', executionOrders);
+            }
+          });
+          webSocketOpenOrders.addOnClose(() => { connectWebSocket(feedOpenOrders, null, webSocketOpenOrders, wsSettings) });
+          webSocketFills.addOnClose(() => { connectWebSocket(feedFills, null, webSocketFills, wsSettings) });
+        }
+      };
+      return ordersWsObject;
     },
     /**
      * 
@@ -222,39 +229,43 @@ function Ws(settings) {
      * 
      * 
      */
-    position: {
-      info: null,
-      events: null,
-      connect: async () => {
-        /** @type {import('../../../typings/_ws').positionEventEmitter} */
-        ws.position.events = new Events.EventEmitter();
-        const feed = 'open_positions';
-        const webSocket = WebSocket('kraken-futures:position:position');
-        await connectWebSocket(feed, null, webSocket, settings);
-        // Load rest info
-        const positionRestData = (await rest.getPosition()).data;
-        /** @type {import('../../../typings/_ws').dataPosition} */
-        ws.position.info = Object.assign({}, positionRestData);
-        webSocket.addOnMessage((message) => {
-          const messageParse = JSON.parse(message);
-          console.log(messageParse);
-          if (messageParse.feed !== 'open_positions' || !messageParse.positions) { return };
-          const positionEvent = messageParse.positions.find(v => v.instrument === settings.SYMBOL);
-          if (positionEvent) {
-            ws.position.info.pxS = positionEvent.balance < 0 ? positionEvent.entry_price : 0;
-            ws.position.info.qtyS = positionEvent.balance < 0 ? Math.abs(positionEvent.balance) : 0;
-            ws.position.info.pxB = positionEvent.balance > 0 ? positionEvent.entry_price : 0;
-            ws.position.info.qtyB = positionEvent.balance > 0 ? Math.abs(positionEvent.balance) : 0;
-          } else {
-            ws.position.info.pxS = 0;
-            ws.position.info.pxB = 0;
-            ws.position.info.qtyB = 0;
-            ws.position.info.qtyS = 0;
-          }
-          ws.position.events.emit('update', ws.position.info);
-        });
-        webSocket.addOnClose(() => { connectWebSocket(feed, null, webSocket, settings) });
-      }
+    getPosition: (params) => {
+      /** @type {import('../../../typings/_ws').positionWsObjectReturn} */
+      const positionWsObject = {
+        data: null,
+        events: null,
+        connect: async () => {
+          /** @type {import('../../../typings/_ws').positionEventEmitter} */
+          positionWsObject.events = new Events.EventEmitter();
+          const feed = 'open_positions';
+          const webSocket = WebSocket('kraken-futures:position:position');
+          await connectWebSocket(feed, null, webSocket, wsSettings);
+          // Load rest data
+          const positionRestData = (await rest.getPosition(params)).data;
+          /** @type {import('../../../typings/_ws').dataPosition} */
+          positionWsObject.data = Object.assign({}, positionRestData);
+          webSocket.addOnMessage((message) => {
+            const messageParse = JSON.parse(message);
+            console.log(messageParse);
+            if (messageParse.feed !== 'open_positions' || !messageParse.positions) { return };
+            const positionEvent = messageParse.positions.find(v => v.instrument === params.symbol);
+            if (positionEvent) {
+              positionWsObject.data.pxS = positionEvent.balance < 0 ? positionEvent.entry_price : 0;
+              positionWsObject.data.qtyS = positionEvent.balance < 0 ? Math.abs(positionEvent.balance) : 0;
+              positionWsObject.data.pxB = positionEvent.balance > 0 ? positionEvent.entry_price : 0;
+              positionWsObject.data.qtyB = positionEvent.balance > 0 ? Math.abs(positionEvent.balance) : 0;
+            } else {
+              positionWsObject.data.pxS = 0;
+              positionWsObject.data.pxB = 0;
+              positionWsObject.data.qtyB = 0;
+              positionWsObject.data.qtyS = 0;
+            }
+            positionWsObject.events.emit('update', positionWsObject.data);
+          });
+          webSocket.addOnClose(() => { connectWebSocket(feed, null, webSocket, wsSettings) });
+        }
+      };
+      return positionWsObject;
     },
     /**
      * 
@@ -265,61 +276,65 @@ function Ws(settings) {
      * 
      * 
      */
-    liquidation: {
-      info: null,
-      events: null,
-      connect: async () => {
-        /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
-        ws.liquidation.events = new Events.EventEmitter();
-        // Ticker websocket
-        const feedTicker = 'ticker';
-        const symbolTicker = settings.SYMBOL;
-        const webSocketTicker = WebSocket('kraken-futures:liquidation:instrument');
-        // Position websocket
-        const feedPosition = 'open_positions';
-        const webSocketPosition = WebSocket('kraken-futures:liquidation:position');
-        await Promise.all([
-          connectWebSocket(feedTicker, symbolTicker, webSocketTicker, settings),
-          connectWebSocket(feedPosition, null, webSocketPosition, settings),
-        ]);
-        // Load rest info
-        const positionRestData = (await rest.getPosition()).data;
-        const liquidationRestData = (await rest.getLiquidation()).data;
-        // Liquidation info
-        /** @type {import('../../../typings/_ws').dataLiquidation} */
-        ws.liquidation.info = Object.assign({}, positionRestData, liquidationRestData);
-        webSocketTicker.addOnMessage((message) => {
-          const messageParse = JSON.parse(message);
-          console.log(messageParse);
-          if (messageParse.product_id !== settings.SYMBOL) { return };
-          ws.liquidation.info.markPx = +messageParse.markPrice ? +messageParse.markPrice : 0;
-          ws.liquidation.events.emit('update', ws.liquidation.info);
-        });
-        webSocketPosition.addOnMessage((message) => {
-          const messageParsed = JSON.parse(message);
-          console.log(messageParsed);
-          if (messageParsed.feed !== 'open_positions' || !messageParsed.positions) { return };
-          const positionEvent = messageParsed.positions.find(v => v.instrument === settings.SYMBOL);
-          if (positionEvent) {
-            ws.liquidation.info.pxS = positionEvent.balance < 0 ? positionEvent.entry_price : 0;
-            ws.liquidation.info.qtyS = positionEvent.balance < 0 ? Math.abs(positionEvent.balance) : 0;
-            ws.liquidation.info.pxB = positionEvent.balance > 0 ? positionEvent.entry_price : 0;
-            ws.liquidation.info.qtyB = positionEvent.balance > 0 ? Math.abs(positionEvent.balance) : 0;
-            ws.liquidation.info.liqPxS = positionEvent.balance < 0 ? positionEvent.liquidation_threshold : 0;
-            ws.liquidation.info.liqPxB = positionEvent.balance > 0 ? positionEvent.liquidation_threshold : 0;
-          } else {
-            ws.liquidation.info.pxS = 0;
-            ws.liquidation.info.pxB = 0;
-            ws.liquidation.info.qtyB = 0;
-            ws.liquidation.info.qtyS = 0;
-            ws.liquidation.info.liqPxS = 0;
-            ws.liquidation.info.liqPxB = 0;
-          }
-          ws.liquidation.events.emit('update', ws.liquidation.info);
-        });
-        webSocketTicker.addOnClose(() => connectWebSocket(feedTicker, symbolTicker, webSocketTicker, settings));
-        webSocketPosition.addOnClose(() => connectWebSocket(feedPosition, null, webSocketPosition, settings));
-      }
+    getLiquidation: (params) => {
+      /** @type {import('../../../typings/_ws').liquidationWsObjectReturn} */
+      const liquidationWsObject = {
+        data: null,
+        events: null,
+        connect: async () => {
+          /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
+          liquidationWsObject.events = new Events.EventEmitter();
+          // Ticker websocket
+          const feedTicker = 'ticker';
+          const symbolTicker = params.symbol;
+          const webSocketTicker = WebSocket('kraken-futures:liquidation:instrument');
+          // Position websocket
+          const feedPosition = 'open_positions';
+          const webSocketPosition = WebSocket('kraken-futures:liquidation:position');
+          await Promise.all([
+            connectWebSocket(feedTicker, symbolTicker, webSocketTicker, wsSettings),
+            connectWebSocket(feedPosition, null, webSocketPosition, wsSettings),
+          ]);
+          // Load rest data
+          const positionRestData = (await rest.getPosition(params)).data;
+          const liquidationRestData = (await rest.getLiquidation(params)).data;
+          // Liquidation data
+          /** @type {import('../../../typings/_ws').dataLiquidation} */
+          liquidationWsObject.data = Object.assign({}, positionRestData, liquidationRestData);
+          webSocketTicker.addOnMessage((message) => {
+            const messageParse = JSON.parse(message);
+            console.log(messageParse);
+            if (messageParse.product_id !== params.symbol) { return };
+            liquidationWsObject.data.markPx = +messageParse.markPrice ? +messageParse.markPrice : 0;
+            liquidationWsObject.events.emit('update', liquidationWsObject.data);
+          });
+          webSocketPosition.addOnMessage((message) => {
+            const messageParsed = JSON.parse(message);
+            console.log(messageParsed);
+            if (messageParsed.feed !== 'open_positions' || !messageParsed.positions) { return };
+            const positionEvent = messageParsed.positions.find(v => v.instrument === params.symbol);
+            if (positionEvent) {
+              liquidationWsObject.data.pxS = positionEvent.balance < 0 ? positionEvent.entry_price : 0;
+              liquidationWsObject.data.qtyS = positionEvent.balance < 0 ? Math.abs(positionEvent.balance) : 0;
+              liquidationWsObject.data.pxB = positionEvent.balance > 0 ? positionEvent.entry_price : 0;
+              liquidationWsObject.data.qtyB = positionEvent.balance > 0 ? Math.abs(positionEvent.balance) : 0;
+              liquidationWsObject.data.liqPxS = positionEvent.balance < 0 ? positionEvent.liquidation_threshold : 0;
+              liquidationWsObject.data.liqPxB = positionEvent.balance > 0 ? positionEvent.liquidation_threshold : 0;
+            } else {
+              liquidationWsObject.data.pxS = 0;
+              liquidationWsObject.data.pxB = 0;
+              liquidationWsObject.data.qtyB = 0;
+              liquidationWsObject.data.qtyS = 0;
+              liquidationWsObject.data.liqPxS = 0;
+              liquidationWsObject.data.liqPxB = 0;
+            }
+            liquidationWsObject.events.emit('update', liquidationWsObject.data);
+          });
+          webSocketTicker.addOnClose(() => connectWebSocket(feedTicker, symbolTicker, webSocketTicker, wsSettings));
+          webSocketPosition.addOnClose(() => connectWebSocket(feedPosition, null, webSocketPosition, wsSettings));
+        }
+      };
+      return liquidationWsObject;
     },
     /**
      * 
@@ -330,57 +345,61 @@ function Ws(settings) {
      * 
      * 
      */
-    orderBook: {
-      info: null,
-      events: null,
-      connect: async (params) => {
-        const webSocket = WebSocket('kraken-futures:order-book:order-book');
-        ws.orderBook.info = OrderBook();
-        if (params && params.type === 'server') {
-          ws.orderBook.info._createServer(params);
-        }
-        if (params && params.type === 'client') {
-          ws.orderBook.info._connectClient(webSocket, params); return;
-        }
-        // Connect websocket
-        const feed = 'book';
-        const symbol = settings.SYMBOL;
-        await connectWebSocket(feed, symbol, webSocket, settings);
-        // Order book functionality
-        webSocket.addOnMessage((message) => {
-          const messageParse = JSON.parse(message);
-          if (messageParse.feed === 'book_snapshot') {
-            return synchronizeOrderBookSnapshot(messageParse, ws.orderBook.info);
+    getOrderBook: (params) => {
+      /** @type {import('../../../typings/_ws').orderBookWsObjectReturn} */
+      const orderBookWsObject = {
+        data: null,
+        events: null,
+        connect: async () => {
+          const webSocket = WebSocket('kraken-futures:order-book:order-book');
+          orderBookWsObject.data = OrderBook();
+          if (params && params.type === 'server') {
+            orderBookWsObject.data._createServer(params);
           }
-          const timestamp = Date.now();
-          const orderBookTimestamp = +messageParse.timestamp;
-          if (timestamp - orderBookTimestamp > 5000) {
-            return webSocket.close();
+          if (params && params.type === 'client') {
+            orderBookWsObject.data._connectClient(webSocket, params); return;
           }
-          if (messageParse.feed === 'book') {
-            const update = { id: +messageParse.price, price: +messageParse.price, quantity: +messageParse.qty };
-            if (messageParse.side === 'sell') {
-              ws.orderBook.info._updateOrderByPriceAsk(update);
+          // Connect websocket
+          const feed = 'book';
+          const symbol = params.symbol;
+          await connectWebSocket(feed, symbol, webSocket, wsSettings);
+          // Order book functionality
+          webSocket.addOnMessage((message) => {
+            const messageParse = JSON.parse(message);
+            if (messageParse.feed === 'book_snapshot') {
+              return synchronizeOrderBookSnapshot(messageParse, orderBookWsObject.data);
             }
-            if (messageParse.side === 'buy') {
-              ws.orderBook.info._updateOrderByPriceBid(update);
+            const timestamp = Date.now();
+            const orderBookTimestamp = +messageParse.timestamp;
+            if (timestamp - orderBookTimestamp > 5000) {
+              return webSocket.close();
             }
-          }
-        });
-        webSocket.addOnClose(() => {
-          desynchronizeOrderBook(ws.orderBook.info);
-          connectWebSocket(feed, symbol, webSocket, settings);
-        });
-        await (new Promise(resolve => {
-          let counter = 0;
-          const interval = setInterval(() => {
-            counter += 1;
-            if (counter >= 120) throw new Error('Could not verify connection of order book.');
-            if (!ws.orderBook.info.asks.length || !ws.orderBook.info.bids.length) return;
-            resolve(); clearInterval(interval);
-          }, 500);
-        }));
-      }
+            if (messageParse.feed === 'book') {
+              const update = { id: +messageParse.price, price: +messageParse.price, quantity: +messageParse.qty };
+              if (messageParse.side === 'sell') {
+                orderBookWsObject.data._updateOrderByPriceAsk(update);
+              }
+              if (messageParse.side === 'buy') {
+                orderBookWsObject.data._updateOrderByPriceBid(update);
+              }
+            }
+          });
+          webSocket.addOnClose(() => {
+            desynchronizeOrderBook(orderBookWsObject.data);
+            connectWebSocket(feed, symbol, webSocket, wsSettings);
+          });
+          await (new Promise(resolve => {
+            let counter = 0;
+            const interval = setInterval(() => {
+              counter += 1;
+              if (counter >= 120) throw new Error('Could not verify connection of order book.');
+              if (!orderBookWsObject.data.asks.length || !orderBookWsObject.data.bids.length) return;
+              resolve(); clearInterval(interval);
+            }, 500);
+          }));
+        }
+      };
+      return orderBookWsObject;
     },
   };
   return ws;

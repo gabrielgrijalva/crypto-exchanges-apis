@@ -12,11 +12,11 @@ const UtilsFactory = require('../../_shared-classes/utils');
  * 
  */
 /**
- * @param {import('../../../typings/settings')} settings
+ * @param {import('../../../typings/_utils').utilsSettings} utilsSettings
  */
-function Utils(settings) {
-  const utils = UtilsFactory(settings);
-  utils.getOrderId = () => uuid().replace(/-/g, '');
+function Utils(utilsSettings) {
+  const utils = UtilsFactory(utilsSettings);
+  utils.getOrderId = () => uuid();
   return utils;
 };
 module.exports = Utils;

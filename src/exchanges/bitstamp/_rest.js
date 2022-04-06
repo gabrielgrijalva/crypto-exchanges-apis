@@ -61,9 +61,9 @@ function getCandleResolution(interval) {
  * 
  */
 /**
- * @param {import('../../../typings/settings')} settings 
+ * @param {import('../../../typings/_rest').restSettings} restSettings 
  */
-function getPublicFunction(settings) {
+function getPublicFunction(restSettings) {
   /** 
    * @this {import('../../../typings/_rest').Request} 
    * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
@@ -71,7 +71,7 @@ function getPublicFunction(settings) {
   async function public(method, path, data) {
     const dataStringified = qs.stringify(data);
     const requestSendParams = {
-      url: `${settings.REST.URL}${path}?${dataStringified}`,
+      url: `${restSettings.URL}${path}?${dataStringified}`,
       method: method,
     };
     const response = await this.send(requestSendParams);
@@ -91,18 +91,20 @@ function getPublicFunction(settings) {
  * 
  */
 /** 
- * @param {import('../../../typings/settings')} settings
+ * @param {import('../../../typings/_rest').restSettings} restSettings
  */
-function Rest(settings) {
-  // Default rest settings values
-  settings.REST.URL = settings.REST.URL || 'https://www.bitstamp.net';
-  settings.REST.REQUESTS_LIMIT = settings.REST.REQUESTS_LIMIT || 8000;
-  settings.REST.REQUESTS_REFILL = settings.REST.REQUESTS_REFILL || 8000;
-  settings.REST.REQUESTS_REFILL_INTERVAL = settings.REST.REQUESTS_REFILL_INTERVAL || 600000;
-  settings.REST.REQUESTS_TIMESTAMPS = settings.REST.REQUESTS_TIMESTAMPS || 10;
+function Rest(restSettings) {
+  // Default rest restSettings values
+  restSettings.URL = restSettings.URL || 'https://www.bitstamp.net';
+  restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || false;
+  restSettings.REQUESTS_REFILL_LIMIT = restSettings.REQUESTS_REFILL_LIMIT || 8000;
+  restSettings.REQUESTS_REFILL_AMOUNT = restSettings.REQUESTS_REFILL_AMOUNT || 8000;
+  restSettings.REQUESTS_REFILL_INTERVAL = restSettings.REQUESTS_REFILL_INTERVAL || 600000;
+  restSettings.REQUESTS_TIMESTAMPS = restSettings.REQUESTS_TIMESTAMPS || 10;
   // Request creation
-  const public = getPublicFunction(settings);
-  const request = Request({ settings, public, key: null });
+  const REST_SETTINGS = restSettings;
+  const PUBLIC = getPublicFunction(restSettings);
+  const request = Request({ REST_SETTINGS, PUBLIC, KEY: null });
   /** 
    * 
    * 
@@ -195,7 +197,7 @@ function Rest(settings) {
       data.step = getCandleResolution(params.interval);
       data.start = moment.utc(params.start).unix();
       data.limit = 1000;
-      const response = await request.public('GET', `/api/v2/ohlc/${settings.SYMBOL}/`, data);
+      const response = await request.public('GET', `/api/v2/ohlc/${params.symbol}/`, data);
       if (+response.data.code) {
         return handleResponseError(params, response.data);
       }
@@ -243,6 +245,14 @@ function Rest(settings) {
      * 
      */
     getFundingRates: null,
+    /**
+     * 
+     * 
+     * GET INSTRUMENTS SYMBOLS
+     * 
+     * 
+     */
+    getInstrumentsSymbols: null,
   };
   return rest;
 };
