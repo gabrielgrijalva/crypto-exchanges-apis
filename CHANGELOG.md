@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2022-04-06
+- Changed ws function params to new typing definitions.
 ## [2.0.4] - 2022-04-06
 - Corrections of only required module settings in exchanges.
 ## [2.0.3] - 2022-04-06
