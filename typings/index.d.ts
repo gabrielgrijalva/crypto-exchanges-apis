@@ -16,9 +16,9 @@ type exchanges = 'binance-coin' | 'bitmex' | 'bitstamp' | 'bybit' | 'bybit-futur
 interface CryptoExchangeApi {
   FIXER(fixerSettings: FixerN.fixerSettings): FixerN.Fixer;
   POPULATOR(populatorSettings: PopulatorN.populatorSettings): PopulatorN.Populator;
-  REST(restSettings: RestN.restSettings): RestN.Rest;
+  REST(restSettings?: RestN.restSettings): RestN.Rest;
   UTILS(utilsSettings: UtilsN.utilsSettings): UtilsN.Utils;
-  WS(wsSettings: WsN.wsSettings): WsN.Ws;
+  WS(wsSettings?: WsN.wsSettings): WsN.Ws;
 }
 declare function CryptoExchangesApi(exchange: exchanges): CryptoExchangeApi;
 export = CryptoExchangesApi;
