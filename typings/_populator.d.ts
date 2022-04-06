@@ -19,11 +19,11 @@ declare namespace PopulatorN {
    * 
    */
   type populatorSettings = {
+    DATABASE: string;
+    PASSWORD: string;
     PORT?: number;
     HOST?: string;
     USER?: string;
-    DATABASE?: string;
-    PASSWORD?: string;
     TIMEZONE?: string;
   }
   /**
