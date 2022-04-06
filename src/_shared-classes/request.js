@@ -9,10 +9,8 @@ function createRefillSetInterval(request, restSettings) {
   const timeoutMilliseconds = round.up(timestamp / restSettings.REQUESTS_REFILL_INTERVAL, 0)
     * restSettings.REQUESTS_REFILL_INTERVAL - timestamp;
   const intervalRefillFunction = () => {
-    request.remaining += request.remaining < restSettings.REQUESTS_LIMIT
-      ? restSettings.REQUESTS_REFILL : 0;
-    request.remaining = request.remaining >= restSettings.REQUESTS_LIMIT
-      ? restSettings.REQUESTS_LIMIT : request.remaining;
+    request.remaining = (request.remaining + restSettings.REQUESTS_REFILL_AMOUNT) < restSettings.REQUESTS_REFILL_LIMIT
+      ? request.remaining + restSettings.REQUESTS_REFILL_AMOUNT : restSettings.REQUESTS_REFILL_LIMIT;
   };
   setTimeout(() => {
     intervalRefillFunction();
@@ -32,7 +30,7 @@ function Request(requestSettings) {
    */
   const request = {
     // Variables
-    remaining: restSettings.REQUESTS_LIMIT,
+    remaining: restSettings.REQUESTS_REFILL_LIMIT,
     timestamps: [],
     // Functions
     send: (params) => {
@@ -45,7 +43,7 @@ function Request(requestSettings) {
     public: public,
     private: private,
   };
-  createRefillSetInterval(request, restSettings);
+  if (restSettings.REQUESTS_REFILL) { createRefillSetInterval(request, restSettings) };
   return request;
 };
 module.exports = Request;
