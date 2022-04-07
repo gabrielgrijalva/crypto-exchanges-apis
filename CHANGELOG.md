@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.3] - 2022-04-07
+- Changed code to save candle several times in cron populator.
 ## [2.1.2] - 2022-04-07
 - Improved error handling in populator implementation.
 ## [2.1.1] - 2022-04-07
