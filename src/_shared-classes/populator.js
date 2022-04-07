@@ -106,7 +106,7 @@ function Populator(populatorSettings) {
         const timestamp = moment.utc().startOf('second').subtract(interval, 'milliseconds');
         if ((timestamp.valueOf() % interval) !== 0) { return };
         let candle = null;
-        for (let i = 0; i < 15 && (!candle || !candle.volume); i += 1) {
+        for (let i = 0; i < 5; i += 1) {
           const start = timestamp.clone().subtract(interval * 5, 'milliseconds').format('YYYY-MM-DD HH:mm:ss');
           const response = await params.rest.getCandles({
             symbol: params.symbol,
@@ -122,7 +122,7 @@ function Populator(populatorSettings) {
           } else {
             console.log(response.error);
           }
-          await wait(500);
+          await wait(1000);
         }
       }, () => { }, true);
     },
