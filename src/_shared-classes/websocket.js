@@ -32,10 +32,10 @@ function WebSocket(name) {
     localWsInstance.ping();
     localWsInstance.on('pong', async () => {
       clearTimeout(timeout);
-      await wait(1000);
+      await wait(3000);
       if (localWsInstance.readyState === localWsInstance.OPEN) {
         localWsInstance.ping();
-        timeout = setTimeout(disconnect, 1000);
+        timeout = setTimeout(disconnect, 3000);
       }
     });
     const disconnect = () => {
@@ -43,7 +43,7 @@ function WebSocket(name) {
         localWsInstance.terminate();
       }
     };
-    timeout = setTimeout(disconnect, 1000);
+    timeout = setTimeout(disconnect, 3000);
   };
   const closeFunction = () => {
     clearInterval(websocketErrorsInterval);
