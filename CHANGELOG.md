@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.1] - 2022-04-07
+- Corrected minor errors in shared classes.
 ## [2.1.0] - 2022-04-06
 - Changed ws function params to new typing definitions.
 ## [2.0.4] - 2022-04-06
