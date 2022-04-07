@@ -79,11 +79,10 @@ function Populator(populatorSettings) {
           symbol: params.symbol,
           start: start.format('YYYY-MM-DD HH:mm:ss'),
           interval: interval,
-        })).data;
+        })).data.filter(v => v.open && v.high && v.low && v.close);
         if (candles.length) {
           console.log(candles[0].timestamp);
-          const finishIndex = candles.findIndex(v => v.timestamp
-            === finish.format('YYYY-MM-DD HH:mm:ss'));
+          const finishIndex = candles.findIndex(v => v.timestamp === finish.format('YYYY-MM-DD HH:mm:ss'));
           if (finishIndex !== -1) {
             candles.splice(finishIndex + 1);
           }
@@ -109,7 +108,7 @@ function Populator(populatorSettings) {
             start: start,
             interval: interval,
           })).data.find(v => v.timestamp === timestamp.format('YYYY-MM-DD HH:mm:ss'));
-          if (candle) {
+          if (candle && candle.open && candle.high && candle.low && candle.close) {
             console.log(candle.timestamp);
             await saveCandles(connection, [candle], table);
           }
