@@ -75,23 +75,28 @@ function Populator(populatorSettings) {
       let start = moment.utc(params.start);
       const finish = moment.utc(params.finish);
       while (start.unix() < finish.unix()) {
-        const candles = (await params.rest.getCandles({
+        const response = await params.rest.getCandles({
           symbol: params.symbol,
           start: start.format('YYYY-MM-DD HH:mm:ss'),
           interval: interval,
-        })).data.filter(v => v.open && v.high && v.low && v.close);
-        if (candles.length) {
-          console.log(candles[0].timestamp);
-          const finishIndex = candles.findIndex(v => v.timestamp === finish.format('YYYY-MM-DD HH:mm:ss'));
-          if (finishIndex !== -1) {
-            candles.splice(finishIndex + 1);
+        });
+        if (response.data) {
+          const candles = response.data.filter(v => v.open && v.high && v.low && v.close);
+          if (candles.length) {
+            console.log(candles[0].timestamp);
+            const finishIndex = candles.findIndex(v => v.timestamp === finish.format('YYYY-MM-DD HH:mm:ss'));
+            if (finishIndex !== -1) {
+              candles.splice(finishIndex + 1);
+            }
+            await saveCandles(connection, candles, table);
+            start = moment.utc(candles[candles.length - 1].timestamp);
+          } else {
+            start.add(interval, 'milliseconds');
           }
-          await saveCandles(connection, candles, table);
-          start = moment.utc(candles[candles.length - 1].timestamp);
+          await wait(params.waitRequest);
         } else {
-          start.add(interval, 'milliseconds');
+          console.log(response.error);
         }
-        await wait(params.waitRequest);
       }
     },
     candlesCron: (params) => {
@@ -103,14 +108,19 @@ function Populator(populatorSettings) {
         let candle = null;
         for (let i = 0; i < 15 && (!candle || !candle.volume); i += 1) {
           const start = timestamp.clone().subtract(interval * 5, 'milliseconds').format('YYYY-MM-DD HH:mm:ss');
-          candle = (await params.rest.getCandles({
+          const response = await params.rest.getCandles({
             symbol: params.symbol,
             start: start,
             interval: interval,
-          })).data.find(v => v.timestamp === timestamp.format('YYYY-MM-DD HH:mm:ss'));
-          if (candle && candle.open && candle.high && candle.low && candle.close) {
-            console.log(candle.timestamp);
-            await saveCandles(connection, [candle], table);
+          });
+          if (response.data) {
+            candle = response.data.find(v => v.timestamp === timestamp.format('YYYY-MM-DD HH:mm:ss'));
+            if (candle && candle.open && candle.high && candle.low && candle.close) {
+              console.log(candle.timestamp);
+              await saveCandles(connection, [candle], table);
+            }
+          } else {
+            console.log(response.error);
           }
           await wait(500);
         }
