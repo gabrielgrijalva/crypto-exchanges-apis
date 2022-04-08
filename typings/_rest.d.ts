@@ -75,7 +75,6 @@ declare namespace RestN {
     price?: number;
     symbol: string;
     quantity?: number;
-    fQuantity?: number;
   }
   type updateOrdersParams = updateOrderParams[];
   type getEquityParams = {
