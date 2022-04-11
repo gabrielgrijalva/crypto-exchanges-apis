@@ -193,6 +193,7 @@ function Ws(wsSettings = {}) {
      * 
      */
     getOrders: (params) => {
+      const webSocket = WebSocket('okex:orders:orders', wsSettings);
       /** @type {import('../../../typings/_ws').ordersWsObjectReturn} */
       const ordersWsObject = {
         data: null,
@@ -204,7 +205,6 @@ function Ws(wsSettings = {}) {
           // Orders websocket
           const symbol = params.symbol;
           const channel = 'orders';
-          const webSocket = WebSocket('okex:orders:orders', wsSettings);
           await connectWebSocket('private', symbol, channel, webSocket, wsSettings);
           webSocket.addOnMessage((message) => {
             const messageParse = JSON.parse(message.toString());
@@ -270,6 +270,7 @@ function Ws(wsSettings = {}) {
      * 
      */
     getPosition: (params) => {
+      const webSocket = WebSocket('okex:position:position', wsSettings);
       /** @type {import('../../../typings/_ws').positionWsObjectReturn} */
       const positionWsObject = {
         data: null,
@@ -279,7 +280,6 @@ function Ws(wsSettings = {}) {
           positionWsObject.events = new Events.EventEmitter();
           const symbol = params.symbol;
           const channel = 'positions';
-          const webSocket = WebSocket('okex:position:position', wsSettings);
           await connectWebSocket('private', symbol, channel, webSocket, wsSettings);
           // Load rest data
           const positionRestData = (await rest.getPosition(params)).data;
@@ -312,6 +312,8 @@ function Ws(wsSettings = {}) {
      * 
      */
     getLiquidation: (params) => {
+      const webSocketMark = WebSocket('okex:liquidation:mark-price', wsSettings);
+      const webSocketPosition = WebSocket('okex:liquidation:position', wsSettings);
       /** @type {import('../../../typings/_ws').liquidationWsObjectReturn} */
       const liquidationWsObject = {
         data: null,
@@ -320,12 +322,8 @@ function Ws(wsSettings = {}) {
           /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
           liquidationWsObject.events = new Events.EventEmitter();
           const symbol = params.symbol;
-          // Instrument websocket
           const channelMark = 'mark-price';
-          const webSocketMark = WebSocket('okex:liquidation:mark-price', wsSettings);
-          // Position websocket
           const channelPosition = 'positions';
-          const webSocketPosition = WebSocket('okex:liquidation:position', wsSettings);
           await Promise.all([
             connectWebSocket('public', symbol, channelMark, webSocketMark, wsSettings),
             connectWebSocket('private', symbol, channelPosition, webSocketPosition, wsSettings),
@@ -375,12 +373,12 @@ function Ws(wsSettings = {}) {
      * 
      */
     getOrderBook: (params) => {
+      const webSocket = WebSocket('okex:order-book:order-book', wsSettings);
       /** @type {import('../../../typings/_ws').orderBookWsObjectReturn} */
       const orderBookWsObject = {
         data: null,
         events: null,
         connect: async () => {
-          const webSocket = WebSocket('okex:order-book:order-book', wsSettings);
           orderBookWsObject.data = OrderBook();
           if (params && params.type === 'server') {
             orderBookWsObject.data._createServer(params);

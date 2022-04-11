@@ -162,6 +162,8 @@ function Ws(wsSettings = {}) {
      * 
      */
     getOrders: (params) => {
+      const webSocketOpenOrders = WebSocket('kraken-futures:orders:orders', wsSettings);
+      const webSocketFills = WebSocket('kraken-futures:orders:executions', wsSettings);
       /** @type {import('../../../typings/_ws').ordersWsObjectReturn} */
       const ordersWsObject = {
         data: null,
@@ -169,12 +171,8 @@ function Ws(wsSettings = {}) {
         connect: async () => {
           /** @type {import('../../../typings/_ws').ordersEventEmitter} */
           ordersWsObject.events = new Events.EventEmitter();
-          // Open orders websocket
           const feedOpenOrders = 'open_orders';
-          const webSocketOpenOrders = WebSocket('kraken-futures:orders:orders', wsSettings);
-          // Executions websocket
           const feedFills = 'fills';
-          const webSocketFills = WebSocket('kraken-futures:orders:executions', wsSettings);
           await Promise.all([
             connectWebSocket(feedOpenOrders, null, webSocketOpenOrders, wsSettings),
             connectWebSocket(feedFills, null, webSocketFills, wsSettings),
@@ -230,6 +228,7 @@ function Ws(wsSettings = {}) {
      * 
      */
     getPosition: (params) => {
+      const webSocket = WebSocket('kraken-futures:position:position', wsSettings);
       /** @type {import('../../../typings/_ws').positionWsObjectReturn} */
       const positionWsObject = {
         data: null,
@@ -238,7 +237,6 @@ function Ws(wsSettings = {}) {
           /** @type {import('../../../typings/_ws').positionEventEmitter} */
           positionWsObject.events = new Events.EventEmitter();
           const feed = 'open_positions';
-          const webSocket = WebSocket('kraken-futures:position:position', wsSettings);
           await connectWebSocket(feed, null, webSocket, wsSettings);
           // Load rest data
           const positionRestData = (await rest.getPosition(params)).data;
@@ -277,6 +275,8 @@ function Ws(wsSettings = {}) {
      * 
      */
     getLiquidation: (params) => {
+      const webSocketTicker = WebSocket('kraken-futures:liquidation:instrument', wsSettings);
+      const webSocketPosition = WebSocket('kraken-futures:liquidation:position', wsSettings);
       /** @type {import('../../../typings/_ws').liquidationWsObjectReturn} */
       const liquidationWsObject = {
         data: null,
@@ -284,13 +284,9 @@ function Ws(wsSettings = {}) {
         connect: async () => {
           /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
           liquidationWsObject.events = new Events.EventEmitter();
-          // Ticker websocket
           const feedTicker = 'ticker';
           const symbolTicker = params.symbol;
-          const webSocketTicker = WebSocket('kraken-futures:liquidation:instrument', wsSettings);
-          // Position websocket
           const feedPosition = 'open_positions';
-          const webSocketPosition = WebSocket('kraken-futures:liquidation:position', wsSettings);
           await Promise.all([
             connectWebSocket(feedTicker, symbolTicker, webSocketTicker, wsSettings),
             connectWebSocket(feedPosition, null, webSocketPosition, wsSettings),
@@ -346,12 +342,12 @@ function Ws(wsSettings = {}) {
      * 
      */
     getOrderBook: (params) => {
+      const webSocket = WebSocket('kraken-futures:order-book:order-book', wsSettings);
       /** @type {import('../../../typings/_ws').orderBookWsObjectReturn} */
       const orderBookWsObject = {
         data: null,
         events: null,
         connect: async () => {
-          const webSocket = WebSocket('kraken-futures:order-book:order-book', wsSettings);
           orderBookWsObject.data = OrderBook();
           if (params && params.type === 'server') {
             orderBookWsObject.data._createServer(params);

@@ -137,13 +137,13 @@ function Ws(wsSettings = {}) {
      * 
      */
     getOrders: (params) => {
+      const webSocket = WebSocket('binance-coin:orders:orders', wsSettings);
       /** @type {import('../../../typings/_ws').ordersWsObjectReturn} */
       const ordersWsObject = {
         data: null,
         events: new Events.EventEmitter(),
         connect: async () => {
           const stream = (await rest._getListenKey()).data;
-          const webSocket = WebSocket('binance-coin:orders:orders', wsSettings);
           setInterval(() => rest._getListenKey(), 1800000);
           await connectWebSocket(stream, webSocket, wsSettings);
           webSocket.addOnMessage((message) => {
@@ -175,13 +175,13 @@ function Ws(wsSettings = {}) {
      * 
      */
     getPosition: (params) => {
+      const webSocket = WebSocket('binance-coin:position:position', wsSettings);
       /** @type {import('../../../typings/_ws').positionWsObjectReturn} */
       const positionWsObject = {
         data: null,
         events: new Events.EventEmitter(),
         connect: async () => {
           const stream = (await rest._getListenKey()).data;
-          const webSocket = WebSocket('binance-coin:position:position', wsSettings);
           setInterval(() => rest._getListenKey(), 1800000);
           await connectWebSocket(stream, webSocket, wsSettings);
           // Load rest data
@@ -215,17 +215,15 @@ function Ws(wsSettings = {}) {
      * 
      */
     getLiquidation: (params) => {
+      const webSocketMarkPrice = WebSocket('binance-coin:liquidation:mark-price', wsSettings);
+      const webSocketPosition = WebSocket('binance-coin:liquidation:position', wsSettings);
       /** @type {import('../../../typings/_ws').liquidationWsObjectReturn} */
       const liquidationWsObject = {
         data: null,
         events: new Events.EventEmitter(),
         connect: async () => {
-          // Mark price websocket
           const streamMarkPrice = `${params.symbol.toLowerCase()}@markPrice@1s`;
-          const webSocketMarkPrice = WebSocket('binance-coin:liquidation:mark-price', wsSettings);
-          // Position websocket
           const streamPosition = (await rest._getListenKey()).data;
-          const webSocketPosition = WebSocket('binance-coin:liquidation:position', wsSettings);
           setInterval(() => rest._getListenKey(), 1800000);
           await Promise.all([
             connectWebSocket(streamMarkPrice, webSocketMarkPrice, wsSettings),
@@ -281,12 +279,12 @@ function Ws(wsSettings = {}) {
      * 
      */
     getOrderBook: (params) => {
+      const webSocket = WebSocket('binance-coin:order-book:order-book', wsSettings);
       /** @type {import('../../../typings/_ws').orderBookWsObjectReturn} */
       const orderBookWsObject = {
         data: null,
         events: null,
         connect: async () => {
-          const webSocket = WebSocket('binance-coin:order-book:order-book', wsSettings);
           orderBookWsObject.data = OrderBook();
           if (params && params.type === 'server') {
             orderBookWsObject.data._createServer(params);

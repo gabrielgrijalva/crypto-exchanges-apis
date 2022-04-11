@@ -158,6 +158,8 @@ function Ws(wsSettings = {}) {
      * 
      */
     getOrders: (params) => {
+      const webSocketOrders = WebSocket('bybit:orders:orders', wsSettings);
+      const webSocketExecutions = WebSocket('bybit:orders:executions', wsSettings);
       /** @type {import('../../../typings/_ws').ordersWsObjectReturn} */
       const ordersWsObject = {
         data: null,
@@ -165,12 +167,8 @@ function Ws(wsSettings = {}) {
         connect: async () => {
           /** @type {import('../../../typings/_ws').ordersEventEmitter} */
           ordersWsObject.events = new Events.EventEmitter();
-          // Orders websocket
           const topicOrders = 'order';
-          const webSocketOrders = WebSocket('bybit:orders:orders', wsSettings);
-          // Executions websocket
           const topicExecutions = 'execution';
-          const webSocketExecutions = WebSocket('bybit:orders:executions', wsSettings);
           await Promise.all([
             connectWebSocket(topicOrders, webSocketOrders, wsSettings),
             connectWebSocket(topicExecutions, webSocketExecutions, wsSettings),
@@ -231,6 +229,7 @@ function Ws(wsSettings = {}) {
      * 
      */
     getPosition: (params) => {
+      const webSocket = WebSocket('bybit:position:position', wsSettings);
       /** @type {import('../../../typings/_ws').positionWsObjectReturn} */
       const positionWsObject = {
         data: null,
@@ -239,7 +238,6 @@ function Ws(wsSettings = {}) {
           /** @type {import('../../../typings/_ws').positionEventEmitter} */
           positionWsObject.events = new Events.EventEmitter();
           const topic = 'position';
-          const webSocket = WebSocket('bybit:position:position', wsSettings);
           await connectWebSocket(topic, webSocket, wsSettings);
           // Load rest data
           const positionRestData = (await rest.getPosition(params)).data;
@@ -272,6 +270,8 @@ function Ws(wsSettings = {}) {
      * 
      */
     getLiquidation: (params) => {
+      const webSocketInstrument = WebSocket('bybit:liquidation:instrument', wsSettings);
+      const webSocketPosition = WebSocket('bybit:liquidation:position', wsSettings);
       /** @type {import('../../../typings/_ws').liquidationWsObjectReturn} */
       const liquidationWsObject = {
         data: null,
@@ -279,12 +279,8 @@ function Ws(wsSettings = {}) {
         connect: async () => {
           /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
           liquidationWsObject.events = new Events.EventEmitter();
-          // Instrument websocket
           const topicInstrument = `instrument_info.100ms.${params.symbol}`;
-          const webSocketInstrument = WebSocket('bybit:liquidation:instrument', wsSettings);
-          // Position websocket
           const topicPosition = 'position';
-          const webSocketPosition = WebSocket('bybit:liquidation:position', wsSettings);
           await Promise.all([
             connectWebSocket(topicInstrument, webSocketInstrument, wsSettings),
             connectWebSocket(topicPosition, webSocketPosition, wsSettings),
@@ -335,12 +331,12 @@ function Ws(wsSettings = {}) {
      * 
      */
     getOrderBook: (params) => {
+      const webSocket = WebSocket('bybit:order-book:order-book', wsSettings);
       /** @type {import('../../../typings/_ws').orderBookWsObjectReturn} */
       const orderBookWsObject = {
         data: null,
         events: null,
         connect: async () => {
-          const webSocket = WebSocket('bybit:order-book:order-book', wsSettings);
           orderBookWsObject.data = OrderBook();
           if (params && params.type === 'server') {
             orderBookWsObject.data._createServer(params);

@@ -180,6 +180,8 @@ function Ws(wsSettings = {}) {
      * 
      */
     getOrders: (params) => {
+      const webSocketOpenOrders = WebSocket('deribit:orders:orders', wsSettings);
+      const webSocketExecutions = WebSocket('deribit:orders:executions', wsSettings);
       /** @type {import('../../../typings/_ws').ordersWsObjectReturn} */
       const ordersWsObject = {
         data: null,
@@ -187,12 +189,8 @@ function Ws(wsSettings = {}) {
         connect: async () => {
           /** @type {import('../../../typings/_ws').ordersEventEmitter} */
           ordersWsObject.events = new Events.EventEmitter();
-          // Open orders websocket
           const channelOpenOrders = `user.orders.${params.symbol}.raw`;
-          const webSocketOpenOrders = WebSocket('deribit:orders:orders', wsSettings);
-          // Executions websocket
           const channelExecutions = `user.trades.${params.symbol}.raw`;
-          const webSocketExecutions = WebSocket('deribit:orders:executions', wsSettings);
           await Promise.all([
             connectWebSocket(channelOpenOrders, 'private', webSocketOpenOrders, wsSettings),
             connectWebSocket(channelExecutions, 'private', webSocketExecutions, wsSettings),
@@ -240,6 +238,7 @@ function Ws(wsSettings = {}) {
      * 
      */
     getPosition: (params) => {
+      const webSocket = WebSocket('deribit:position:position', wsSettings);
       /** @type {import('../../../typings/_ws').positionWsObjectReturn} */
       const positionWsObject = {
         data: null,
@@ -248,7 +247,6 @@ function Ws(wsSettings = {}) {
           /** @type {import('../../../typings/_ws').positionEventEmitter} */
           positionWsObject.events = new Events.EventEmitter();
           const channel = `user.changes.${params.symbol}.raw`;
-          const webSocket = WebSocket('deribit:position:position', wsSettings);
           await connectWebSocket(channel, 'private', webSocket, wsSettings);
           // Load rest data
           const positionRestData = (await rest.getPosition(params)).data;
@@ -281,6 +279,9 @@ function Ws(wsSettings = {}) {
      * 
      */
     getLiquidation: (params) => {
+      const webSocketInstrument = WebSocket('deribit:liquidation:instrument', wsSettings);
+      const webSocketPosition = WebSocket('deribit:liquidation:position', wsSettings);
+      const webSocketPortfolio = WebSocket('deribit:liquidation:portfolio', wsSettings);
       /** @type {import('../../../typings/_ws').liquidationWsObjectReturn} */
       const liquidationWsObject = {
         data: null,
@@ -288,15 +289,9 @@ function Ws(wsSettings = {}) {
         connect: async () => {
           /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
           liquidationWsObject.events = new Events.EventEmitter();
-          // Instrument websocket
           const channelInstrument = `ticker.${params.symbol}.raw`;
-          const webSocketInstrument = WebSocket('deribit:liquidation:instrument', wsSettings);
-          // Position websocket
           const channelPosition = `user.changes.${params.symbol}.raw`;
-          const webSocketPosition = WebSocket('deribit:liquidation:position', wsSettings);
-          // Portfolio websocket
           const channelPortfolio = `user.portfolio.${params.asset}`;
-          const webSocketPortfolio = WebSocket('deribit:liquidation:portfolio', wsSettings);
           await Promise.all([
             connectWebSocket(channelInstrument, 'public', webSocketInstrument, wsSettings),
             connectWebSocket(channelPosition, 'private', webSocketPosition, wsSettings),
@@ -355,12 +350,12 @@ function Ws(wsSettings = {}) {
      * 
      */
     getOrderBook: (params) => {
+      const webSocket = WebSocket('deribit:order-book:order-book', wsSettings);
       /** @type {import('../../../typings/_ws').orderBookWsObjectReturn} */
       const orderBookWsObject = {
         data: null,
         events: null,
         connect: async () => {
-          const webSocket = WebSocket('deribit:order-book:order-book', wsSettings);
           orderBookWsObject.data = OrderBook();
           if (params && params.type === 'server') {
             orderBookWsObject.data._createServer(params);
