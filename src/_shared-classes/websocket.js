@@ -9,8 +9,8 @@ const wait = require('../_utils/wait');
  */
 function WebSocket(name, wsSettings = {}) {
   // Default wsSettings values
-  wsSettings.WS_SEND_PING_WAIT = wsSettings.WS_SEND_PING_WAIT ? wsSettings.WS_SEND_PING_WAIT : 3000;
-  wsSettings.WS_RECEIVE_PONG_WAIT = wsSettings.WS_RECEIVE_PONG_WAIT ? wsSettings.WS_RECEIVE_PONG_WAIT : 3000;
+  wsSettings.WS_SEND_PING_WAIT = wsSettings.WS_SEND_PING_WAIT || 3000;
+  wsSettings.WS_RECEIVE_PONG_WAIT = wsSettings.WS_RECEIVE_PONG_WAIT || 3000;
   /** @type {ws.WebSocket} */
   let wsInstance = null;
   let webSocketErrors = 0;
