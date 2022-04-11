@@ -149,6 +149,8 @@ declare namespace WsN {
     type?: 'client';
     port?: number;
     host?: string;
+    frozenCheckInterval?: number;
+    priceOverlapsCheckInterval?: number;
   };
   type orderBookServerParams = {
     symbol: string;
@@ -156,6 +158,8 @@ declare namespace WsN {
     port?: number;
     host?: string;
     broadcast?: number;
+    frozenCheckInterval?: number;
+    priceOverlapsCheckInterval?: number;
   };
   type orderBookParams = orderBookClientParams | orderBookServerParams;
   type dataOrderBook = {

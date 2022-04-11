@@ -343,12 +343,16 @@ function Ws(wsSettings = {}) {
      */
     getOrderBook: (params) => {
       const webSocket = WebSocket('kraken-futures:order-book:order-book', wsSettings);
+      const orderBook = OrderBook({
+        FROZEN_CHECK_INTERVAL: params.frozenCheckInterval,
+        PRICE_OVERLAPS_CHECK_INTERVAL: params.priceOverlapsCheckInterval,
+      });
       /** @type {import('../../../typings/_ws').orderBookWsObjectReturn} */
       const orderBookWsObject = {
         data: null,
         events: null,
         connect: async () => {
-          orderBookWsObject.data = OrderBook();
+          orderBookWsObject.data = orderBook;
           if (params && params.type === 'server') {
             orderBookWsObject.data._createServer(params);
           }
