@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2022-04-11
+- Made relevant changes in websockets implementations.
 ## [2.1.4] - 2022-04-08
 - Removed unnecessary fQuantity variable.
 ## [2.1.3] - 2022-04-07
