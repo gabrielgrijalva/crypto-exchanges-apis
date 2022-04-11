@@ -82,7 +82,7 @@ declare namespace WsN {
     on(event: 'cancelations', listener: (data: dataCancelations[]) => void);
     on(event: 'creations-updates', listener: (data: dataCreationsUpdates[]) => void);
   }
-  type ordersWsObjectReturn = { data: null; events: ordersEventEmitter; connect(params: ordersParams): Promise<void>; };
+  type ordersWsObjectReturn = { data: null; events: ordersEventEmitter; connect(): Promise<void>; };
   /**
    * 
    * 
@@ -107,7 +107,7 @@ declare namespace WsN {
     // On 'event' functions
     on(event: 'update', listener: (data: dataPosition) => void);
   }
-  type positionWsObjectReturn = { data: dataPosition; events: positionEventEmitter; connect(params: positionParams): Promise<void>; };
+  type positionWsObjectReturn = { data: dataPosition; events: positionEventEmitter; connect(): Promise<void>; };
   /**
    * 
    * 
@@ -132,7 +132,7 @@ declare namespace WsN {
     // On 'event' functions
     on(event: 'update', listener: (data: dataLiquidation) => void);
   }
-  type liquidationWsObjectReturn = { data: dataLiquidation; events: liquidationEventEmitter; connect(params: liquidationParams): Promise<void>; };
+  type liquidationWsObjectReturn = { data: dataLiquidation; events: liquidationEventEmitter; connect(): Promise<void>; };
   /**
    * 
    * 
@@ -174,7 +174,7 @@ declare namespace WsN {
     _insertSnapshotAsks(snapshot: orderBookOrder[]): void;
     _insertSnapshotBids(snapshot: orderBookOrder[]): void;
   };
-  type orderBookWsObjectReturn = { data: dataOrderBook; events: null; connect(params: orderBookParams): Promise<void>; };
+  type orderBookWsObjectReturn = { data: dataOrderBook; events: null; connect(): Promise<void>; };
   /**
    * 
    * 
@@ -211,10 +211,10 @@ declare namespace WsN {
    * 
    */
   interface Ws {
-    getOrders(): ordersWsObjectReturn;
-    getPosition(): positionWsObjectReturn;
-    getLiquidation(): liquidationWsObjectReturn;
-    getOrderBook(): orderBookWsObjectReturn;
+    getOrders(params: ordersParams): ordersWsObjectReturn;
+    getPosition(params: positionParams): positionWsObjectReturn;
+    getLiquidation(params: liquidationParams): liquidationWsObjectReturn;
+    getOrderBook(params: orderBookParams): orderBookWsObjectReturn;
   }
 }
 export = WsN;

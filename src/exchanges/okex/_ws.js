@@ -192,12 +192,12 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getOrders: () => {
+    getOrders: (params) => {
       /** @type {import('../../../typings/_ws').ordersWsObjectReturn} */
       const ordersWsObject = {
         data: null,
         events: null,
-        connect: async (params) => {
+        connect: async () => {
           /** @type {import('../../../typings/_ws').ordersEventEmitter} */
           ordersWsObject.events = new Events.EventEmitter();
           const openOrders = [];
@@ -269,12 +269,12 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getPosition: () => {
+    getPosition: (params) => {
       /** @type {import('../../../typings/_ws').positionWsObjectReturn} */
       const positionWsObject = {
         data: null,
         events: null,
-        connect: async (params) => {
+        connect: async () => {
           /** @type {import('../../../typings/_ws').positionEventEmitter} */
           positionWsObject.events = new Events.EventEmitter();
           const symbol = params.symbol;
@@ -311,12 +311,12 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getLiquidation: () => {
+    getLiquidation: (params) => {
       /** @type {import('../../../typings/_ws').liquidationWsObjectReturn} */
       const liquidationWsObject = {
         data: null,
         events: null,
-        connect: async (params) => {
+        connect: async () => {
           /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
           liquidationWsObject.events = new Events.EventEmitter();
           const symbol = params.symbol;
@@ -374,12 +374,12 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getOrderBook: () => {
+    getOrderBook: (params) => {
       /** @type {import('../../../typings/_ws').orderBookWsObjectReturn} */
       const orderBookWsObject = {
         data: null,
         events: null,
-        connect: async (params) => {
+        connect: async () => {
           const webSocket = WebSocket('okex:order-book:order-book', wsSettings);
           orderBookWsObject.data = OrderBook();
           if (params && params.type === 'server') {
