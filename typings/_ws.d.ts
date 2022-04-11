@@ -30,6 +30,19 @@ declare namespace WsN {
    * 
    * 
    * 
+   * ORDER BOOK SETTINGS
+   * 
+   * 
+   * 
+   */
+  type orderBookSettings = {
+    FROZEN_CHECK_INTERVAL?: number;
+    PRICE_OVERLAPS_CHECK_INTERVAL?: number;
+  }
+  /**
+   * 
+   * 
+   * 
    * WS ORDERS
    * 
    * 

@@ -165,7 +165,12 @@ function getConnectClient(asks, bids) {
   };
   return connectClient;
 };
-function OrderBook() {
+/** 
+ * @param {import('../../typings/_ws').orderBookSettings} orderBookSettings
+ */
+function OrderBook(orderBookSettings = {}) {
+  orderBookSettings.FROZEN_CHECK_INTERVAL = orderBookSettings.FROZEN_CHECK_INTERVAL || 30000;
+  orderBookSettings.PRICE_OVERLAPS_CHECK_INTERVAL = orderBookSettings.PRICE_OVERLAPS_CHECK_INTERVAL || 5000;
   /** @type {import('../../typings/_ws').orderBookOrder[]} */
   const asks = [];
   /** @type {import('../../typings/_ws').orderBookOrder[]} */
@@ -204,9 +209,8 @@ function OrderBook() {
     if (orderBook.asks[0].price <= orderBook.bids[0].price) {
       throw { error: { type: 'order-book-price-overlaps', params: null, exchange: null } };
     }
-  }, 5000);
+  }, orderBookSettings.PRICE_OVERLAPS_CHECK_INTERVAL);
   setInterval(() => {
-    if (!orderBook.asks[0] || !orderBook.bids[0]) { return };
     const currentSnapshotAsks = JSON.stringify(orderBook.asks.slice(0, 10));
     const currentSnapshotBids = JSON.stringify(orderBook.bids.slice(0, 10));
     if (lastSnapshotAsks === currentSnapshotAsks || lastSnapshotBids === currentSnapshotBids) {
@@ -214,7 +218,7 @@ function OrderBook() {
     }
     lastSnapshotAsks = currentSnapshotAsks;
     lastSnapshotBids = currentSnapshotBids;
-  }, 60000);
+  }, orderBookSettings.FROZEN_CHECK_INTERVAL);
   return orderBook;
 };
 module.exports = OrderBook;
