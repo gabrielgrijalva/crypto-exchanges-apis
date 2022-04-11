@@ -159,7 +159,7 @@ function Ws(wsSettings = {}) {
           /** @type {import('../../../typings/_ws').ordersEventEmitter} */
           ordersWsObject.events = new Events.EventEmitter();
           const topic = `execution:${params.symbol}`;
-          const webSocket = WebSocket('bitmex:orders:orders');
+          const webSocket = WebSocket('bitmex:orders:orders', wsSettings);
           await connectWebSocket(topic, webSocket, wsSettings);
           webSocket.addOnMessage((message) => {
             const messageParse = JSON.parse(message);
@@ -213,7 +213,7 @@ function Ws(wsSettings = {}) {
           /** @type {import('../../../typings/_ws').positionEventEmitter} */
           positionWsObject.events = new Events.EventEmitter();
           const topic = `position:${params.symbol}`;
-          const webSocket = WebSocket('bitmex:position:position');
+          const webSocket = WebSocket('bitmex:position:position', wsSettings);
           await connectWebSocket(topic, webSocket, wsSettings);
           // Load rest data
           const positionRestData = (await rest.getPosition(params)).data;
@@ -255,10 +255,10 @@ function Ws(wsSettings = {}) {
           liquidationWsObject.events = new Events.EventEmitter();
           // Instrument websocket
           const topicInstrument = `instrument:${params.symbol}`;
-          const webSocketInstrument = WebSocket('bitmex:liquidation:instrument');
+          const webSocketInstrument = WebSocket('bitmex:liquidation:instrument', wsSettings);
           // Position websocket
           const topicPosition = `position:${params.symbol}`;
-          const webSocketPosition = WebSocket('bitmex:liquidation:position');
+          const webSocketPosition = WebSocket('bitmex:liquidation:position', wsSettings);
           await Promise.all([
             connectWebSocket(topicInstrument, webSocketInstrument, wsSettings),
             connectWebSocket(topicPosition, webSocketPosition, wsSettings),
@@ -312,7 +312,7 @@ function Ws(wsSettings = {}) {
         data: null,
         events: null,
         connect: async (params) => {
-          const webSocket = WebSocket('bitmex:order-book:order-book');
+          const webSocket = WebSocket('bitmex:order-book:order-book', wsSettings);
           orderBookWsObject.data = OrderBook();
           if (params && params.type === 'server') {
             orderBookWsObject.data._createServer(params);

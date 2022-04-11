@@ -189,10 +189,10 @@ function Ws(wsSettings = {}) {
           ordersWsObject.events = new Events.EventEmitter();
           // Open orders websocket
           const channelOpenOrders = `user.orders.${params.symbol}.raw`;
-          const webSocketOpenOrders = WebSocket('deribit:orders:orders');
+          const webSocketOpenOrders = WebSocket('deribit:orders:orders', wsSettings);
           // Executions websocket
           const channelExecutions = `user.trades.${params.symbol}.raw`;
-          const webSocketExecutions = WebSocket('deribit:orders:executions');
+          const webSocketExecutions = WebSocket('deribit:orders:executions', wsSettings);
           await Promise.all([
             connectWebSocket(channelOpenOrders, 'private', webSocketOpenOrders, wsSettings),
             connectWebSocket(channelExecutions, 'private', webSocketExecutions, wsSettings),
@@ -248,7 +248,7 @@ function Ws(wsSettings = {}) {
           /** @type {import('../../../typings/_ws').positionEventEmitter} */
           positionWsObject.events = new Events.EventEmitter();
           const channel = `user.changes.${params.symbol}.raw`;
-          const webSocket = WebSocket('deribit:position:position');
+          const webSocket = WebSocket('deribit:position:position', wsSettings);
           await connectWebSocket(channel, 'private', webSocket, wsSettings);
           // Load rest data
           const positionRestData = (await rest.getPosition(params)).data;
@@ -290,13 +290,13 @@ function Ws(wsSettings = {}) {
           liquidationWsObject.events = new Events.EventEmitter();
           // Instrument websocket
           const channelInstrument = `ticker.${params.symbol}.raw`;
-          const webSocketInstrument = WebSocket('deribit:liquidation:instrument');
+          const webSocketInstrument = WebSocket('deribit:liquidation:instrument', wsSettings);
           // Position websocket
           const channelPosition = `user.changes.${params.symbol}.raw`;
-          const webSocketPosition = WebSocket('deribit:liquidation:position');
+          const webSocketPosition = WebSocket('deribit:liquidation:position', wsSettings);
           // Portfolio websocket
           const channelPortfolio = `user.portfolio.${params.asset}`;
-          const webSocketPortfolio = WebSocket('deribit:liquidation:portfolio');
+          const webSocketPortfolio = WebSocket('deribit:liquidation:portfolio', wsSettings);
           await Promise.all([
             connectWebSocket(channelInstrument, 'public', webSocketInstrument, wsSettings),
             connectWebSocket(channelPosition, 'private', webSocketPosition, wsSettings),
@@ -360,7 +360,7 @@ function Ws(wsSettings = {}) {
         data: null,
         events: null,
         connect: async (params) => {
-          const webSocket = WebSocket('deribit:order-book:order-book');
+          const webSocket = WebSocket('deribit:order-book:order-book', wsSettings);
           orderBookWsObject.data = OrderBook();
           if (params && params.type === 'server') {
             orderBookWsObject.data._createServer(params);

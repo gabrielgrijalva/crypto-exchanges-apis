@@ -167,10 +167,10 @@ function Ws(wsSettings = {}) {
           ordersWsObject.events = new Events.EventEmitter();
           // Orders websocket
           const topicOrders = 'order';
-          const webSocketOrders = WebSocket('bybit-futures:orders:orders');
+          const webSocketOrders = WebSocket('bybit-futures:orders:orders', wsSettings);
           // Executions websocket
           const topicExecutions = 'execution';
-          const webSocketExecutions = WebSocket('bybit-futures:orders:executions');
+          const webSocketExecutions = WebSocket('bybit-futures:orders:executions', wsSettings);
           await Promise.all([
             connectWebSocket(topicOrders, webSocketOrders, wsSettings),
             connectWebSocket(topicExecutions, webSocketExecutions, wsSettings),
@@ -240,7 +240,7 @@ function Ws(wsSettings = {}) {
           /** @type {import('../../../typings/_ws').positionEventEmitter} */
           positionWsObject.events = new Events.EventEmitter();
           const topic = 'position';
-          const webSocket = WebSocket('bybit-futures:position:position');
+          const webSocket = WebSocket('bybit-futures:position:position', wsSettings);
           await connectWebSocket(topic, webSocket, wsSettings);
           // Load rest data
           const positionRestData = (await rest.getPosition(params)).data;
@@ -282,10 +282,10 @@ function Ws(wsSettings = {}) {
           liquidationWsObject.events = new Events.EventEmitter();
           // Instrument websocket
           const topicInstrument = `instrument_info.100ms.${params.symbol}`;
-          const webSocketInstrument = WebSocket('bybit-futures:liquidation:instrument');
+          const webSocketInstrument = WebSocket('bybit-futures:liquidation:instrument', wsSettings);
           // Position websocket
           const topicPosition = 'position';
-          const webSocketPosition = WebSocket('bybit-futures:liquidation:position');
+          const webSocketPosition = WebSocket('bybit-futures:liquidation:position', wsSettings);
           await Promise.all([
             connectWebSocket(topicInstrument, webSocketInstrument, wsSettings),
             connectWebSocket(topicPosition, webSocketPosition, wsSettings),
@@ -341,7 +341,7 @@ function Ws(wsSettings = {}) {
         data: null,
         events: null,
         connect: async (params) => {
-          const webSocket = WebSocket('bybit-futures:order-book:order-book');
+          const webSocket = WebSocket('bybit-futures:order-book:order-book', wsSettings);
           orderBookWsObject.data = OrderBook();
           if (params && params.type === 'server') {
             orderBookWsObject.data._createServer(params);

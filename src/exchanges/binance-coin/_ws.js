@@ -143,7 +143,7 @@ function Ws(wsSettings = {}) {
         events: new Events.EventEmitter(),
         connect: async (params) => {
           const stream = (await rest._getListenKey()).data;
-          const webSocket = WebSocket('binance-coin:orders:orders');
+          const webSocket = WebSocket('binance-coin:orders:orders', wsSettings);
           setInterval(() => rest._getListenKey(), 1800000);
           await connectWebSocket(stream, webSocket, wsSettings);
           webSocket.addOnMessage((message) => {
@@ -181,7 +181,7 @@ function Ws(wsSettings = {}) {
         events: new Events.EventEmitter(),
         connect: async (params) => {
           const stream = (await rest._getListenKey()).data;
-          const webSocket = WebSocket('binance-coin:position:position');
+          const webSocket = WebSocket('binance-coin:position:position', wsSettings);
           setInterval(() => rest._getListenKey(), 1800000);
           await connectWebSocket(stream, webSocket, wsSettings);
           // Load rest data
@@ -222,10 +222,10 @@ function Ws(wsSettings = {}) {
         connect: async (params) => {
           // Mark price websocket
           const streamMarkPrice = `${params.symbol.toLowerCase()}@markPrice@1s`;
-          const webSocketMarkPrice = WebSocket('binance-coin:liquidation:mark-price');
+          const webSocketMarkPrice = WebSocket('binance-coin:liquidation:mark-price', wsSettings);
           // Position websocket
           const streamPosition = (await rest._getListenKey()).data;
-          const webSocketPosition = WebSocket('binance-coin:liquidation:position');
+          const webSocketPosition = WebSocket('binance-coin:liquidation:position', wsSettings);
           setInterval(() => rest._getListenKey(), 1800000);
           await Promise.all([
             connectWebSocket(streamMarkPrice, webSocketMarkPrice, wsSettings),
@@ -286,7 +286,7 @@ function Ws(wsSettings = {}) {
         data: null,
         events: null,
         connect: async (params) => {
-          const webSocket = WebSocket('binance-coin:order-book:order-book');
+          const webSocket = WebSocket('binance-coin:order-book:order-book', wsSettings);
           orderBookWsObject.data = OrderBook();
           if (params && params.type === 'server') {
             orderBookWsObject.data._createServer(params);
