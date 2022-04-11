@@ -136,14 +136,14 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getOrders: () => {
+    getOrders: (params) => {
+      const webSocket = WebSocket('binance-coin:orders:orders', wsSettings);
       /** @type {import('../../../typings/_ws').ordersWsObjectReturn} */
       const ordersWsObject = {
         data: null,
         events: new Events.EventEmitter(),
-        connect: async (params) => {
+        connect: async () => {
           const stream = (await rest._getListenKey()).data;
-          const webSocket = WebSocket('binance-coin:orders:orders');
           setInterval(() => rest._getListenKey(), 1800000);
           await connectWebSocket(stream, webSocket, wsSettings);
           webSocket.addOnMessage((message) => {
@@ -174,14 +174,14 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getPosition: () => {
+    getPosition: (params) => {
+      const webSocket = WebSocket('binance-coin:position:position', wsSettings);
       /** @type {import('../../../typings/_ws').positionWsObjectReturn} */
       const positionWsObject = {
         data: null,
         events: new Events.EventEmitter(),
-        connect: async (params) => {
+        connect: async () => {
           const stream = (await rest._getListenKey()).data;
-          const webSocket = WebSocket('binance-coin:position:position');
           setInterval(() => rest._getListenKey(), 1800000);
           await connectWebSocket(stream, webSocket, wsSettings);
           // Load rest data
@@ -214,18 +214,16 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getLiquidation: () => {
+    getLiquidation: (params) => {
+      const webSocketMarkPrice = WebSocket('binance-coin:liquidation:mark-price', wsSettings);
+      const webSocketPosition = WebSocket('binance-coin:liquidation:position', wsSettings);
       /** @type {import('../../../typings/_ws').liquidationWsObjectReturn} */
       const liquidationWsObject = {
         data: null,
         events: new Events.EventEmitter(),
-        connect: async (params) => {
-          // Mark price websocket
+        connect: async () => {
           const streamMarkPrice = `${params.symbol.toLowerCase()}@markPrice@1s`;
-          const webSocketMarkPrice = WebSocket('binance-coin:liquidation:mark-price');
-          // Position websocket
           const streamPosition = (await rest._getListenKey()).data;
-          const webSocketPosition = WebSocket('binance-coin:liquidation:position');
           setInterval(() => rest._getListenKey(), 1800000);
           await Promise.all([
             connectWebSocket(streamMarkPrice, webSocketMarkPrice, wsSettings),
@@ -280,14 +278,18 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getOrderBook: () => {
+    getOrderBook: (params) => {
+      const webSocket = WebSocket('binance-coin:order-book:order-book', wsSettings);
+      const orderBook = OrderBook({
+        FROZEN_CHECK_INTERVAL: params.frozenCheckInterval,
+        PRICE_OVERLAPS_CHECK_INTERVAL: params.priceOverlapsCheckInterval,
+      });
       /** @type {import('../../../typings/_ws').orderBookWsObjectReturn} */
       const orderBookWsObject = {
         data: null,
         events: null,
-        connect: async (params) => {
-          const webSocket = WebSocket('binance-coin:order-book:order-book');
-          orderBookWsObject.data = OrderBook();
+        connect: async () => {
+          orderBookWsObject.data = orderBook;
           if (params && params.type === 'server') {
             orderBookWsObject.data._createServer(params);
           }
@@ -343,9 +345,9 @@ function Ws(wsSettings = {}) {
             let counter = 0;
             const interval = setInterval(() => {
               counter += 1;
-              if (counter >= 120) throw new Error('Could not verify connection of order book.');
-              if (!orderBookWsObject.data.asks.length || !orderBookWsObject.data.bids.length) return;
-              resolve(); clearInterval(interval);
+              if (counter >= 10 || orderBookWsObject.data.asks.length || orderBookWsObject.data.bids.length) {
+                resolve(); clearInterval(interval);
+              }
             }, 500);
           }));
         }

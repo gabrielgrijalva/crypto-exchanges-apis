@@ -161,20 +161,18 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getOrders: () => {
+    getOrders: (params) => {
+      const webSocketOpenOrders = WebSocket('kraken-futures:orders:orders', wsSettings);
+      const webSocketFills = WebSocket('kraken-futures:orders:executions', wsSettings);
       /** @type {import('../../../typings/_ws').ordersWsObjectReturn} */
       const ordersWsObject = {
         data: null,
         events: null,
-        connect: async (params) => {
+        connect: async () => {
           /** @type {import('../../../typings/_ws').ordersEventEmitter} */
           ordersWsObject.events = new Events.EventEmitter();
-          // Open orders websocket
           const feedOpenOrders = 'open_orders';
-          const webSocketOpenOrders = WebSocket('kraken-futures:orders:orders');
-          // Executions websocket
           const feedFills = 'fills';
-          const webSocketFills = WebSocket('kraken-futures:orders:executions');
           await Promise.all([
             connectWebSocket(feedOpenOrders, null, webSocketOpenOrders, wsSettings),
             connectWebSocket(feedFills, null, webSocketFills, wsSettings),
@@ -229,16 +227,16 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getPosition: () => {
+    getPosition: (params) => {
+      const webSocket = WebSocket('kraken-futures:position:position', wsSettings);
       /** @type {import('../../../typings/_ws').positionWsObjectReturn} */
       const positionWsObject = {
         data: null,
         events: null,
-        connect: async (params) => {
+        connect: async () => {
           /** @type {import('../../../typings/_ws').positionEventEmitter} */
           positionWsObject.events = new Events.EventEmitter();
           const feed = 'open_positions';
-          const webSocket = WebSocket('kraken-futures:position:position');
           await connectWebSocket(feed, null, webSocket, wsSettings);
           // Load rest data
           const positionRestData = (await rest.getPosition(params)).data;
@@ -276,21 +274,19 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getLiquidation: () => {
+    getLiquidation: (params) => {
+      const webSocketTicker = WebSocket('kraken-futures:liquidation:instrument', wsSettings);
+      const webSocketPosition = WebSocket('kraken-futures:liquidation:position', wsSettings);
       /** @type {import('../../../typings/_ws').liquidationWsObjectReturn} */
       const liquidationWsObject = {
         data: null,
         events: null,
-        connect: async (params) => {
+        connect: async () => {
           /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
           liquidationWsObject.events = new Events.EventEmitter();
-          // Ticker websocket
           const feedTicker = 'ticker';
           const symbolTicker = params.symbol;
-          const webSocketTicker = WebSocket('kraken-futures:liquidation:instrument');
-          // Position websocket
           const feedPosition = 'open_positions';
-          const webSocketPosition = WebSocket('kraken-futures:liquidation:position');
           await Promise.all([
             connectWebSocket(feedTicker, symbolTicker, webSocketTicker, wsSettings),
             connectWebSocket(feedPosition, null, webSocketPosition, wsSettings),
@@ -345,14 +341,18 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getOrderBook: () => {
+    getOrderBook: (params) => {
+      const webSocket = WebSocket('kraken-futures:order-book:order-book', wsSettings);
+      const orderBook = OrderBook({
+        FROZEN_CHECK_INTERVAL: params.frozenCheckInterval,
+        PRICE_OVERLAPS_CHECK_INTERVAL: params.priceOverlapsCheckInterval,
+      });
       /** @type {import('../../../typings/_ws').orderBookWsObjectReturn} */
       const orderBookWsObject = {
         data: null,
         events: null,
-        connect: async (params) => {
-          const webSocket = WebSocket('kraken-futures:order-book:order-book');
-          orderBookWsObject.data = OrderBook();
+        connect: async () => {
+          orderBookWsObject.data = orderBook;
           if (params && params.type === 'server') {
             orderBookWsObject.data._createServer(params);
           }
@@ -392,9 +392,9 @@ function Ws(wsSettings = {}) {
             let counter = 0;
             const interval = setInterval(() => {
               counter += 1;
-              if (counter >= 120) throw new Error('Could not verify connection of order book.');
-              if (!orderBookWsObject.data.asks.length || !orderBookWsObject.data.bids.length) return;
-              resolve(); clearInterval(interval);
+              if (counter >= 10 || orderBookWsObject.data.asks.length || orderBookWsObject.data.bids.length) {
+                resolve(); clearInterval(interval);
+              }
             }, 500);
           }));
         }

@@ -5,8 +5,12 @@ const wait = require('../_utils/wait');
 /**
  * 
  * @param {string} name 
+ * @param {import('../../typings/_ws').wsSettings} wsSettings
  */
-function WebSocket(name) {
+function WebSocket(name, wsSettings = {}) {
+  // Default wsSettings values
+  wsSettings.WS_SEND_PING_WAIT = wsSettings.WS_SEND_PING_WAIT || 3000;
+  wsSettings.WS_RECEIVE_PONG_WAIT = wsSettings.WS_RECEIVE_PONG_WAIT || 3000;
   /** @type {ws.WebSocket} */
   let wsInstance = null;
   let webSocketErrors = 0;
@@ -32,10 +36,10 @@ function WebSocket(name) {
     localWsInstance.ping();
     localWsInstance.on('pong', async () => {
       clearTimeout(timeout);
-      await wait(3000);
+      await wait(wsSettings.WS_SEND_PING_WAIT);
       if (localWsInstance.readyState === localWsInstance.OPEN) {
         localWsInstance.ping();
-        timeout = setTimeout(disconnect, 3000);
+        timeout = setTimeout(disconnect, wsSettings.WS_RECEIVE_PONG_WAIT);
       }
     });
     const disconnect = () => {
@@ -43,7 +47,7 @@ function WebSocket(name) {
         localWsInstance.terminate();
       }
     };
-    timeout = setTimeout(disconnect, 3000);
+    timeout = setTimeout(disconnect, wsSettings.WS_RECEIVE_PONG_WAIT);
   };
   const closeFunction = () => {
     clearInterval(websocketErrorsInterval);

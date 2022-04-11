@@ -150,16 +150,16 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getOrders: () => {
+    getOrders: (params) => {
+      const webSocket = WebSocket('bitmex:orders:orders', wsSettings);
       /** @type {import('../../../typings/_ws').ordersWsObjectReturn} */
       const ordersWsObject = {
         data: null,
         events: null,
-        connect: async (params) => {
+        connect: async () => {
           /** @type {import('../../../typings/_ws').ordersEventEmitter} */
           ordersWsObject.events = new Events.EventEmitter();
           const topic = `execution:${params.symbol}`;
-          const webSocket = WebSocket('bitmex:orders:orders');
           await connectWebSocket(topic, webSocket, wsSettings);
           webSocket.addOnMessage((message) => {
             const messageParse = JSON.parse(message);
@@ -204,16 +204,16 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getPosition: () => {
+    getPosition: (params) => {
+      const webSocket = WebSocket('bitmex:position:position', wsSettings);
       /** @type {import('../../../typings/_ws').positionWsObjectReturn} */
       const positionWsObject = {
         data: null,
         events: null,
-        connect: async (params) => {
+        connect: async () => {
           /** @type {import('../../../typings/_ws').positionEventEmitter} */
           positionWsObject.events = new Events.EventEmitter();
           const topic = `position:${params.symbol}`;
-          const webSocket = WebSocket('bitmex:position:position');
           await connectWebSocket(topic, webSocket, wsSettings);
           // Load rest data
           const positionRestData = (await rest.getPosition(params)).data;
@@ -245,20 +245,18 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getLiquidation: () => {
+    getLiquidation: (params) => {
+      const webSocketInstrument = WebSocket('bitmex:liquidation:instrument', wsSettings);
+      const webSocketPosition = WebSocket('bitmex:liquidation:position', wsSettings);
       /** @type {import('../../../typings/_ws').liquidationWsObjectReturn} */
       const liquidationWsObject = {
         data: null,
         events: null,
-        connect: async (params) => {
+        connect: async () => {
           /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
           liquidationWsObject.events = new Events.EventEmitter();
-          // Instrument websocket
           const topicInstrument = `instrument:${params.symbol}`;
-          const webSocketInstrument = WebSocket('bitmex:liquidation:instrument');
-          // Position websocket
           const topicPosition = `position:${params.symbol}`;
-          const webSocketPosition = WebSocket('bitmex:liquidation:position');
           await Promise.all([
             connectWebSocket(topicInstrument, webSocketInstrument, wsSettings),
             connectWebSocket(topicPosition, webSocketPosition, wsSettings),
@@ -306,14 +304,18 @@ function Ws(wsSettings = {}) {
      * 
      * 
      */
-    getOrderBook: () => {
+    getOrderBook: (params) => {
+      const webSocket = WebSocket('bitmex:order-book:order-book', wsSettings);
+      const orderBook = OrderBook({
+        FROZEN_CHECK_INTERVAL: params.frozenCheckInterval,
+        PRICE_OVERLAPS_CHECK_INTERVAL: params.priceOverlapsCheckInterval,
+      });
       /** @type {import('../../../typings/_ws').orderBookWsObjectReturn} */
       const orderBookWsObject = {
         data: null,
         events: null,
-        connect: async (params) => {
-          const webSocket = WebSocket('bitmex:order-book:order-book');
-          orderBookWsObject.data = OrderBook();
+        connect: async () => {
+          orderBookWsObject.data = orderBook;
           if (params && params.type === 'server') {
             orderBookWsObject.data._createServer(params);
           }
@@ -371,9 +373,9 @@ function Ws(wsSettings = {}) {
             let counter = 0;
             const interval = setInterval(() => {
               counter += 1;
-              if (counter >= 120) throw new Error('Could not verify connection of order book.');
-              if (!orderBookWsObject.data.asks.length || !orderBookWsObject.data.bids.length) return;
-              resolve(); clearInterval(interval);
+              if (counter >= 10 || orderBookWsObject.data.asks.length || orderBookWsObject.data.bids.length) {
+                resolve(); clearInterval(interval);
+              }
             }, 500);
           }));
         }
