@@ -392,9 +392,9 @@ function Ws(wsSettings = {}) {
             let counter = 0;
             const interval = setInterval(() => {
               counter += 1;
-              if (counter >= 120) throw new Error('Could not verify connection of order book.');
-              if (!orderBookWsObject.data.asks.length || !orderBookWsObject.data.bids.length) return;
-              resolve(); clearInterval(interval);
+              if (counter >= 10 || orderBookWsObject.data.asks.length || orderBookWsObject.data.bids.length) {
+                resolve(); clearInterval(interval);
+              }
             }, 500);
           }));
         }
