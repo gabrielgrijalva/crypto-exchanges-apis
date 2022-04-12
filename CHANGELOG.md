@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.2.1] - 2022-04-12
+- Corrected errors in _ws.js implementations.
 ## [2.2.0] - 2022-04-11
 - Made relevant changes in websockets implementations.
 ## [2.1.4] - 2022-04-08
