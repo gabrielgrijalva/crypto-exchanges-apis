@@ -167,7 +167,7 @@ function Ws(wsSettings = {}) {
       /** @type {import('../../../typings/_ws').ordersWsObjectReturn} */
       const ordersWsObject = {
         data: null,
-        events: null,
+        events: new Events.EventEmitter(),
         connect: async () => {
           /** @type {import('../../../typings/_ws').ordersEventEmitter} */
           ordersWsObject.events = new Events.EventEmitter();
@@ -232,7 +232,7 @@ function Ws(wsSettings = {}) {
       /** @type {import('../../../typings/_ws').positionWsObjectReturn} */
       const positionWsObject = {
         data: null,
-        events: null,
+        events: new Events.EventEmitter(),
         connect: async () => {
           /** @type {import('../../../typings/_ws').positionEventEmitter} */
           positionWsObject.events = new Events.EventEmitter();
@@ -280,7 +280,7 @@ function Ws(wsSettings = {}) {
       /** @type {import('../../../typings/_ws').liquidationWsObjectReturn} */
       const liquidationWsObject = {
         data: null,
-        events: null,
+        events: new Events.EventEmitter(),
         connect: async () => {
           /** @type {import('../../../typings/_ws').liquidationEventEmitter} */
           liquidationWsObject.events = new Events.EventEmitter();
