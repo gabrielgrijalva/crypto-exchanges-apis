@@ -157,8 +157,6 @@ function Ws(wsSettings = {}) {
         data: null,
         events: new Events.EventEmitter(),
         connect: async () => {
-          /** @type {import('../../../typings/_ws').ordersEventEmitter} */
-          ordersWsObject.events = new Events.EventEmitter();
           const topic = `execution:${params.symbol}`;
           await connectWebSocket(topic, webSocket, wsSettings);
           webSocket.addOnMessage((message) => {

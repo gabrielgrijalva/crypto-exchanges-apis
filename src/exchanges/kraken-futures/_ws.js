@@ -170,8 +170,6 @@ function Ws(wsSettings = {}) {
         data: null,
         events: new Events.EventEmitter(),
         connect: async () => {
-          /** @type {import('../../../typings/_ws').ordersEventEmitter} */
-          ordersWsObject.events = new Events.EventEmitter();
           const feedOpenOrders = 'open_orders';
           const feedFills = 'fills';
           await Promise.all([

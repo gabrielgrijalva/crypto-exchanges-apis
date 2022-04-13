@@ -165,8 +165,6 @@ function Ws(wsSettings = {}) {
         data: null,
         events: new Events.EventEmitter(),
         connect: async () => {
-          /** @type {import('../../../typings/_ws').ordersEventEmitter} */
-          ordersWsObject.events = new Events.EventEmitter();
           const topicOrders = 'order';
           const topicExecutions = 'execution';
           await Promise.all([

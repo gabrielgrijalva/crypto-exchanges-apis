@@ -187,8 +187,6 @@ function Ws(wsSettings = {}) {
         data: null,
         events: new Events.EventEmitter(),
         connect: async () => {
-          /** @type {import('../../../typings/_ws').ordersEventEmitter} */
-          ordersWsObject.events = new Events.EventEmitter();
           const channelOpenOrders = `user.orders.${params.symbol}.raw`;
           const channelExecutions = `user.trades.${params.symbol}.raw`;
           await Promise.all([
