@@ -326,6 +326,40 @@ function Ws(wsSettings = {}) {
      * 
      * 
      * 
+     * WS TRADES
+     * 
+     * 
+     * 
+     */
+    getTrades: (params) => {
+      const webSocket = WebSocket('bybit-futures:trades:trades', wsSettings);
+      /** @type {import('../../../typings/_ws').tradesWsObjectReturn} */
+      const tradesWsObject = {
+        data: null,
+        events: new Events.EventEmitter(),
+        connect: async () => {
+          const topic = `trade.${params.symbol}`;
+          await connectWebSocket(topic, webSocket, wsSettings);
+          webSocket.addOnMessage((message) => {
+            const messageParse = JSON.parse(message);
+            if (messageParse.topic !== topic) { return };
+            tradesWsObject.events.emit('update', messageParse.data.map(v => {
+              return {
+                side: v.side === 'Sell' ? 'sell' : 'buy',
+                price: +v.price,
+                quantity: +v.size,
+                timestamp: moment.utc(v.timestamp).format('YYYY-MM-DD HH:mm:ss.SSS'),
+              }
+            }));
+          });
+        },
+      }
+      return tradesWsObject;
+    },
+    /**
+     * 
+     * 
+     * 
      * WS ORDER BOOK
      * 
      * 

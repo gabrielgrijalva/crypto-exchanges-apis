@@ -273,6 +273,38 @@ function Ws(wsSettings = {}) {
      * 
      * 
      * 
+     * WS TRADES
+     * 
+     * 
+     * 
+     */
+    getTrades: (params) => {
+      const webSocket = WebSocket('binance-coin:trades:trades', wsSettings);
+      /** @type {import('../../../typings/_ws').tradesWsObjectReturn} */
+      const tradesWsObject = {
+        data: null,
+        events: new Events.EventEmitter(),
+        connect: async () => {
+          const stream = `${params.symbol.toLowerCase()}@trade`;
+          await connectWebSocket(stream, webSocket, wsSettings);
+          webSocket.addOnMessage((message) => {
+            const messageParse = JSON.parse(message);
+            if (messageParse.e !== 'trade') { return };
+            tradesWsObject.events.emit('update', [{
+              side: messageParse.m ? 'sell' : 'buy',
+              price: +messageParse.p,
+              quantity: +messageParse.q,
+              timestamp: moment(+messageParse.E).utc().format('YYYY-MM-DD HH:mm:ss.SSS'),
+            }]);
+          });
+        },
+      }
+      return tradesWsObject;
+    },
+    /**
+     * 
+     * 
+     * 
      * WS ORDER BOOK
      * 
      * 

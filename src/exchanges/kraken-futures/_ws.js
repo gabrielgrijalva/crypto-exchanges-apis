@@ -74,16 +74,21 @@ function connectWebSocket(feed, symbol, webSocket, wsSettings) {
     const apiKey = wsSettings.API_KEY;
     const apiSecret = wsSettings.API_SECRET;
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
+    console.log(url);
     webSocket.connect(url);
+    console.log(url);
     function connectOnOpenFunction() {
+      console.log('connectOnOpenFunction');
       if (apiKey && apiSecret) {
         webSocket.send(JSON.stringify({ event: 'challenge', api_key: apiKey }));
       } else {
+        console.log('connectOnOpenFunction');
         webSocket.send(JSON.stringify(getRequestParams(feed, symbol)));
       }
     };
     function connectOnMessageFunction(message) {
       const messageParse = JSON.parse(message);
+      console.log(messageParse);
       if (messageParse.event === 'challenge' && messageParse.message) {
         const requestParams = getRequestParams(feed, symbol);
         const signatureParams = getSingatureParams(messageParse.message, apiKey, apiSecret);
@@ -331,6 +336,39 @@ function Ws(wsSettings = {}) {
         }
       };
       return liquidationWsObject;
+    },
+    /**
+     * 
+     * 
+     * 
+     * WS TRADES
+     * 
+     * 
+     * 
+     */
+    getTrades: (params) => {
+      const webSocket = WebSocket('kraken-futures:trades:trades', wsSettings);
+      /** @type {import('../../../typings/_ws').tradesWsObjectReturn} */
+      const tradesWsObject = {
+        data: null,
+        events: new Events.EventEmitter(),
+        connect: async () => {
+          const feed = 'trade';
+          const symbol = params.symbol;
+          await connectWebSocket(feed, symbol, webSocket, wsSettings);
+          webSocket.addOnMessage((message) => {
+            const messageParse = JSON.parse(message);
+            if (messageParse.feed !== 'trade' || messageParse.product_id !== symbol) { return };
+            tradesWsObject.events.emit('update', [{
+              side: messageParse.side,
+              price: +messageParse.price,
+              quantity: +messageParse.qty,
+              timestamp: moment(+messageParse.timestamp).utc().format('YYYY-MM-DD HH:mm:ss.SSS'),
+            }]);
+          });
+        },
+      }
+      return tradesWsObject;
     },
     /**
      * 
