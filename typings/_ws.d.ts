@@ -137,6 +137,31 @@ declare namespace WsN {
    * 
    * 
    * 
+   * WS TRADES
+   * 
+   * 
+   * 
+   */
+  type tradesParams = {
+    symbol: string;
+  }
+  type dataTrades = {
+    side: 'sell' | 'buy';
+    price: number;
+    quantity: number;
+    timestamp: string;
+  }
+  type tradesEventEmitter = Events.EventEmitter & {
+    // Emit 'event' functions
+    emit(event: 'update', data: dataTrades[]);
+    // On 'event' functions
+    on(event: 'update', listener: (data: dataTrades[]) => void);
+  }
+  type tradesWsObjectReturn = { data: null; events: tradesEventEmitter; connect(): Promise<void>; };
+  /**
+   * 
+   * 
+   * 
    * ORDER BOOK INTERFACE
    * 
    * 
@@ -218,6 +243,7 @@ declare namespace WsN {
     getOrders(params: ordersParams): ordersWsObjectReturn;
     getPosition(params: positionParams): positionWsObjectReturn;
     getLiquidation(params: liquidationParams): liquidationWsObjectReturn;
+    getTrades(params: tradesParams): tradesWsObjectReturn;
     getOrderBook(params: orderBookParams): orderBookWsObjectReturn;
   }
 }

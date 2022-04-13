@@ -367,6 +367,41 @@ function Ws(wsSettings = {}) {
      * 
      * 
      * 
+     * WS TRADES
+     * 
+     * 
+     * 
+     */
+    getTrades: (params) => {
+      const webSocket = WebSocket('okex:trades:trades', wsSettings);
+      /** @type {import('../../../typings/_ws').tradesWsObjectReturn} */
+      const tradesWsObject = {
+        data: null,
+        events: new Events.EventEmitter(),
+        connect: async () => {
+          const channel = 'trades';
+          const symbol = params.symbol;
+          await connectWebSocket('public', symbol, channel, webSocket, wsSettings);
+          webSocket.addOnMessage((message) => {
+            const messageParse = JSON.parse(message.toString());
+            if (messageParse.event === 'subscribe' || !messageParse.arg || messageParse.arg.channel !== channel) { return };
+            tradesWsObject.events.emit('update', messageParse.data.map(v => {
+              return {
+                side: v.side,
+                price: +v.px,
+                quantity: +v.sz,
+                timestamp: moment(+v.ts).utc().format('YYYY-MM-DD HH:mm:ss.SSS'),
+              };
+            }));
+          });
+        },
+      }
+      return tradesWsObject;
+    },
+    /**
+     * 
+     * 
+     * 
      * WS ORDER BOOK
      * 
      * 

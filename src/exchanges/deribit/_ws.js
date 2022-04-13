@@ -344,6 +344,40 @@ function Ws(wsSettings = {}) {
      * 
      * 
      * 
+     * WS TRADES
+     * 
+     * 
+     * 
+     */
+    getTrades: (params) => {
+      const webSocket = WebSocket('deribit:trades:trades', wsSettings);
+      /** @type {import('../../../typings/_ws').tradesWsObjectReturn} */
+      const tradesWsObject = {
+        data: null,
+        events: new Events.EventEmitter(),
+        connect: async () => {
+          const channel = `trades.${params.symbol}.100ms`;
+          await connectWebSocket(channel, 'public', webSocket, wsSettings);
+          webSocket.addOnMessage((message) => {
+            const messageParse = JSON.parse(message);
+            if (!messageParse.params || messageParse.params.channel !== channel) { return };
+            tradesWsObject.events.emit('update', messageParse.params.data.map(v => {
+              return {
+                side: v.direction,
+                price: +v.price,
+                quantity: +v.amount,
+                timestamp: moment(+v.timestamp).utc().format('YYYY-MM-DD HH:mm:ss.SSS'),
+              }
+            }));
+          });
+        },
+      }
+      return tradesWsObject;
+    },
+    /**
+     * 
+     * 
+     * 
      * WS ORDER BOOK
      * 
      * 
