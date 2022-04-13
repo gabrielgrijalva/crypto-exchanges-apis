@@ -359,7 +359,7 @@ function Ws(wsSettings = {}) {
               side: messageParse.side,
               price: +messageParse.price,
               quantity: +messageParse.qty,
-              timestamp: moment(+messageParse.timestamp).utc().format('YYYY-MM-DD HH:mm:ss.SSS'),
+              timestamp: moment(+messageParse.time).utc().format('YYYY-MM-DD HH:mm:ss.SSS'),
             }]);
           });
         },
