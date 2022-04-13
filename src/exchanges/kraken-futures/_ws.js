@@ -63,32 +63,28 @@ function getSingatureParams(challenge, apiKey, apiSecret) {
 };
 /**
  * 
+ * @param {'public' | 'private'} type
  * @param {string} feed
  * @param {string} symbol
  * @param {import('../../../typings/_ws').WebSocket} webSocket 
  * @param {import('../../../typings/_ws').wsSettings} wsSettings
  */
-function connectWebSocket(feed, symbol, webSocket, wsSettings) {
+function connectWebSocket(type, feed, symbol, webSocket, wsSettings) {
   return new Promise((resolve) => {
-    const url = wsSettings.URL;
+    const url = type === 'private' ? wsSettings.URL : wsSettings.URL.replace('api.', '');
     const apiKey = wsSettings.API_KEY;
     const apiSecret = wsSettings.API_SECRET;
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
-    console.log(url);
     webSocket.connect(url);
-    console.log(url);
     function connectOnOpenFunction() {
-      console.log('connectOnOpenFunction');
       if (apiKey && apiSecret) {
         webSocket.send(JSON.stringify({ event: 'challenge', api_key: apiKey }));
       } else {
-        console.log('connectOnOpenFunction');
         webSocket.send(JSON.stringify(getRequestParams(feed, symbol)));
       }
     };
     function connectOnMessageFunction(message) {
       const messageParse = JSON.parse(message);
-      console.log(messageParse);
       if (messageParse.event === 'challenge' && messageParse.message) {
         const requestParams = getRequestParams(feed, symbol);
         const signatureParams = getSingatureParams(messageParse.message, apiKey, apiSecret);
@@ -179,8 +175,8 @@ function Ws(wsSettings = {}) {
           const feedOpenOrders = 'open_orders';
           const feedFills = 'fills';
           await Promise.all([
-            connectWebSocket(feedOpenOrders, null, webSocketOpenOrders, wsSettings),
-            connectWebSocket(feedFills, null, webSocketFills, wsSettings),
+            connectWebSocket('private', feedOpenOrders, null, webSocketOpenOrders, wsSettings),
+            connectWebSocket('private', feedFills, null, webSocketFills, wsSettings),
           ]);
           webSocketOpenOrders.addOnMessage((message) => {
             const messageParse = JSON.parse(message);
@@ -217,8 +213,8 @@ function Ws(wsSettings = {}) {
               ordersWsObject.events.emit('executions', executionOrders);
             }
           });
-          webSocketOpenOrders.addOnClose(() => { connectWebSocket(feedOpenOrders, null, webSocketOpenOrders, wsSettings) });
-          webSocketFills.addOnClose(() => { connectWebSocket(feedFills, null, webSocketFills, wsSettings) });
+          webSocketOpenOrders.addOnClose(() => { connectWebSocket('private', feedOpenOrders, null, webSocketOpenOrders, wsSettings) });
+          webSocketFills.addOnClose(() => { connectWebSocket('private', feedFills, null, webSocketFills, wsSettings) });
         }
       };
       return ordersWsObject;
@@ -242,7 +238,7 @@ function Ws(wsSettings = {}) {
           /** @type {import('../../../typings/_ws').positionEventEmitter} */
           positionWsObject.events = new Events.EventEmitter();
           const feed = 'open_positions';
-          await connectWebSocket(feed, null, webSocket, wsSettings);
+          await connectWebSocket('private', feed, null, webSocket, wsSettings);
           // Load rest data
           const positionRestData = (await rest.getPosition(params)).data;
           /** @type {import('../../../typings/_ws').dataPosition} */
@@ -265,7 +261,7 @@ function Ws(wsSettings = {}) {
             }
             positionWsObject.events.emit('update', positionWsObject.data);
           });
-          webSocket.addOnClose(() => { connectWebSocket(feed, null, webSocket, wsSettings) });
+          webSocket.addOnClose(() => { connectWebSocket('private', feed, null, webSocket, wsSettings) });
         }
       };
       return positionWsObject;
@@ -293,8 +289,8 @@ function Ws(wsSettings = {}) {
           const symbolTicker = params.symbol;
           const feedPosition = 'open_positions';
           await Promise.all([
-            connectWebSocket(feedTicker, symbolTicker, webSocketTicker, wsSettings),
-            connectWebSocket(feedPosition, null, webSocketPosition, wsSettings),
+            connectWebSocket('public', feedTicker, symbolTicker, webSocketTicker, wsSettings),
+            connectWebSocket('private', feedPosition, null, webSocketPosition, wsSettings),
           ]);
           // Load rest data
           const positionRestData = (await rest.getPosition(params)).data;
@@ -331,8 +327,8 @@ function Ws(wsSettings = {}) {
             }
             liquidationWsObject.events.emit('update', liquidationWsObject.data);
           });
-          webSocketTicker.addOnClose(() => connectWebSocket(feedTicker, symbolTicker, webSocketTicker, wsSettings));
-          webSocketPosition.addOnClose(() => connectWebSocket(feedPosition, null, webSocketPosition, wsSettings));
+          webSocketTicker.addOnClose(() => connectWebSocket('public', feedTicker, symbolTicker, webSocketTicker, wsSettings));
+          webSocketPosition.addOnClose(() => connectWebSocket('private', feedPosition, null, webSocketPosition, wsSettings));
         }
       };
       return liquidationWsObject;
@@ -355,7 +351,7 @@ function Ws(wsSettings = {}) {
         connect: async () => {
           const feed = 'trade';
           const symbol = params.symbol;
-          await connectWebSocket(feed, symbol, webSocket, wsSettings);
+          await connectWebSocket('public', feed, symbol, webSocket, wsSettings);
           webSocket.addOnMessage((message) => {
             const messageParse = JSON.parse(message);
             if (messageParse.feed !== 'trade' || messageParse.product_id !== symbol) { return };
@@ -400,7 +396,7 @@ function Ws(wsSettings = {}) {
           // Connect websocket
           const feed = 'book';
           const symbol = params.symbol;
-          await connectWebSocket(feed, symbol, webSocket, wsSettings);
+          await connectWebSocket('public', feed, symbol, webSocket, wsSettings);
           // Order book functionality
           webSocket.addOnMessage((message) => {
             const messageParse = JSON.parse(message);
@@ -424,7 +420,7 @@ function Ws(wsSettings = {}) {
           });
           webSocket.addOnClose(() => {
             desynchronizeOrderBook(orderBookWsObject.data);
-            connectWebSocket(feed, symbol, webSocket, wsSettings);
+            connectWebSocket('public', feed, symbol, webSocket, wsSettings);
           });
           await (new Promise(resolve => {
             let counter = 0;
