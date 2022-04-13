@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.2.3] - 2022-04-13
+- Corrected errors in exchanges websockets implementations.
 ## [2.2.2] - 2022-04-13
 - Implemented get trades websocket functionality.
 ## [2.2.1] - 2022-04-12
