@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.2.4] - 2022-04-14
+- Corrected error in get order book ws function.
 ## [2.2.3] - 2022-04-13
 - Corrected errors in exchanges websockets implementations.
 ## [2.2.2] - 2022-04-13
