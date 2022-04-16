@@ -213,7 +213,7 @@ function OrderBook(orderBookSettings = {}) {
   setInterval(() => {
     const currentSnapshotAsks = JSON.stringify(orderBook.asks.slice(0, 10));
     const currentSnapshotBids = JSON.stringify(orderBook.bids.slice(0, 10));
-    if (lastSnapshotAsks === currentSnapshotAsks || lastSnapshotBids === currentSnapshotBids) {
+    if (lastSnapshotAsks === currentSnapshotAsks && lastSnapshotBids === currentSnapshotBids) {
       throw { error: { type: 'order-book-static', params: null, exchange: null } };
     }
     lastSnapshotAsks = currentSnapshotAsks;
