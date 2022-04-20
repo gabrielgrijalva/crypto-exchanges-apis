@@ -2,6 +2,7 @@ const mysql = require('mysql');
 const moment = require('moment');
 const CronJob = require('cron').CronJob;
 const wait = require('../_utils/wait');
+const round = require('../_utils/round');
 /**
  * 
  * 
@@ -103,8 +104,8 @@ function Populator(populatorSettings) {
       const table = params.table;
       const interval = params.interval;
       new CronJob('00 * * * * *', async () => {
-        const timestamp = moment.utc().startOf('second').subtract(interval, 'milliseconds');
-        if ((timestamp.valueOf() % interval) !== 0) { return };
+        const timestamp = moment(round.down(moment.utc().valueOf() / interval, 0)
+          * params.interval).utc().subtract(params.interval, 'milliseconds');
         let candle = null;
         for (let i = 0; i < 5; i += 1) {
           const start = timestamp.clone().subtract(interval * 5, 'milliseconds').format('YYYY-MM-DD HH:mm:ss');
@@ -124,7 +125,7 @@ function Populator(populatorSettings) {
           }
           await wait(1000);
         }
-      }, () => { }, true);
+      }, () => { }, true, null, null, true);
     },
   };
   return populator;
