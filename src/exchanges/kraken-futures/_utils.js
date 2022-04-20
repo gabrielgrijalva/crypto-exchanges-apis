@@ -16,7 +16,7 @@ const UtilsFactory = require('../../_shared-classes/utils');
  */
 function Utils(utilsSettings) {
   const utils = UtilsFactory(utilsSettings);
-  utils.getOrderId = () => uuid();
+  utils.getOrderId = (symbol) => `${symbol}-${uuid()}`;
   return utils;
 };
 module.exports = Utils;

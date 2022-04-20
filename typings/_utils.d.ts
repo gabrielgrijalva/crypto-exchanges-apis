@@ -43,7 +43,7 @@ declare namespace UtilsN {
   type sideTypes = 'sell' | 'buy';
   type roundTypes = 'up' | 'down' | 'normal';
   interface Utils {
-    getOrderId(): string;
+    getOrderId(symbol: string): string;
     getOpenOrderQtyFromBalance(px: number, qty: number, rnd: roundTypes): number;
     getCloseOrderQtyFromOpenPosition(px: number, qty: number, rnd: roundTypes): number;
     getOpenPositionQtyFromOpenExecution(px: number, qty: number, rnd: roundTypes): number;
