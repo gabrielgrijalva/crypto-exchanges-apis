@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.2.7] - 2022-04-20
+- Changed utils typing definitions and kraken utils implementation.
 ## [2.2.6] - 2022-04-16
 - Corrected error in okex utils.
 ## [2.2.5] - 2022-04-15
