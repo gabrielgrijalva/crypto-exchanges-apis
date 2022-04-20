@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.2.8] - 2022-04-20
+- Changed populators implementation.
 ## [2.2.7] - 2022-04-20
 - Changed utils typing definitions and kraken utils implementation.
 ## [2.2.6] - 2022-04-16
