@@ -35,7 +35,8 @@ declare namespace WsN {
    * 
    * 
    */
-  type orderBookSettings = {
+  type orderBooksSettings = {
+    SYMBOL?: string;
     FROZEN_CHECK_INTERVAL?: number;
     PRICE_OVERLAPS_CHECK_INTERVAL?: number;
   }
@@ -51,7 +52,8 @@ declare namespace WsN {
   type ordersParams = {
     symbol: string;
   }
-  type dataCreationsUpdates = {
+  type ordersCreationsUpdates = {
+    symbol: string;
     event: 'creations-updates';
     id: string;
     side: 'sell' | 'buy';
@@ -59,7 +61,8 @@ declare namespace WsN {
     quantity: number;
     timestamp: string;
   }
-  type dataExecutions = {
+  type ordersExecutions = {
+    symbol: string;
     event: 'executions';
     id: string;
     side: 'sell' | 'buy';
@@ -67,72 +70,62 @@ declare namespace WsN {
     quantity: number;
     timestamp: string;
   }
-  type dataCancelations = {
+  type ordersCancelations = {
+    symbol: string;
     event: 'cancelations';
     id: string;
     timestamp: string;
   }
   type ordersEventEmitter = Events.EventEmitter & {
     // Emit 'event' functions
-    emit(event: 'executions', data: dataExecutions[]);
-    emit(event: 'cancelations', data: dataCancelations[]);
-    emit(event: 'creations-updates', data: dataCreationsUpdates[]);
+    emit(event: 'executions', data: ordersExecutions[]);
+    emit(event: 'cancelations', data: ordersCancelations[]);
+    emit(event: 'creations-updates', data: ordersCreationsUpdates[]);
     // On 'event' functions
-    on(event: 'executions', listener: (data: dataExecutions[]) => void);
-    on(event: 'cancelations', listener: (data: dataCancelations[]) => void);
-    on(event: 'creations-updates', listener: (data: dataCreationsUpdates[]) => void);
+    on(event: 'executions', listener: (data: ordersExecutions[]) => void);
+    on(event: 'cancelations', listener: (data: ordersCancelations[]) => void);
+    on(event: 'creations-updates', listener: (data: ordersCreationsUpdates[]) => void);
   }
-  type ordersWsObjectReturn = { data: null; events: ordersEventEmitter; connect(): Promise<void>; };
+  type ordersWsObject = { subscribe(params: ordersParams): Promise<void>; data: null; events: ordersEventEmitter; subscriptions: ordersParams[] };
   /**
    * 
    * 
    * 
-   * WS POSITION
+   * WS POSITIONS
    * 
    * 
    * 
    */
-  type positionParams = {
+  type positionsParams = {
     symbol: string;
   }
-  type dataPosition = {
+  type positionsData = {
+    symbol: string;
     pxS: number;
     pxB: number;
     qtyS: number;
     qtyB: number;
   }
-  type positionEventEmitter = Events.EventEmitter & {
-    // Emit 'event' functions
-    emit(event: 'update', data: dataPosition);
-    // On 'event' functions
-    on(event: 'update', listener: (data: dataPosition) => void);
-  }
-  type positionWsObjectReturn = { data: dataPosition; events: positionEventEmitter; connect(): Promise<void>; };
+  type positionsWsObject = { subscribe(params: positionsParams): Promise<void>; data: positionsData[]; events: null; subscriptions: positionsParams[] };
   /**
    * 
    * 
    * 
-   * WS LIQUIDATION
+   * WS LIQUIDATIONS
    * 
    * 
    * 
    */
-  type liquidationParams = {
+  type liquidationsParams = {
     asset: string;
     symbol: string;
   }
-  type dataLiquidation = dataPosition & {
+  type liquidationsData = positionsData & {
     markPx: number;
     liqPxS: number;
     liqPxB: number;
   }
-  type liquidationEventEmitter = Events.EventEmitter & {
-    // Emit 'event' functions
-    emit(event: 'update', data: dataLiquidation);
-    // On 'event' functions
-    on(event: 'update', listener: (data: dataLiquidation) => void);
-  }
-  type liquidationWsObjectReturn = { data: dataLiquidation; events: liquidationEventEmitter; connect(): Promise<void>; };
+  type liquidationsWsObject = { subscribe(params: liquidationsParams): Promise<void>; data: liquidationsData[]; events: null; subscriptions: liquidationsParams[] };
   /**
    * 
    * 
@@ -145,7 +138,8 @@ declare namespace WsN {
   type tradesParams = {
     symbol: string;
   }
-  type dataTrades = {
+  type tradesData = {
+    symbol: string;
     side: 'sell' | 'buy';
     price: number;
     quantity: number;
@@ -153,11 +147,11 @@ declare namespace WsN {
   }
   type tradesEventEmitter = Events.EventEmitter & {
     // Emit 'event' functions
-    emit(event: 'update', data: dataTrades[]);
+    emit(event: 'trade', data: tradesData[]);
     // On 'event' functions
-    on(event: 'update', listener: (data: dataTrades[]) => void);
+    on(event: 'trade', listener: (data: tradesData[]) => void);
   }
-  type tradesWsObjectReturn = { data: null; events: tradesEventEmitter; connect(): Promise<void>; };
+  type tradesWsObject = { subscribe(params: tradesParams): Promise<void>; data: tradesData[]; events: tradesEventEmitter; subscriptions: tradesParams[] };
   /**
    * 
    * 
@@ -167,9 +161,9 @@ declare namespace WsN {
    * 
    * 
    */
-  type flags = { synchronizing: boolean, synchronized: boolean, snapshot: null | { asks: orderBookOrder[], bids: orderBookOrder[], lastUpdateId: number } };
-  type orderBookOrder = { id: number, price: number, quantity: number };
-  type orderBookClientParams = {
+  type orderBooksOrder = { id: number, price: number, quantity: number };
+  type orderBooksFlags = { synchronizing: boolean, synchronized: boolean, snapshot: null | { asks: orderBooksOrder[], bids: orderBooksOrder[], lastUpdateId: number } };
+  type orderBooksClientParams = {
     symbol: string;
     type?: 'client';
     port?: number;
@@ -177,7 +171,7 @@ declare namespace WsN {
     frozenCheckInterval?: number;
     priceOverlapsCheckInterval?: number;
   };
-  type orderBookServerParams = {
+  type orderBooksServerParams = {
     symbol: string;
     type?: 'server';
     port?: number;
@@ -186,24 +180,25 @@ declare namespace WsN {
     frozenCheckInterval?: number;
     priceOverlapsCheckInterval?: number;
   };
-  type orderBookParams = orderBookClientParams | orderBookServerParams;
-  type dataOrderBook = {
+  type orderBooksParams = orderBooksClientParams | orderBooksServerParams;
+  type orderBooksData = {
     // Public data
-    asks: orderBookOrder[];
-    bids: orderBookOrder[];
+    symbol: string;
+    asks: orderBooksOrder[];
+    bids: orderBooksOrder[];
     // Private data
-    _createServer(params: orderBookServerParams): void;
-    _connectClient(webSocket: WebSocket, params: orderBookClientParams): void;
-    _deleteOrderByIdAsk(update: orderBookOrder): void;
-    _deleteOrderByIdBid(update: orderBookOrder): void;
-    _updateOrderByIdAsk(update: orderBookOrder): void;
-    _updateOrderByIdBid(update: orderBookOrder): void;
-    _updateOrderByPriceAsk(update: orderBookOrder): void;
-    _updateOrderByPriceBid(update: orderBookOrder): void;
-    _insertSnapshotAsks(snapshot: orderBookOrder[]): void;
-    _insertSnapshotBids(snapshot: orderBookOrder[]): void;
+    _createServer(params: orderBooksServerParams): void;
+    _connectClient(webSocket: WebSocket, params: orderBooksClientParams): void;
+    _deleteOrderByIdAsk(update: orderBooksOrder): void;
+    _deleteOrderByIdBid(update: orderBooksOrder): void;
+    _updateOrderByIdAsk(update: orderBooksOrder): void;
+    _updateOrderByIdBid(update: orderBooksOrder): void;
+    _updateOrderByPriceAsk(update: orderBooksOrder): void;
+    _updateOrderByPriceBid(update: orderBooksOrder): void;
+    _insertSnapshotAsks(snapshot: orderBooksOrder[]): void;
+    _insertSnapshotBids(snapshot: orderBooksOrder[]): void;
   };
-  type orderBookWsObjectReturn = { data: dataOrderBook; events: null; connect(): Promise<void>; };
+  type orderBooksWsObject = { subscribe(params: orderBooksParams): Promise<void>; data: orderBooksData[]; events: null; subscriptions: orderBooksParams[] };
   /**
    * 
    * 
@@ -240,11 +235,12 @@ declare namespace WsN {
    * 
    */
   interface Ws {
-    getOrders(params: ordersParams): ordersWsObjectReturn;
-    getPosition(params: positionParams): positionWsObjectReturn;
-    getLiquidation(params: liquidationParams): liquidationWsObjectReturn;
-    getTrades(params: tradesParams): tradesWsObjectReturn;
-    getOrderBook(params: orderBookParams): orderBookWsObjectReturn;
+    connect(): Promise<void>;
+    orders: ordersWsObject;
+    positions: positionsWsObject;
+    liquidations: liquidationsWsObject;
+    trades: tradesWsObject;
+    orderBooks: orderBooksWsObject;
   }
 }
 export = WsN;
