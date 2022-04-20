@@ -40,7 +40,7 @@ function Utils(utilsSettings) {
      * 
      * 
      */
-    getOrderId: () => '',
+    getOrderId: (symbol) => '',
     /**
      * 
      * 
