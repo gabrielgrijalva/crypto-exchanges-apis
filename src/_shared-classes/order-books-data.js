@@ -1,5 +1,3 @@
-const ws = require('ws');
-const moment = require('moment');
 /**
   * 
   * 
@@ -103,7 +101,7 @@ function getInsertSnapshotFunction(orders) {
 /** 
  * @param {import('../../typings/_ws').orderBooksSettings} orderBooksSettings
  */
-function OrderBook(orderBooksSettings = {}) {
+function OrderBooksData(orderBooksSettings = {}) {
   orderBooksSettings.FROZEN_CHECK_INTERVAL = orderBooksSettings.FROZEN_CHECK_INTERVAL || 30000;
   orderBooksSettings.PRICE_OVERLAPS_CHECK_INTERVAL = orderBooksSettings.PRICE_OVERLAPS_CHECK_INTERVAL || 5000;
   /** @type {import('../../typings/_ws').orderBooksOrder[]} */
@@ -119,7 +117,7 @@ function OrderBook(orderBooksSettings = {}) {
    * 
    * 
    */
-  const orderBooks = {
+  const orderBooksData = {
     symbol: orderBooksSettings.SYMBOL,
     asks: asks,
     bids: bids,
@@ -139,20 +137,20 @@ function OrderBook(orderBooksSettings = {}) {
   let lastSnapshotAsks = '';
   let lastSnapshotBids = '';
   setInterval(() => {
-    if (!orderBooks.asks[0] || !orderBooks.bids[0]) { return };
-    if (orderBooks.asks[0].price <= orderBooks.bids[0].price) {
+    if (!orderBooksData.asks[0] || !orderBooksData.bids[0]) { return };
+    if (orderBooksData.asks[0].price <= orderBooksData.bids[0].price) {
       throw { error: { type: 'order-book-price-overlaps', params: null, exchange: null } };
     }
   }, orderBooksSettings.PRICE_OVERLAPS_CHECK_INTERVAL);
   setInterval(() => {
-    const currentSnapshotAsks = JSON.stringify(orderBooks.asks.slice(0, 10));
-    const currentSnapshotBids = JSON.stringify(orderBooks.bids.slice(0, 10));
+    const currentSnapshotAsks = JSON.stringify(orderBooksData.asks.slice(0, 10));
+    const currentSnapshotBids = JSON.stringify(orderBooksData.bids.slice(0, 10));
     if (lastSnapshotAsks === currentSnapshotAsks && lastSnapshotBids === currentSnapshotBids) {
       throw { error: { type: 'order-book-static', params: null, exchange: null } };
     }
     lastSnapshotAsks = currentSnapshotAsks;
     lastSnapshotBids = currentSnapshotBids;
   }, orderBooksSettings.FROZEN_CHECK_INTERVAL);
-  return orderBooks;
+  return orderBooksData;
 };
-module.exports = OrderBook;
+module.exports = OrderBooksData;

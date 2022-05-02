@@ -1,9 +1,9 @@
 const ws = require('ws');
 const moment = require('moment');
 
-function OrderBookServer() {
+function OrderBooksDataServer() {
   /** @type {import('../../typings/_ws').orderBooksServerWsObject} */
-  const orderBookServer = {
+  const orderBooksDataServer = {
     create: (params) => {
       const wss = new ws.Server({
         port: params.port,
@@ -38,6 +38,6 @@ function OrderBookServer() {
       }, params.broadcast);
     }
   };
-  return orderBookServer;
+  return orderBooksDataServer;
 };
-module.exports = OrderBookServer;
+module.exports = OrderBooksDataServer;

@@ -1,9 +1,8 @@
 const WebSocket = require('./websocket');
 
-
-function OrderBookClient() {
+function OrderBooksDataClient() {
   /** @type {import('../../typings/_ws').orderBooksClientWsObject} */
-  const orderBookClient = {
+  const orderBooksDataClient = {
     connect: (params) => {
       const webSocket = WebSocket('order-book-client');
       webSocket.connect(`ws://${params.host}:${params.port}`);
@@ -13,6 +12,6 @@ function OrderBookClient() {
       webSocket.addOnClose(() => { webSocket.connect(`ws://${params.host}:${params.port}`) });
     },
   };
-  return orderBookClient;
+  return orderBooksDataClient;
 };
-module.exports = OrderBookClient;
+module.exports = OrderBooksDataClient;
