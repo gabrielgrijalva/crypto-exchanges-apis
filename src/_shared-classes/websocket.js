@@ -153,6 +153,19 @@ function WebSocket(name, wsSettings = {}) {
       index !== -1 ? onMessageFunctions.splice(index, 1) : null;
       wsInstance ? wsInstance.removeListener('message', listener) : null;
     },
+    // Find function listener
+    findOnOpen: (listener) => {
+      return onOpenFunctions.find(v => v === listener);
+    },
+    findOnClose: (listener) => {
+      return onCloseFunctions.find(v => v === listener);
+    },
+    findOnError: (listener) => {
+      return onErrorFunctions.find(v => v === listener);
+    },
+    findOnMessage: (listener) => {
+      return onMessageFunctions.find(v => v === listener);
+    },
   };
   return webSocket;
 }

@@ -236,6 +236,11 @@ declare namespace WsN {
     removeOnClose(listener: () => void): void;
     removeOnError(listener: (error: string) => void): void;
     removeOnMessage(listener: (message: string) => void): void;
+    // Find function listener;
+    findOnOpen(listener: () => void): boolean;
+    findOnClose(listener: () => void): boolean;
+    findOnError(listener: (error: string) => void): boolean;
+    findOnMessage(listener: (message: string) => void): boolean;
   }
   /**
    * 
