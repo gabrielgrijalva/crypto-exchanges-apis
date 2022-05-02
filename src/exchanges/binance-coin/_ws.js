@@ -300,7 +300,7 @@ function Ws(wsSettings = {}) {
       const position = (await rest.getPosition(params)).data;
       const liquidation = (await rest.getLiquidation(params)).data;
       liquidationsWsObject.data.push(Object.assign({}, params, position, liquidation));
-      return confirmSubscription(`${params.symbol.toLowerCase()}@markPrice`, webSocketMarketStream);
+      await confirmSubscription(`${params.symbol.toLowerCase()}@markPrice`, webSocketMarketStream);
     },
     data: [],
     events: null,
@@ -331,7 +331,7 @@ function Ws(wsSettings = {}) {
       tradesWsObject.subscriptions.push(Object.assign({}, params));
       const lastPrice = (await rest.getLastPrice(params)).data;
       tradesWsObject.data.push({ symbol: params.symbol, side: 'buy', price: lastPrice, quantity: 0, timestamp: '' });
-      return confirmSubscription(`${params.symbol.toLowerCase()}@trade`, webSocketMarketStream);
+      await confirmSubscription(`${params.symbol.toLowerCase()}@trade`, webSocketMarketStream);
     },
     data: [],
     events: new Events.EventEmitter(),
@@ -395,7 +395,7 @@ function Ws(wsSettings = {}) {
         FROZEN_CHECK_INTERVAL: params.frozenCheckInterval,
         PRICE_OVERLAPS_CHECK_INTERVAL: params.priceOverlapsCheckInterval,
       }));
-      return confirmSubscription(`${params.symbol.toLowerCase()}@depth@100ms`, webSocketMarketStream);
+      await confirmSubscription(`${params.symbol.toLowerCase()}@depth@100ms`, webSocketMarketStream);
     },
     data: [],
     events: null,
