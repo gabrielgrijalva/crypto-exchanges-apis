@@ -77,7 +77,7 @@ function confirmSubscription(stream, webSocketMarketStream) {
     const seconds = Math.floor(Date.now() / 1000).toString();
     const microseconds = Math.floor(process.hrtime()[1] / 1000).toString();
     const micLeadingZeros = '0'.repeat(6 - microseconds.length);
-    const subscribeId = `${seconds}${micLeadingZeros}${microseconds}`;
+    const subscribeId = +`${seconds}${micLeadingZeros}${microseconds}`;
     const subscribeTimeout = setTimeout(() => { throw new Error(`Could not subscribe:${subscribeId}`) }, 60000);
     webSocketMarketStream.addOnMessage(function confirmSubscriptionFunction(message) {
       const messageParse = JSON.parse(message);
@@ -87,7 +87,7 @@ function confirmSubscription(stream, webSocketMarketStream) {
         webSocketMarketStream.removeOnMessage(confirmSubscriptionFunction);
       }
     }, false);
-    webSocketMarketStream.send(JSON.stringify({ method: 'SUBSCRIBE', params: [stream] }));
+    webSocketMarketStream.send(JSON.stringify({ id: subscribeId, method: 'SUBSCRIBE', params: [stream] }));
   });
 };
 /**
@@ -169,8 +169,9 @@ function Ws(wsSettings = {}) {
    * 
    * @type {import('../../../typings/_ws').WebSocket} */
   const webSocketUserStream = WebSocket('binance-coin:user-stream', wsSettings);
+  let listenKey = '';
   let getListenKeyInterval = null;
-  webSocketUserStream.addOnOpen(() => setInterval(() => rest._getListenKey(), 1800000));
+  webSocketUserStream.addOnOpen(() => setInterval(async () => { listenKey = (await rest._getListenKey()).data }, 1800000));
   webSocketUserStream.addOnClose(() => clearInterval(getListenKeyInterval));
   webSocketUserStream.addOnClose(() => connectWebSocket('user', rest, webSocketUserStream, wsSettings));
   /**
@@ -191,6 +192,7 @@ function Ws(wsSettings = {}) {
    **/
   async function connectWebSockets() {
     if (wsSettings.API_KEY && wsSettings.API_SECRET) {
+      listenKey = (await rest._getListenKey()).data;
       await connectWebSocket('user', rest, webSocketUserStream, wsSettings);
     }
     await connectWebSocket('market', rest, webSocketMarketStream, wsSettings);
@@ -270,11 +272,15 @@ function Ws(wsSettings = {}) {
     const messageParse = JSON.parse(message);
     if (!messageParse.id || messageParse.id !== 1000) { return };
     const reqData = messageParse.result.find(v => v.req.includes('@position'));
-    reqData.res.positions.forEach(position => {
-      const positionData = liquidationsWsObject.data.find(v => v.symbol === position.symbol);
-      if (!positionData) { return };
-      positionData.liqPxS = +position.positionAmt < 0 ? +position.liquidationPrice : 0;
-      positionData.liqPxB = +position.positionAmt > 0 ? +position.liquidationPrice : 0;
+    if (!reqData) { return };
+    liquidationsWsObject.data.forEach(liquidationData => {
+      const position = reqData.res.positions.find(v => v.symbol === liquidationData.symbol);
+      liquidationData.pxS = position && +position.positionAmt < 0 ? +position.entryPrice : 0;
+      liquidationData.pxB = position && +position.positionAmt > 0 ? +position.entryPrice : 0;
+      liquidationData.qtyS = position && +position.positionAmt < 0 ? Math.abs(+position.positionAmt) : 0;
+      liquidationData.qtyB = position && +position.positionAmt > 0 ? Math.abs(+position.positionAmt) : 0;
+      liquidationData.liqPxS = position && +position.positionAmt < 0 ? +position.liquidationPrice : 0;
+      liquidationData.liqPxB = position && +position.positionAmt > 0 ? +position.liquidationPrice : 0;
     });
   };
   const liquidationsOnMessageMarketStream = (message) => {
@@ -283,7 +289,7 @@ function Ws(wsSettings = {}) {
     const liquidationData = liquidationsWsObject.data.find(v => v.symbol === messageParse.s);
     if (!liquidationData) { return };
     liquidationData.markPx = +messageParse.p;
-    webSocketUserStream.send(JSON.stringify({ id: 1000, method: 'REQUEST', params: ['@position'] }));
+    webSocketUserStream.send(JSON.stringify({ id: 1000, method: 'REQUEST', params: [`${listenKey}@position`] }));
   };
   /** @type {import('../../../typings/_ws').liquidationsWsObject} */
   const liquidationsWsObject = {
@@ -293,7 +299,8 @@ function Ws(wsSettings = {}) {
       liquidationsWsObject.subscriptions.push(Object.assign({}, params));
       const position = (await rest.getPosition(params)).data;
       const liquidation = (await rest.getLiquidation(params)).data;
-      positionsWsObject.data.push(Object.assign({}, params, position, liquidation));
+      liquidationsWsObject.data.push(Object.assign({}, params, position, liquidation));
+      return confirmSubscription(`${params.symbol.toLowerCase()}@markPrice`, webSocketMarketStream);
     },
     data: [],
     events: null,
