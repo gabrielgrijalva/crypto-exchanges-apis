@@ -1,7 +1,8 @@
 const ws = require('ws');
 const moment = require('moment');
 
-function OrderBooksDataServer() {
+/** @param {import('../../typings/_ws').orderBooksWsObject} orderBooksWs */
+function OrderBooksDataServer(orderBooksWs) {
   /** @type {import('../../typings/_ws').orderBooksServerWsObject} */
   const orderBooksDataServer = {
     create: (params) => {
@@ -26,7 +27,7 @@ function OrderBooksDataServer() {
       });
       setInterval(() => {
         wss.clients.forEach((client) => {
-          client.send(JSON.stringify(params.orderBookWs.data.reduce((a, v) => {
+          client.send(JSON.stringify(orderBooksWs.data.reduce((a, v) => {
             a.push({
               symbol: v.symbol,
               asks: v.asks.slice(0, 100),

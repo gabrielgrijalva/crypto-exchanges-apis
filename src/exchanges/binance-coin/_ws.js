@@ -415,8 +415,8 @@ function Ws(wsSettings = {}) {
     liquidations: liquidationsWsObject,
     trades: tradesWsObject,
     orderBooks: orderBooksWsObject,
-    orderBooksClient: OrderBooksDataClient(),
-    orderBooksServer: OrderBooksDataServer(),
+    orderBooksClient: OrderBooksDataClient(orderBooksWsObject),
+    orderBooksServer: OrderBooksDataServer(orderBooksWsObject),
   };
   return ws;
 }
