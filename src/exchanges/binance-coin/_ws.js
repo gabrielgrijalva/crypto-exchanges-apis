@@ -2,9 +2,9 @@ const moment = require('moment');
 const Events = require('events');
 const Rest = require('./_rest');
 const WebSocket = require('../../_shared-classes/websocket');
-const OrderBook = require('../../_shared-classes/order-book');
-const OrderBookClient = require('../../_shared-classes/order-book-client');
-const OrderBookServer = require('../../_shared-classes/order-book-server');
+const OrderBookData = require('../../_shared-classes/order-books-data');
+const OrderBooksDataClient = require('../../_shared-classes/order-books-data-client');
+const OrderBooksDataServer = require('../../_shared-classes/order-books-data-server');
 /**
  * 
  * 
@@ -332,7 +332,7 @@ function Ws(wsSettings = {}) {
   const orderBooksWsObject = {
     subscribe: async (params) => {
       orderBooksWsObject.subscriptions.push(params);
-      orderBooksWsObject.data.push(OrderBook({
+      orderBooksWsObject.data.push(OrderBookData({
         SYMBOL: params.symbol,
         FROZEN_CHECK_INTERVAL: params.frozenCheckInterval,
         PRICE_OVERLAPS_CHECK_INTERVAL: params.priceOverlapsCheckInterval,
@@ -397,8 +397,8 @@ function Ws(wsSettings = {}) {
     liquidations: liquidationsWsObject,
     trades: tradesWsObject,
     orderBooks: orderBooksWsObject,
-    orderBooksClient: OrderBookClient(),
-    orderBooksServer: OrderBookServer(),
+    orderBooksClient: OrderBooksDataClient(),
+    orderBooksServer: OrderBooksDataServer(),
   };
   return ws;
 }
