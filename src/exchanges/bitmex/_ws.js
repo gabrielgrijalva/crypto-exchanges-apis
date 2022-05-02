@@ -76,15 +76,14 @@ function connectWebSocket(webSocket, wsSettings) {
     const signedHeaders = getSignedHeaders(apiKey, apiSecret);
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
     webSocket.connect(url, { headers: signedHeaders });
-    function connectFunction(message) {
+    webSocket.addOnMessage(function connectFunction(message) {
       const messageParse = JSON.parse(message);
       if (messageParse.info && messageParse.info === 'Welcome to the BitMEX Realtime API.') {
         resolve();
         clearTimeout(connectTimeout);
         webSocket.removeOnMessage(connectFunction);
       }
-    };
-    webSocket.addOnMessage(connectFunction, false);
+    }, false);
   });
 };
 /**

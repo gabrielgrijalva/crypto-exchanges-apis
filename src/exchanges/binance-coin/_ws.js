@@ -59,12 +59,11 @@ function connectWebSocket(type, rest, webSocket, wsSettings) {
     const stream = type === 'user' ? (await rest._getListenKey()).data : 'stream';
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
     webSocket.connect(`${url}/ws/${stream}`);
-    function connectFunction() {
+    webSocket.addOnOpen(function connectFunction() {
       resolve();
       clearTimeout(connectTimeout);
       webSocket.removeOnOpen(connectFunction);
-    };
-    webSocket.addOnOpen(connectFunction, false);
+    }, false);
   });
 };
 /**
