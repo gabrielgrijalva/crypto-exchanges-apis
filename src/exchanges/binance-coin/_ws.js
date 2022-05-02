@@ -286,7 +286,6 @@ function Ws(wsSettings = {}) {
   });
   webSocketMarketStream.addOnMessage((message) => {
     const messageParse = JSON.parse(message);
-    console.log(messageParse);
     if (messageParse.e !== 'markPriceUpdate') { return };
     const liquidationData = liquidationsWsObject.data.find(v => v.symbol === messageParse.s);
     if (!liquidationData) { return };
