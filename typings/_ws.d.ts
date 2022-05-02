@@ -147,9 +147,9 @@ declare namespace WsN {
   }
   type tradesEventEmitter = Events.EventEmitter & {
     // Emit 'event' functions
-    emit(event: 'trade', data: tradesData[]);
+    emit(event: 'trades', data: tradesData[]);
     // On 'event' functions
-    on(event: 'trade', listener: (data: tradesData[]) => void);
+    on(event: 'trades', listener: (data: tradesData[]) => void);
   }
   type tradesWsObject = { subscribe(params: tradesParams): Promise<void>; data: tradesData[]; events: tradesEventEmitter; subscriptions: tradesParams[] };
   /**
