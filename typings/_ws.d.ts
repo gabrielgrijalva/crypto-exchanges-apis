@@ -156,49 +156,61 @@ declare namespace WsN {
    * 
    * 
    * 
-   * ORDER BOOK INTERFACE
+   * ORDER BOOK
    * 
    * 
    * 
    */
   type orderBooksOrder = { id: number, price: number, quantity: number };
   type orderBooksFlags = { synchronizing: boolean, synchronized: boolean, snapshot: null | { asks: orderBooksOrder[], bids: orderBooksOrder[], lastUpdateId: number } };
-  type orderBooksClientParams = {
-    symbol: string;
-    type?: 'client';
-    port?: number;
-    host?: string;
-    frozenCheckInterval?: number;
-    priceOverlapsCheckInterval?: number;
-  };
-  type orderBooksServerParams = {
-    symbol: string;
-    type?: 'server';
-    port?: number;
-    host?: string;
-    broadcast?: number;
-    frozenCheckInterval?: number;
-    priceOverlapsCheckInterval?: number;
-  };
-  type orderBooksParams = orderBooksClientParams | orderBooksServerParams;
+  type orderBooksParams = { symbol: string; frozenCheckInterval: number; priceOverlapsCheckInterval: number; }
   type orderBooksData = {
-    // Public data
     symbol: string;
     asks: orderBooksOrder[];
     bids: orderBooksOrder[];
-    // Private data
-    _createServer(params: orderBooksServerParams): void;
-    _connectClient(webSocket: WebSocket, params: orderBooksClientParams): void;
-    _deleteOrderByIdAsk(update: orderBooksOrder): void;
-    _deleteOrderByIdBid(update: orderBooksOrder): void;
-    _updateOrderByIdAsk(update: orderBooksOrder): void;
-    _updateOrderByIdBid(update: orderBooksOrder): void;
-    _updateOrderByPriceAsk(update: orderBooksOrder): void;
-    _updateOrderByPriceBid(update: orderBooksOrder): void;
-    _insertSnapshotAsks(snapshot: orderBooksOrder[]): void;
-    _insertSnapshotBids(snapshot: orderBooksOrder[]): void;
+    otherData: any;
+    deleteOrderByIdAsk(update: orderBooksOrder): void;
+    deleteOrderByIdBid(update: orderBooksOrder): void;
+    updateOrderByIdAsk(update: orderBooksOrder): void;
+    updateOrderByIdBid(update: orderBooksOrder): void;
+    updateOrderByPriceAsk(update: orderBooksOrder): void;
+    updateOrderByPriceBid(update: orderBooksOrder): void;
+    insertSnapshotAsks(snapshot: orderBooksOrder[]): void;
+    insertSnapshotBids(snapshot: orderBooksOrder[]): void;
   };
   type orderBooksWsObject = { subscribe(params: orderBooksParams): Promise<void>; data: orderBooksData[]; events: null; subscriptions: orderBooksParams[] };
+  /**
+   * 
+   * 
+   * 
+   * ORDER BOOK SERVER
+   * 
+   * 
+   * 
+   */
+  type orderBooksServerParams = {
+    port: number;
+    host: string;
+    broadcast: number;
+    orderBookWs: orderBooksWsObject;
+  };
+  type orderBooksServerWsObject = { create(params: orderBooksServerParams): void; }
+  /**
+   * 
+   * 
+   * 
+   * ORDER BOOK CLIENT
+   * 
+   * 
+   * 
+   */
+  type orderBooksClientParams = {
+    type: 'client';
+    port: number;
+    host: string;
+    orderBookWs: orderBooksWsObject;
+  };
+  type orderBooksClientWsObject = { connect(params: orderBooksClientParams): void; };
   /**
    * 
    * 
@@ -241,6 +253,8 @@ declare namespace WsN {
     liquidations: liquidationsWsObject;
     trades: tradesWsObject;
     orderBooks: orderBooksWsObject;
+    orderBooksServer: orderBooksServerWsObject;
+    orderBooksClient: orderBooksClientWsObject;
   }
 }
 export = WsN;

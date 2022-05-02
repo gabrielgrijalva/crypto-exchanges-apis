@@ -11,28 +11,28 @@ const moment = require('moment');
   */
 /**
  * @param {number} id
- * @param {import('../../typings/_ws').orderBookOrder[]} orders 
+ * @param {import('../../typings/_ws').orderBooksOrder[]} orders 
  */
 function findOrderIndexById(id, orders) {
   return orders.findIndex(v => v.id === id);
 };
 /**
   * @param {number} price
-  * @param {import('../../typings/_ws').orderBookOrder[]} orders 
+  * @param {import('../../typings/_ws').orderBooksOrder[]} orders 
   */
 function findOrderIndexByPriceAsk(price, orders) {
   return orders.findIndex(v => v.price >= price);
 };
 /**
  * @param {number} price
- * @param {import('../../typings/_ws').orderBookOrder[]} orders 
+ * @param {import('../../typings/_ws').orderBooksOrder[]} orders 
  */
 function findOrderIndexByPriceBid(price, orders) {
   return orders.findIndex(v => v.price <= price);
 };
 /**
- * @param {import('../../typings/_ws').orderBookOrder[]} orders
- * @returns {(update: import('../../typings/_ws').orderBookOrder) => void}
+ * @param {import('../../typings/_ws').orderBooksOrder[]} orders
+ * @returns {(update: import('../../typings/_ws').orderBooksOrder) => void}
  */
 function getDeleteOrderById(orders) {
   return function deleteOrderById(update) {
@@ -44,8 +44,8 @@ function getDeleteOrderById(orders) {
   };
 };
 /**
- * @param {import('../../typings/_ws').orderBookOrder[]} orders
- * @returns {(update: import('../../typings/_ws').orderBookOrder) => void}
+ * @param {import('../../typings/_ws').orderBooksOrder[]} orders
+ * @returns {(update: import('../../typings/_ws').orderBooksOrder) => void}
  */
 function getUpdateOrderById(orders) {
   return function updateOrderById(update) {
@@ -63,8 +63,8 @@ function getUpdateOrderById(orders) {
 };
 /**
  * @param {'asks' | 'bids'} side 
- * @param {import('../../typings/_ws').orderBookOrder[]} orders
- * @returns {(update: import('../../typings/_ws').orderBookOrder) => void}
+ * @param {import('../../typings/_ws').orderBooksOrder[]} orders
+ * @returns {(update: import('../../typings/_ws').orderBooksOrder) => void}
  */
 function getUpdateOrderByPrice(side, orders) {
   const findOrderIndexByPrice = side === 'asks' ? findOrderIndexByPriceAsk : findOrderIndexByPriceBid;
@@ -91,8 +91,8 @@ function getUpdateOrderByPrice(side, orders) {
   };
 };
 /** 
- * @param {import('../../typings/_ws').orderBookOrder[]} orders
- * @returns {(snapshot: import('../../typings/_ws').orderBookOrder[]) => void}
+ * @param {import('../../typings/_ws').orderBooksOrder[]} orders
+ * @returns {(snapshot: import('../../typings/_ws').orderBooksOrder[]) => void}
  */
 function getInsertSnapshotFunction(orders) {
   return function insertSnapshotFunction(snapshot) {
@@ -100,125 +100,59 @@ function getInsertSnapshotFunction(orders) {
     snapshot.forEach(v => orders.push(v));
   };
 };
-/**
- * @param {import('../../typings/_ws').orderBookOrder[]} asks 
- * @param {import('../../typings/_ws').orderBookOrder[]} bids 
- */
-function getCreateServer(asks, bids) {
-  /**
-   * @param {import('../../typings/_ws').orderBookServerParams} orderBookServerParams 
-   */
-  function createServer(orderBookServerParams) {
-    const wss = new ws.Server({
-      port: orderBookServerParams.port,
-      host: orderBookServerParams.host,
-      clientTracking: true,
-    });
-    wss.on('listening', function listening() {
-      console.log(`wss listening on ${orderBookServerParams.port}: ${moment.utc().format('YYYY-MM-DD HH:mm:ss')}`);
-    });
-    wss.on('connection', function connection(ws) {
-      console.log(`wss connection: ${moment.utc().format('YYYY-MM-DD HH:mm:ss')}`);
-    });
-    wss.on('error', function error() {
-      console.log(`wss error: ${moment.utc().format('YYYY-MM-DD HH:mm:ss')}`);
-      throw new Error('Websocket server connection error...');
-    });
-    wss.on('close', function close() {
-      console.log(`wss close: ${moment.utc().format('YYYY-MM-DD HH:mm:ss')}`);
-      throw new Error('Websocket server connection closed...');
-    });
-    setInterval(() => {
-      wss.clients.forEach((client) => {
-        client.send(JSON.stringify({
-          asks: asks.slice(0, 100),
-          bids: bids.slice(0, 100),
-          timestamp: Date.now(),
-        }))
-      });
-    }, orderBookServerParams.broadcast);
-  };
-  return createServer;
-};
-/**
- * @param {import('../../typings/_ws').orderBookOrder[]} asks 
- * @param {import('../../typings/_ws').orderBookOrder[]} bids 
- */
-function getConnectClient(asks, bids) {
-  /**
-   * @param {import('../../typings/_ws').WebSocket} webSocket
-   * @param {import('../../typings/_ws').orderBookClientParams} orderBookClientParams 
-   */
-  function connectClient(webSocket, orderBookClientParams) {
-    const port = orderBookClientParams.port;
-    const host = orderBookClientParams.host;
-    const url = `ws://${host}:${port}`;
-    webSocket.connect(url);
-    webSocket.addOnMessage((message) => {
-      const messageParsed = JSON.parse(message);
-      asks.splice(0);
-      bids.splice(0);
-      messageParsed.asks.forEach(v => asks.push(v));
-      messageParsed.bids.forEach(v => bids.push(v));
-    });
-    webSocket.addOnClose(() => { webSocket.connect(url) });
-  };
-  return connectClient;
-};
 /** 
- * @param {import('../../typings/_ws').orderBookSettings} orderBookSettings
+ * @param {import('../../typings/_ws').orderBooksSettings} orderBooksSettings
  */
-function OrderBook(orderBookSettings = {}) {
-  orderBookSettings.FROZEN_CHECK_INTERVAL = orderBookSettings.FROZEN_CHECK_INTERVAL || 30000;
-  orderBookSettings.PRICE_OVERLAPS_CHECK_INTERVAL = orderBookSettings.PRICE_OVERLAPS_CHECK_INTERVAL || 5000;
-  /** @type {import('../../typings/_ws').orderBookOrder[]} */
+function OrderBook(orderBooksSettings = {}) {
+  orderBooksSettings.FROZEN_CHECK_INTERVAL = orderBooksSettings.FROZEN_CHECK_INTERVAL || 30000;
+  orderBooksSettings.PRICE_OVERLAPS_CHECK_INTERVAL = orderBooksSettings.PRICE_OVERLAPS_CHECK_INTERVAL || 5000;
+  /** @type {import('../../typings/_ws').orderBooksOrder[]} */
   const asks = [];
-  /** @type {import('../../typings/_ws').orderBookOrder[]} */
+  /** @type {import('../../typings/_ws').orderBooksOrder[]} */
   const bids = [];
   /**
    * 
    * 
    * 
-   * @type {import('../../typings/_ws').dataOrderBook}
+   * @type {import('../../typings/_ws').orderBooksData}
    * 
    * 
    * 
    */
-  const orderBook = {
+  const orderBooks = {
+    symbol: orderBooksSettings.SYMBOL,
     asks: asks,
     bids: bids,
-    // Create server or connect client
-    _createServer: getCreateServer(asks, bids),
-    _connectClient: getConnectClient(asks, bids),
+    otherData: {},
     // Action by id
-    _deleteOrderByIdAsk: getDeleteOrderById(asks),
-    _deleteOrderByIdBid: getDeleteOrderById(bids),
-    _updateOrderByIdAsk: getUpdateOrderById(asks),
-    _updateOrderByIdBid: getUpdateOrderById(bids),
+    deleteOrderByIdAsk: getDeleteOrderById(asks),
+    deleteOrderByIdBid: getDeleteOrderById(bids),
+    updateOrderByIdAsk: getUpdateOrderById(asks),
+    updateOrderByIdBid: getUpdateOrderById(bids),
     // Action by price
-    _updateOrderByPriceAsk: getUpdateOrderByPrice('asks', asks),
-    _updateOrderByPriceBid: getUpdateOrderByPrice('bids', bids),
+    updateOrderByPriceAsk: getUpdateOrderByPrice('asks', asks),
+    updateOrderByPriceBid: getUpdateOrderByPrice('bids', bids),
     // Insert snapshot
-    _insertSnapshotAsks: getInsertSnapshotFunction(asks),
-    _insertSnapshotBids: getInsertSnapshotFunction(bids),
+    insertSnapshotAsks: getInsertSnapshotFunction(asks),
+    insertSnapshotBids: getInsertSnapshotFunction(bids),
   };
   let lastSnapshotAsks = '';
   let lastSnapshotBids = '';
   setInterval(() => {
-    if (!orderBook.asks[0] || !orderBook.bids[0]) { return };
-    if (orderBook.asks[0].price <= orderBook.bids[0].price) {
+    if (!orderBooks.asks[0] || !orderBooks.bids[0]) { return };
+    if (orderBooks.asks[0].price <= orderBooks.bids[0].price) {
       throw { error: { type: 'order-book-price-overlaps', params: null, exchange: null } };
     }
-  }, orderBookSettings.PRICE_OVERLAPS_CHECK_INTERVAL);
+  }, orderBooksSettings.PRICE_OVERLAPS_CHECK_INTERVAL);
   setInterval(() => {
-    const currentSnapshotAsks = JSON.stringify(orderBook.asks.slice(0, 10));
-    const currentSnapshotBids = JSON.stringify(orderBook.bids.slice(0, 10));
+    const currentSnapshotAsks = JSON.stringify(orderBooks.asks.slice(0, 10));
+    const currentSnapshotBids = JSON.stringify(orderBooks.bids.slice(0, 10));
     if (lastSnapshotAsks === currentSnapshotAsks && lastSnapshotBids === currentSnapshotBids) {
       throw { error: { type: 'order-book-static', params: null, exchange: null } };
     }
     lastSnapshotAsks = currentSnapshotAsks;
     lastSnapshotBids = currentSnapshotBids;
-  }, orderBookSettings.FROZEN_CHECK_INTERVAL);
-  return orderBook;
+  }, orderBooksSettings.FROZEN_CHECK_INTERVAL);
+  return orderBooks;
 };
 module.exports = OrderBook;
