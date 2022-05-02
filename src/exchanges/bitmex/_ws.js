@@ -314,7 +314,7 @@ function Ws(wsSettings = {}) {
       tradeData.timestamp = moment(tradeEvent.timestamp).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
       trades.push(tradeData);
     });
-    if (trades.length) { tradesWsObject.events.emit('trade', trades) };
+    if (trades.length) { tradesWsObject.events.emit('trades', trades) };
   };
   /** @type {import('../../../typings/_ws').tradesWsObject} */
   const tradesWsObject = {

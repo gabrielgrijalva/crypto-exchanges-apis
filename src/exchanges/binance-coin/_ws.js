@@ -322,7 +322,7 @@ function Ws(wsSettings = {}) {
     tradeData.price = +messageParse.p;
     tradeData.quantity = +messageParse.q;
     tradeData.timestamp = moment(+messageParse.E).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
-    tradesWsObject.events.emit('trade', [tradeData]);
+    tradesWsObject.events.emit('trades', [tradeData]);
   };
   /** @type {import('../../../typings/_ws').tradesWsObject} */
   const tradesWsObject = {
