@@ -163,7 +163,7 @@ declare namespace WsN {
    */
   type orderBooksOrder = { id: number, price: number, quantity: number };
   type orderBooksFlags = { synchronizing: boolean, synchronized: boolean, snapshot: null | { asks: orderBooksOrder[], bids: orderBooksOrder[], lastUpdateId: number } };
-  type orderBooksParams = { symbol: string; frozenCheckInterval: number; priceOverlapsCheckInterval: number; }
+  type orderBooksParams = { symbol: string; frozenCheckInterval?: number; priceOverlapsCheckInterval?: number; }
   type orderBooksData = {
     symbol: string;
     asks: orderBooksOrder[];
