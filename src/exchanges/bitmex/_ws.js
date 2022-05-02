@@ -286,7 +286,7 @@ function Ws(wsSettings = {}) {
       const position = (await rest.getPosition(params)).data;
       const liquidation = (await rest.getLiquidation(params)).data;
       liquidationsWsObject.data.push(Object.assign({}, params, position, liquidation));
-      await confirmSubscription(`insturment:${params.symbol}`, webSocket);
+      await confirmSubscription(`instrument:${params.symbol}`, webSocket);
       await confirmSubscription(`position:${params.symbol}`, webSocket);
     },
     data: [],
