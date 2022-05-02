@@ -381,7 +381,7 @@ function Ws(wsSettings = {}) {
     messageParse.b.forEach(v => {
       const update = { id: +v[0], price: +v[0], quantity: +v[1] };
       orderBookData.updateOrderByPriceBid(update);
-    })
+    });
   };
   const orderBooksOnClose = () => desynchronizeOrderBooks(orderBooksWsObject.data);
   /** @type {import('../../../typings/_ws').orderBooksWsObject} */
@@ -406,8 +406,8 @@ function Ws(wsSettings = {}) {
    * 
    * WS IMPLEMENTATION
    * 
-   * @type {import('../../../typings/_ws').Ws} 
-   */
+   * 
+   * @type {import('../../../typings/_ws').Ws} */
   const ws = {
     connect: connectWebSockets,
     orders: ordersWsObject,
