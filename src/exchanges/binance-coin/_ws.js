@@ -78,7 +78,7 @@ function confirmSubscription(stream, webSocketMarketStream) {
     const microseconds = Math.floor(process.hrtime()[1] / 1000).toString();
     const micLeadingZeros = '0'.repeat(6 - microseconds.length);
     const subscribeId = +`${seconds}${micLeadingZeros}${microseconds}`;
-    const subscribeTimeout = setTimeout(() => { throw new Error(`Could not subscribe:${subscribeId}`) }, 60000);
+    const subscribeTimeout = setTimeout(() => { throw new Error(`Could not subscribe:${stream}`) }, 60000);
     webSocketMarketStream.addOnMessage(function confirmSubscriptionFunction(message) {
       const messageParse = JSON.parse(message);
       if (messageParse.id === subscribeId && !messageParse.result) {
