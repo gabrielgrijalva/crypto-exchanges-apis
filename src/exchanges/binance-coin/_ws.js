@@ -221,7 +221,7 @@ function Ws(wsSettings = {}) {
   const ordersWsObject = {
     subscribe: async (params) => {
       if (!webSocketUserStream.findOnMessage(ordersOnMessage)) { webSocketUserStream.addOnMessage(ordersOnMessage) };
-      ordersWsObject.subscriptions.push(params);
+      ordersWsObject.subscriptions.push(Object.assign({}, params));
     },
     data: null,
     events: new Events.EventEmitter(),
@@ -251,9 +251,9 @@ function Ws(wsSettings = {}) {
   const positionsWsObject = {
     subscribe: async (params) => {
       if (!webSocketUserStream.findOnMessage(positionsOnMessage)) { webSocketUserStream.addOnMessage(positionsOnMessage) };
-      positionsWsObject.subscriptions.push(params);
+      positionsWsObject.subscriptions.push(Object.assign({}, params));
       const position = (await rest.getPosition(params)).data;
-      positionsWsObject.data.push(Object.assign(params, position));
+      positionsWsObject.data.push(Object.assign({}, params, position));
     },
     data: [],
     events: null,
@@ -290,10 +290,10 @@ function Ws(wsSettings = {}) {
     subscribe: async (params) => {
       if (!webSocketUserStream.findOnMessage(liquidationsOnMessageUserStream)) { webSocketUserStream.addOnMessage(liquidationsOnMessageUserStream) };
       if (!webSocketMarketStream.findOnMessage(liquidationsOnMessageMarketStream)) { webSocketMarketStream.addOnMessage(liquidationsOnMessageMarketStream) };
-      liquidationsWsObject.subscriptions.push(params);
+      liquidationsWsObject.subscriptions.push(Object.assign({}, params));
       const position = (await rest.getPosition(params)).data;
       const liquidation = (await rest.getLiquidation(params)).data;
-      positionsWsObject.data.push(Object.assign(params, position, liquidation));
+      positionsWsObject.data.push(Object.assign({}, params, position, liquidation));
     },
     data: [],
     events: null,
@@ -321,7 +321,7 @@ function Ws(wsSettings = {}) {
   const tradesWsObject = {
     subscribe: async (params) => {
       if (!webSocketMarketStream.findOnMessage(tradesOnMessage)) { webSocketMarketStream.addOnMessage(tradesOnMessage) };
-      tradesWsObject.subscriptions.push(params);
+      tradesWsObject.subscriptions.push(Object.assign({}, params));
       const lastPrice = (await rest.getLastPrice(params)).data;
       tradesWsObject.data.push({ symbol: params.symbol, side: 'buy', price: lastPrice, quantity: 0, timestamp: '' });
       return confirmSubscription(`${params.symbol.toLowerCase()}@trade`, webSocketMarketStream);
@@ -382,7 +382,7 @@ function Ws(wsSettings = {}) {
     subscribe: async (params) => {
       if (!webSocketMarketStream.findOnMessage(orderBooksOnMessage)) { webSocketMarketStream.addOnMessage(orderBooksOnMessage) };
       if (!webSocketMarketStream.findOnClose(orderBooksOnClose)) { webSocketMarketStream.addOnClose(orderBooksOnClose) };
-      orderBooksWsObject.subscriptions.push(params);
+      orderBooksWsObject.subscriptions.push(Object.assign({}, params));
       orderBooksWsObject.data.push(OrderBookData({
         SYMBOL: params.symbol,
         FROZEN_CHECK_INTERVAL: params.frozenCheckInterval,
