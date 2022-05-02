@@ -78,7 +78,7 @@ function connectWebSocket(webSocket, wsSettings) {
     webSocket.connect(url, { headers: signedHeaders });
     function connectFunction(message) {
       const messageParse = JSON.parse(message);
-      if (messageParse.success) {
+      if (messageParse.info && messageParse.info === 'Welcome to the BitMEX Realtime API.') {
         resolve();
         clearTimeout(connectTimeout);
         webSocket.removeOnMessage(connectFunction);
