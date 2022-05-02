@@ -87,10 +87,10 @@ async function sendRestCancelOrder(rest, params, errors = 0) {
  * @param {number} currentPositionQtyB 
  * @param {import('../../typings/_utils').Utils} utils 
  * @param {import('../../typings/_fixer').fixerSettings} fixerSettings
- * @param {import('../../typings/_ws').orderBookWsObjectReturn} orderBookWsObject 
+ * @param {import('../../typings/_ws').orderBooksWsObject} orderBooksWsObject 
  * @returns {import('../../typings/_rest').createOrderParams}
  */
-function getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, utils, fixerSettings, orderBookWsObject) {
+function getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, utils, fixerSettings, orderBooksWsObject) {
   /** @type {'sell' | 'buy'} */
   let side = 'sell';
   /** @type {number} */
@@ -98,8 +98,9 @@ function getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPosit
   /** @type {'open' | 'close'} */
   let direction = 'open';
   const type = fixerSettings.TYPE;
-  const bestAsk = orderBookWsObject.data.asks[0].price;
-  const bestBid = orderBookWsObject.data.bids[0].price;
+  const orderBookData = orderBooksWsObject.data.find(v => v.symbol === fixSymbol);
+  const bestAsk = orderBookData.asks[0].price;
+  const bestBid = orderBookData.bids[0].price;
   // OPEN SELL
   if (fixPositionQtyS > currentPositionQtyS) {
     side = 'sell';
@@ -132,7 +133,7 @@ function getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPosit
     direction = 'open';
   };
   const orderParams = {};
-  orderParams.id = utils.getOrderId();
+  orderParams.id = utils.getOrderId(fixSymbol);
   orderParams.side = side;
   orderParams.type = fixPositionType;
   if (orderParams.type === 'limit') {
@@ -147,11 +148,13 @@ function getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPosit
  * 
  * @param {import('../../typings/_rest').createOrderParams} order 
  * @param {import('../../typings/_fixer').fixerSettings} fixerSettings
- * @param {import('../../typings/_ws').orderBookWsObjectReturn} orderBookWsObject 
+ * @param {import('../../typings/_ws').orderBooksWsObject} orderBooksWsObject 
  * @returns {import('../../typings/_rest').updateOrderParams}
  */
-function getFixOrderUpdate(order, fixerSettings, orderBookWsObject) {
-  const price = order.side === 'sell' ? orderBookWsObject.data.asks[0].price : orderBookWsObject.data.bids[0].price;
+function getFixOrderUpdate(order, fixerSettings, orderBooksWsObject) {
+  const price = order.side === 'sell'
+    ? orderBooksWsObject.data.find(v => v.symbol === order.symbol).asks[0].price
+    : orderBooksWsObject.data.find(v => v.symbol === order.symbol).bids[0].price;
   const quantity = fixerSettings.TYPE === 'spot' && order.side === 'buy' ?
     round.down((order.price * order.quantity) / price, fixerSettings.QUANTITY_PRECISION) : order.quantity;
   return { id: order.id, price: price, symbol: order.symbol, quantity: quantity };
@@ -245,6 +248,7 @@ function Fixer(fixerSettings) {
         const creationsUpdatesFunc = (messages) => {
           console.log('creations-updates'); console.log(messages);
           messages.forEach(message => {
+            if (message.symbol !== fixSymbol) { return };
             if (creating && creating.id === message.id) {
               order = creating;
               creating = null;
@@ -262,6 +266,7 @@ function Fixer(fixerSettings) {
         const executionsFunc = (messages) => {
           console.log('executions'); console.log(messages);
           messages.forEach(message => {
+            if (message.symbol !== fixSymbol) { return };
             if (message.id === order.id) {
               orderQtyF = round.normal(orderQtyF + message.quantity, fixerSettings.QUANTITY_PRECISION);
               if (order.direction === 'open') {
@@ -297,6 +302,7 @@ function Fixer(fixerSettings) {
         const cancelationsFunc = (messages) => {
           console.log('cancelations'); console.log(messages);
           messages.forEach(message => {
+            if (message.symbol !== fixSymbol) { return };
             if ((order && message.id === order.id)
               || (creating && message.id === creating.id)
               || (updating && message.id === updating.id)
