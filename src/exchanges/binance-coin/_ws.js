@@ -209,14 +209,15 @@ function Ws(wsSettings = {}) {
     const messageParse = JSON.parse(message);
     console.log(messageParse);
     if (messageParse.e !== 'ORDER_TRADE_UPDATE') { return };
-    if (!ordersWsObject.subscriptions.find(v => v.symbol === messageParse.o.s)) { return };
-    if (messageParse.o.x === 'NEW') {
+    const orderEvent = messageParse.o;
+    if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.s)) { return };
+    if (orderEvent.x === 'NEW') {
       ordersWsObject.events.emit('creations-updates', [createCreationUpdate(messageParse)]);
     }
-    if (messageParse.o.x === 'TRADE' || messageParse.o.x === 'CALCULATED') {
+    if (orderEvent.x === 'TRADE' || orderEvent.x === 'CALCULATED') {
       ordersWsObject.events.emit('executions', [createExecution(messageParse)]);
     }
-    if (messageParse.o.x === 'CANCELED' || messageParse.o.x === 'EXPIRED') {
+    if (orderEvent.x === 'CANCELED' || orderEvent.x === 'EXPIRED') {
       ordersWsObject.events.emit('cancelations', [createCancelation(messageParse)]);
     }
   };
@@ -275,21 +276,22 @@ function Ws(wsSettings = {}) {
     const reqData = messageParse.result.find(v => v.req.includes('@position'));
     if (!reqData) { return };
     liquidationsWsObject.data.forEach(liquidationData => {
-      const position = reqData.res.positions.find(v => v.symbol === liquidationData.symbol);
-      liquidationData.pxS = position && +position.positionAmt < 0 ? +position.entryPrice : 0;
-      liquidationData.pxB = position && +position.positionAmt > 0 ? +position.entryPrice : 0;
-      liquidationData.qtyS = position && +position.positionAmt < 0 ? Math.abs(+position.positionAmt) : 0;
-      liquidationData.qtyB = position && +position.positionAmt > 0 ? Math.abs(+position.positionAmt) : 0;
-      liquidationData.liqPxS = position && +position.positionAmt < 0 ? +position.liquidationPrice : 0;
-      liquidationData.liqPxB = position && +position.positionAmt > 0 ? +position.liquidationPrice : 0;
+      const positionEvent = reqData.res.positions.find(v => v.symbol === liquidationData.symbol);
+      liquidationData.pxS = positionEvent && +positionEvent.positionAmt < 0 ? +positionEvent.entryPrice : 0;
+      liquidationData.pxB = positionEvent && +positionEvent.positionAmt > 0 ? +positionEvent.entryPrice : 0;
+      liquidationData.qtyS = positionEvent && +positionEvent.positionAmt < 0 ? Math.abs(+positionEvent.positionAmt) : 0;
+      liquidationData.qtyB = positionEvent && +positionEvent.positionAmt > 0 ? Math.abs(+positionEvent.positionAmt) : 0;
+      liquidationData.liqPxS = positionEvent && +positionEvent.positionAmt < 0 ? +positionEvent.liquidationPrice : 0;
+      liquidationData.liqPxB = positionEvent && +positionEvent.positionAmt > 0 ? +positionEvent.liquidationPrice : 0;
     });
   };
   const liquidationsOnMessageMarketStream = (message) => {
     const messageParse = JSON.parse(message);
     if (messageParse.e !== 'markPriceUpdate') { return };
-    const liquidationData = liquidationsWsObject.data.find(v => v.symbol === messageParse.s);
+    const liquidationEvent = messageParse;
+    const liquidationData = liquidationsWsObject.data.find(v => v.symbol === liquidationEvent.s);
     if (!liquidationData) { return };
-    liquidationData.markPx = +messageParse.p;
+    liquidationData.markPx = +liquidationEvent.p;
     webSocketUserStream.send(JSON.stringify({ id: 1000, method: 'REQUEST', params: [`${listenKey}@position`] }));
   };
   /** @type {import('../../../typings/_ws').liquidationsWsObject} */
@@ -317,12 +319,13 @@ function Ws(wsSettings = {}) {
   const tradesOnMessage = (message) => {
     const messageParse = JSON.parse(message);
     if (messageParse.e !== 'trade') { return };
-    const tradeData = tradesWsObject.data.find(v => v.symbol === messageParse.s);
+    const tradeEvent = messageParse;
+    const tradeData = tradesWsObject.data.find(v => v.symbol === tradeEvent.s);
     if (!tradeData) { return };
-    tradeData.side = messageParse.m ? 'sell' : 'buy';
-    tradeData.price = +messageParse.p;
-    tradeData.quantity = +messageParse.q;
-    tradeData.timestamp = moment(+messageParse.E).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+    tradeData.side = tradeEvent.m ? 'sell' : 'buy';
+    tradeData.price = +tradeEvent.p;
+    tradeData.quantity = +tradeEvent.q;
+    tradeData.timestamp = moment(+tradeEvent.E).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
     tradesWsObject.events.emit('trades', [Object.assign({}, tradeData)]);
   };
   /** @type {import('../../../typings/_ws').tradesWsObject} */
@@ -348,7 +351,8 @@ function Ws(wsSettings = {}) {
   const orderBooksOnMessage = (message) => {
     const messageParse = JSON.parse(message);
     if (messageParse.e !== 'depthUpdate') { return };
-    const orderBookData = orderBooksWsObject.data.find(v => v.symbol === messageParse.s);
+    const orderBookEvent = messageParse;
+    const orderBookData = orderBooksWsObject.data.find(v => v.symbol === orderBookEvent.s);
     if (!orderBookData) { return };
     if (!orderBookData.otherData.synchronized) {
       if (!orderBookData.otherData.synchronizing) {
@@ -356,12 +360,12 @@ function Ws(wsSettings = {}) {
           getOrderBookSnapshot(rest, orderBookData);
         } else {
           const snapshot = orderBookData.otherData.snapshot;
-          if (snapshot.lastUpdateId < messageParse.U) {
+          if (snapshot.lastUpdateId < orderBookEvent.U) {
             orderBookData.otherData.snapshot = null;
             orderBookData.otherData.synchronized = false;
             orderBookData.otherData.synchronizing = false;
           }
-          if (snapshot.lastUpdateId >= messageParse.U && snapshot.lastUpdateId <= messageParse.u) {
+          if (snapshot.lastUpdateId >= orderBookEvent.U && snapshot.lastUpdateId <= orderBookEvent.u) {
             orderBookData.otherData.snapshot = null;
             orderBookData.otherData.synchronized = true;
             orderBookData.otherData.synchronizing = false;
@@ -371,15 +375,12 @@ function Ws(wsSettings = {}) {
       }
     }
     if (!orderBookData.otherData.synchronized) { return };
-    const orderBookTimestamp = +messageParse.E;
-    if (Date.now() - orderBookTimestamp > 5000) {
-      webSocketMarketStream.close();
-    }
-    messageParse.a.forEach(v => {
+    if ((Date.now() - +orderBookEvent.E) > 5000) { return webSocketMarketStream.close() };
+    orderBookEvent.a.forEach(v => {
       const update = { id: +v[0], price: +v[0], quantity: +v[1] };
       orderBookData.updateOrderByPriceAsk(update);
     });
-    messageParse.b.forEach(v => {
+    orderBookEvent.b.forEach(v => {
       const update = { id: +v[0], price: +v[0], quantity: +v[1] };
       orderBookData.updateOrderByPriceBid(update);
     });
