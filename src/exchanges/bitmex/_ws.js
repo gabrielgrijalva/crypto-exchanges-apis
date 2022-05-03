@@ -313,7 +313,7 @@ function Ws(wsSettings = {}) {
       tradeData.price = +tradeEvent.price;
       tradeData.quantity = +tradeEvent.size;
       tradeData.timestamp = moment(tradeEvent.timestamp).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
-      trades.push(tradeData);
+      trades.push(Object.assign({}, tradeData));
     });
     if (trades.length) { tradesWsObject.events.emit('trades', trades) };
   };
