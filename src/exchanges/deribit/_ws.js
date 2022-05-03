@@ -307,8 +307,8 @@ function Ws(wsSettings = {}) {
     liquidationsWsObject.data.forEach(liquidationData => {
       const liquidationSubscription = liquidationsWsObject.subscriptions.find(v => v.symbol === liquidationData.symbol);
       if (liquidationSubscription.asset !== portfolioEvent.currency) { return };
-      liquidationData.liqPxS = liquidationData.qtyS ? +portfolioEvent.estimated_liquidation_ratio * liquidationData.markPx : 0;
-      liquidationData.liqPxB = liquidationData.qtyB ? +portfolioEvent.estimated_liquidation_ratio * liquidationData.markPx : 0;
+      liquidationData.liqPxS = liquidationData.qtyS ? +portfolioEvent.estimated_liquidation_ratio_map.btc_usd * liquidationData.markPx : 0;
+      liquidationData.liqPxB = liquidationData.qtyB ? +portfolioEvent.estimated_liquidation_ratio_map.btc_usd * liquidationData.markPx : 0;
     });
   };
   /** @type {import('../../../typings/_ws').liquidationsWsObject} */
