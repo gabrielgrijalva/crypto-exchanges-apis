@@ -271,7 +271,6 @@ function Ws(wsSettings = {}) {
    */
   const liquidationsOnMessageInstrument = (message) => {
     const messageParse = JSON.parse(message);
-    console.log(messageParse);
     if (!messageParse.topic || !messageParse.topic.includes('instrument_info') || messageParse.type !== 'delta') { return };
     messageParse.data.update.forEach(instrumentEvent => {
       const liquidationData = liquidationsWsObject.data.find(v => v.symbol === instrumentEvent.symbol);
