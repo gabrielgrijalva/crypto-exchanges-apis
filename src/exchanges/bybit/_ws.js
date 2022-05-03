@@ -318,7 +318,7 @@ function Ws(wsSettings = {}) {
    */
   const tradesOnMessage = (message) => {
     const messageParse = JSON.parse(message);
-    if (messageParse.topic && !messageParse.topic.includes('trade')) { return };
+    if (!messageParse.topic || !messageParse.topic.includes('trade')) { return };
     const trades = [];
     messageParse.data.forEach(tradeEvent => {
       const tradeData = tradesWsObject.data.find(v => v.symbol === tradeEvent.symbol);
@@ -353,7 +353,7 @@ function Ws(wsSettings = {}) {
    */
   const orderBooksOnMessage = (message) => {
     const messageParse = JSON.parse(message);
-    if (messageParse.topic && !messageParse.table.includes('orderBook_200')) { return };
+    if (!messageParse.topic || !messageParse.topic.includes('orderBook_200')) { return };
     if (messageParse.type === 'partial') {
       messageParse.data.forEach(orderBookEvent => {
         const orderBookData = orderBooksWsObject.data.find(v => v.symbol === orderBookEvent.symbol);
