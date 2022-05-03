@@ -98,7 +98,7 @@ function connectWebSocket(webSocket, wsSettings) {
     };
     function connectOnMessageFunction(message) {
       const messageParse = JSON.parse(message);
-      if (messageParse.id === 1 && messageParse.result && messageParse.result.scope === 'connection mainaccount') {
+      if (messageParse.id === 1 && messageParse.result && messageParse.result.token_type === 'bearer') {
         resolve();
         clearTimeout(connectTimeout);
         webSocket.removeOnOpen(connectOnOpenFunction);
