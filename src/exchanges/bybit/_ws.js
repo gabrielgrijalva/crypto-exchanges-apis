@@ -275,7 +275,7 @@ function Ws(wsSettings = {}) {
     messageParse.data.update.forEach(instrumentEvent => {
       const liquidationData = liquidationsWsObject.data.find(v => v.symbol === instrumentEvent.symbol);
       if (!liquidationData) { return };
-      liquidationData.markPx = +instrumentEvent.mark_price ? +instrumentEvent.mark_price / 10000 : liquidationData.markPx;
+      liquidationData.markPx = +instrumentEvent.mark_price ? +instrumentEvent.mark_price : liquidationData.markPx;
     });
   };
   const liquidationsOnMessagePosition = (message) => {
