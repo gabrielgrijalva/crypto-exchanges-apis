@@ -323,7 +323,7 @@ function Ws(wsSettings = {}) {
       liquidationsWsObject.data.push(Object.assign({}, params, position, liquidation));
       await confirmSubscription('public', `ticker.${params.symbol}.raw`, webSocket);
       await confirmSubscription('private', `user.changes.${params.symbol}.raw`, webSocket);
-      await confirmSubscription('private', `user.portfolio.${params.symbol}`, webSocket);
+      await confirmSubscription('private', `user.portfolio.${params.asset}`, webSocket);
     },
     data: [],
     events: null,
