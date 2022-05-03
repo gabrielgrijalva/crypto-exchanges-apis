@@ -161,6 +161,7 @@ function Ws(wsSettings = {}) {
    * @type {import('../../../typings/_ws').WebSocket} */
   const webSocket = WebSocket('bitmex', wsSettings);
   webSocket.addOnClose(() => connectWebSocket(webSocket, wsSettings));
+  if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocket.addOnMessage((message) => console.log(JSON.parse(message))) };
   /**
    * 
    * 
@@ -180,7 +181,6 @@ function Ws(wsSettings = {}) {
    */
   const ordersOnMessage = (message) => {
     const messageParse = JSON.parse(message);
-    console.log(messageParse);
     if (messageParse.table !== `execution` || messageParse.action !== 'insert' || !messageParse.data) { return };
     const creationOrders = [];
     const executionOrders = [];
@@ -221,7 +221,6 @@ function Ws(wsSettings = {}) {
    */
   const positionsOnMessage = (message) => {
     const messageParse = JSON.parse(message);
-    console.log(messageParse);
     if (messageParse.table !== 'position' || !messageParse.data) { return };
     messageParse.data.forEach(positionEvent => {
       const positionData = positionsWsObject.data.find(v => v.symbol === positionEvent.symbol);
@@ -255,7 +254,6 @@ function Ws(wsSettings = {}) {
    */
   const liquidationsOnMessageInstrument = (message) => {
     const messageParse = JSON.parse(message);
-    console.log(messageParse);
     if (messageParse.table !== 'instrument' || !messageParse.data) { return };
     messageParse.data.forEach(instrumentEvent => {
       const liquidationData = liquidationsWsObject.data.find(v => v.symbol === instrumentEvent.symbol);
@@ -265,7 +263,6 @@ function Ws(wsSettings = {}) {
   };
   const liquidationsOnMessagePosition = (message) => {
     const messageParse = JSON.parse(message);
-    console.log(messageParse);
     if (messageParse.table !== 'position' || !messageParse.data) { return };
     messageParse.data.forEach(positionEvent => {
       const liquidationData = liquidationsWsObject.data.find(v => v.symbol === positionEvent.symbol);

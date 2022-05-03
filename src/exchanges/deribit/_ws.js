@@ -188,6 +188,7 @@ function Ws(wsSettings = {}) {
    * @type {import('../../../typings/_ws').WebSocket} */
   const webSocket = WebSocket('deribit', wsSettings);
   webSocket.addOnClose(() => connectWebSocket(webSocket, wsSettings));
+  if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocket.addOnMessage((message) => console.log(JSON.parse(message))) };
   /**
    * 
    * 
@@ -207,7 +208,6 @@ function Ws(wsSettings = {}) {
    */
   const ordersOnMessageOrders = (message) => {
     const messageParse = JSON.parse(message);
-    console.log(messageParse);
     if (!messageParse.params || !messageParse.params.channel.includes('user.orders')) { return };
     const orderEvent = messageParse.params.data;
     if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.instrument_name)) { return };
@@ -220,7 +220,6 @@ function Ws(wsSettings = {}) {
   };
   const ordersOnMessageTrades = (message) => {
     const messageParse = JSON.parse(message);
-    console.log(messageParse);
     if (!messageParse.params || !messageParse.params.channel.includes('user.trades')) { return };
     const executionOrders = [];
     messageParse.params.data.forEach(tradeEvent => {
@@ -251,7 +250,6 @@ function Ws(wsSettings = {}) {
    */
   const positionsOnMessage = (message) => {
     const messageParse = JSON.parse(message);
-    console.log(messageParse);
     if (!messageParse.params || !messageParse.params.channel.includes('user.changes')) { return };
     messageParse.params.data.positions.forEach(changeEvent => {
       const positionData = positionsWsObject.data.find(v => v.symbol === changeEvent.instrument_name);
@@ -284,7 +282,6 @@ function Ws(wsSettings = {}) {
    */
   const liquidationsOnMessageTicker = (message) => {
     const messageParse = JSON.parse(message);
-    console.log(messageParse);
     if (!messageParse.params || !messageParse.params.channel.includes('ticker')) { return };
     const tickerEvent = messageParse.params.data;
     const liquidationsData = liquidationsWsObject.data.find(v => v.symbol === tickerEvent.instrument_name);
@@ -293,7 +290,6 @@ function Ws(wsSettings = {}) {
   };
   const liquidationsOnMessageChanges = (message) => {
     const messageParse = JSON.parse(message);
-    console.log(messageParse);
     if (!messageParse.params || !messageParse.params.channel.includes('user.changes')) { return };
     messageParse.params.data.positions.forEach(changeEvent => {
       const liquidationsData = liquidationsWsObject.data.find(v => v.symbol === changeEvent.instrument_name);
@@ -306,7 +302,6 @@ function Ws(wsSettings = {}) {
   };
   const liquidationsOnMessagePortfolio = (message) => {
     const messageParse = JSON.parse(message);
-    console.log(messageParse);
     if (!messageParse.params || !messageParse.params.channel.includes('user.portfolio')) { return };
     const portfolioEvent = messageParse.params.data;
     liquidationsWsObject.data.forEach(liquidationData => {

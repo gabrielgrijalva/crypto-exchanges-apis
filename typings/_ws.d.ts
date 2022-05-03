@@ -24,6 +24,7 @@ declare namespace WsN {
     API_SECRET?: string;
     API_PASSPHRASE?: string;
     WS_SEND_PING_WAIT?: number;
+    WS_ON_MESSAGE_LOGS?: boolean;
     WS_RECEIVE_PONG_WAIT?: number;
   }
   /**

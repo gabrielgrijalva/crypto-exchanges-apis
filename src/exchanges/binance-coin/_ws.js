@@ -175,6 +175,7 @@ function Ws(wsSettings = {}) {
   webSocketUserStream.addOnOpen(() => setInterval(async () => { listenKey = (await rest._getListenKey()).data }, 1800000));
   webSocketUserStream.addOnClose(() => clearInterval(getListenKeyInterval));
   webSocketUserStream.addOnClose(() => connectWebSocket('user', rest, webSocketUserStream, wsSettings));
+  if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocketUserStream.addOnMessage((message) => console.log(JSON.parse(message))) };
   /**
    * 
    * 
@@ -184,6 +185,7 @@ function Ws(wsSettings = {}) {
    * @type {import('../../../typings/_ws').WebSocket} */
   const webSocketMarketStream = WebSocket('binance-coin:market-stream', wsSettings);
   webSocketMarketStream.addOnClose(() => connectWebSocket('market', rest, webSocketMarketStream, wsSettings));
+  if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocketMarketStream.addOnMessage((message) => console.log(JSON.parse(message))) };
   /**
    * 
    * 
@@ -207,7 +209,6 @@ function Ws(wsSettings = {}) {
    */
   const ordersOnMessage = (message) => {
     const messageParse = JSON.parse(message);
-    console.log(messageParse);
     if (messageParse.e !== 'ORDER_TRADE_UPDATE') { return };
     const orderEvent = messageParse.o;
     if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.s)) { return };
@@ -240,7 +241,6 @@ function Ws(wsSettings = {}) {
    */
   const positionsOnMessage = (message) => {
     const messageParse = JSON.parse(message);
-    console.log(messageParse);
     if (messageParse.e !== 'ACCOUNT_UPDATE') { return };
     messageParse.a.P.forEach(positionEvent => {
       const positionData = positionsWsObject.data.find(v => v.symbol === positionEvent.s);
