@@ -59,11 +59,12 @@ function connectWebSocket(type, rest, webSocket, wsSettings) {
     const stream = type === 'user' ? (await rest._getListenKey()).data : 'stream';
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
     webSocket.connect(`${url}/ws/${stream}`);
-    webSocket.addOnOpen(function connectFunction() {
+    function connectOnOpenFunction() {
       resolve();
       clearTimeout(connectTimeout);
-      webSocket.removeOnOpen(connectFunction);
-    }, false);
+      webSocket.removeOnOpen(connectOnOpenFunction);
+    }
+    webSocket.addOnOpen(connectOnOpenFunction, false);
   });
 };
 /**
@@ -78,14 +79,15 @@ function confirmSubscription(stream, webSocketMarketStream) {
     const micLeadingZeros = '0'.repeat(6 - microseconds.length);
     const subscribeId = +`${seconds}${micLeadingZeros}${microseconds}`;
     const subscribeTimeout = setTimeout(() => { throw new Error(`Could not subscribe:${stream}`) }, 60000);
-    webSocketMarketStream.addOnMessage(function confirmSubscriptionFunction(message) {
+    function confirmOnMessageFunction(message) {
       const messageParse = JSON.parse(message);
       if (messageParse.id === subscribeId && !messageParse.result) {
         resolve();
         clearTimeout(subscribeTimeout);
-        webSocketMarketStream.removeOnMessage(confirmSubscriptionFunction);
+        webSocketMarketStream.removeOnMessage(confirmOnMessageFunction);
       }
-    }, false);
+    }
+    webSocketMarketStream.addOnMessage(confirmOnMessageFunction, false);
     webSocketMarketStream.send(JSON.stringify({ id: subscribeId, method: 'SUBSCRIBE', params: [stream] }));
   });
 };
