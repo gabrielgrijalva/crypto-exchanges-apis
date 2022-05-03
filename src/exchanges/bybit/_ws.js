@@ -272,10 +272,12 @@ function Ws(wsSettings = {}) {
   const liquidationsOnMessageInstrument = (message) => {
     const messageParse = JSON.parse(message);
     console.log(messageParse);
-    if (!messageParse.topic.includes('instrument_info')) { return };
-    const liquidationData = liquidationsWsObject.data.find(v => v.symbol === messageParse.data.symbol);
-    if (!liquidationData) { return };
-    liquidationData.markPx = +messageParse.data.mark_price ? +messageParse.data.mark_price / 10000 : liquidationData.markPx;
+    if (!messageParse.topic || !messageParse.topic.includes('instrument_info') || messageParse.type !== 'delta') { return };
+    messageParse.data.update.forEach(instrumentEvent => {
+      const liquidationData = liquidationsWsObject.data.find(v => v.symbol === instrumentEvent.symbol);
+      if (!liquidationData) { return };
+      liquidationData.markPx = +instrumentEvent.mark_price ? +instrumentEvent.mark_price / 10000 : liquidationData.markPx;
+    });
   };
   const liquidationsOnMessagePosition = (message) => {
     const messageParse = JSON.parse(message);
@@ -317,7 +319,7 @@ function Ws(wsSettings = {}) {
    */
   const tradesOnMessage = (message) => {
     const messageParse = JSON.parse(message);
-    if (!messageParse.topic.includes('trade')) { return };
+    if (messageParse.topic && !messageParse.topic.includes('trade')) { return };
     const trades = [];
     messageParse.data.forEach(tradeEvent => {
       const tradeData = tradesWsObject.data.find(v => v.symbol === tradeEvent.symbol);
@@ -352,7 +354,7 @@ function Ws(wsSettings = {}) {
    */
   const orderBooksOnMessage = (message) => {
     const messageParse = JSON.parse(message);
-    if (!messageParse.table.includes('orderBook_200')) { return };
+    if (messageParse.topic && !messageParse.table.includes('orderBook_200')) { return };
     if (messageParse.type === 'partial') {
       messageParse.data.forEach(orderBookEvent => {
         const orderBookData = orderBooksWsObject.data.find(v => v.symbol === orderBookEvent.symbol);
