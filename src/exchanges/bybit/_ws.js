@@ -103,7 +103,7 @@ function confirmSubscription(topic, webSocket) {
     const subscribeTimeout = setTimeout(() => { throw new Error(`Could not subscribe:${topic}`) }, 60000);
     function confirmOnMessageFunction(message) {
       const messageParse = JSON.parse(message);
-      if (messageParse.success && message.request.args[0] === topic) {
+      if (messageParse.success && messageParse.request.args[0] === topic) {
         resolve();
         clearTimeout(subscribeTimeout);
         webSocket.removeOnMessage(confirmOnMessageFunction);
@@ -221,8 +221,8 @@ function Ws(wsSettings = {}) {
       if (!webSocket.findOnMessage(ordersOnMessage)) { webSocket.addOnMessage(ordersOnMessage) };
       if (!webSocket.findOnMessage(executionsOnMessage)) { webSocket.addOnMessage(executionsOnMessage) };
       ordersWsObject.subscriptions.push(Object.assign({}, params));
-      await confirmSubscription(`order.${params.symbol}`, webSocket);
-      await confirmSubscription(`execution.${params.symbol}`, webSocket);
+      await confirmSubscription('order', webSocket);
+      await confirmSubscription('execution', webSocket);
     },
     data: null,
     events: new Events.EventEmitter(),
@@ -255,7 +255,7 @@ function Ws(wsSettings = {}) {
       positionsWsObject.subscriptions.push(Object.assign({}, params));
       const position = (await rest.getPosition(params)).data;
       positionsWsObject.data.push(Object.assign({}, params, position));
-      await confirmSubscription(`position.${params.symbol}`, webSocket);
+      await confirmSubscription('position', webSocket);
     },
     data: [],
     events: null,
@@ -303,7 +303,7 @@ function Ws(wsSettings = {}) {
       const liquidation = (await rest.getLiquidation(params)).data;
       liquidationsWsObject.data.push(Object.assign({}, params, position, liquidation));
       await confirmSubscription(`instrument_info.100ms.${params.symbol}`, webSocket);
-      await confirmSubscription(`position.${params.symbol}`, webSocket);
+      await confirmSubscription('position', webSocket);
     },
     data: [],
     events: null,
