@@ -7,7 +7,6 @@ const WebSocket = require('../../_shared-classes/websocket');
 const OrderBookData = require('../../_shared-classes/order-books-data');
 const OrderBooksDataClient = require('../../_shared-classes/order-books-data-client');
 const OrderBooksDataServer = require('../../_shared-classes/order-books-data-server');
-const { VAR_STRING } = require('mysql/lib/protocol/constants/types');
 /**
  * 
  * 
