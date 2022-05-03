@@ -103,7 +103,8 @@ function confirmSubscription(topic, webSocket) {
     const subscribeTimeout = setTimeout(() => { throw new Error(`Could not subscribe:${topic}`) }, 60000);
     function confirmOnMessageFunction(message) {
       const messageParse = JSON.parse(message);
-      if (messageParse.success && messageParse.request.args[0] === topic) {
+      if ((messageParse.request && messageParse.request.args[0] === topic)
+        && (messageParse.success || messageParse.ret_msg.includes('error:topic:already subscribed'))) {
         resolve();
         clearTimeout(subscribeTimeout);
         webSocket.removeOnMessage(confirmOnMessageFunction);
@@ -272,11 +273,9 @@ function Ws(wsSettings = {}) {
     const messageParse = JSON.parse(message);
     console.log(messageParse);
     if (!messageParse.topic.includes('instrument_info')) { return };
-    messageParse.data.forEach(instrumentEvent => {
-      const liquidationData = liquidationsWsObject.data.find(v => v.symbol === instrumentEvent.symbol);
-      if (!liquidationData) { return };
-      liquidationData.markPx = +instrumentEvent.mark_price ? +instrumentEvent.mark_price / 10000 : liquidationData.markPx;
-    });
+    const liquidationData = liquidationsWsObject.data.find(v => v.symbol === messageParse.data.symbol);
+    if (!liquidationData) { return };
+    liquidationData.markPx = +messageParse.data.mark_price ? +messageParse.data.mark_price / 10000 : liquidationData.markPx;
   };
   const liquidationsOnMessagePosition = (message) => {
     const messageParse = JSON.parse(message);
