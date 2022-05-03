@@ -354,6 +354,7 @@ function Ws(wsSettings = {}) {
   const orderBooksOnMessage = (message) => {
     const messageParse = JSON.parse(message);
     if (!messageParse.topic || !messageParse.topic.includes('orderBook_200')) { return };
+    if ((Date.now() - messageParse.timestamp_e6 / 1000) > 5000) { return webSocket.close() };
     if (messageParse.type === 'partial') {
       messageParse.data.forEach(orderBookEvent => {
         const orderBookData = orderBooksWsObject.data.find(v => v.symbol === orderBookEvent.symbol);
