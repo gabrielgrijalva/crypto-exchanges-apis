@@ -247,7 +247,7 @@ function Ws(wsSettings = {}) {
    */
   const positionsOnMessage = (message) => {
     const messageParse = JSON.parse(message.toString());
-    if (!messageParse.arg || messageParse.arg.channel !== 'positions') { return };
+    if (!messageParse.arg || messageParse.arg.channel !== 'positions' || !messageParse.data) { return };
     messageParse.data.forEach(positionEvent => {
       const positionData = positionsWsObject.data.find(v => v.symbol === positionEvent.instId);
       if (!positionData) { return };
@@ -279,7 +279,7 @@ function Ws(wsSettings = {}) {
    */
   const liquidationsOnMessageMarkPrice = (message) => {
     const messageParse = JSON.parse(message.toString());
-    if (!messageParse.arg || messageParse.arg.channel !== 'mark-price') { return };
+    if (!messageParse.arg || messageParse.arg.channel !== 'mark-price' || !messageParse.data) { return };
     messageParse.data.forEach(markPriceEvent => {
       const liquidationsData = liquidationsWsObject.data.find(v => v.symbol === markPriceEvent.instId);
       if (!liquidationsData) { return };
@@ -288,7 +288,7 @@ function Ws(wsSettings = {}) {
   };
   const liquidationsOnMessagePosition = (message) => {
     const messageParse = JSON.parse(message.toString());
-    if (!messageParse.arg || messageParse.arg.channel !== 'positions') { return };
+    if (!messageParse.arg || messageParse.arg.channel !== 'positions' || !messageParse.data) { return };
     messageParse.data.forEach(positionEvent => {
       const liquidationData = liquidationsWsObject.data.find(v => v.symbol === positionEvent.instId);
       if (!liquidationData) { return };
@@ -326,7 +326,7 @@ function Ws(wsSettings = {}) {
    */
   const tradesOnMessage = (message) => {
     const messageParse = JSON.parse(message.toString());
-    if (!messageParse.arg || messageParse.arg.channel !== 'trades') { return };
+    if (!messageParse.arg || messageParse.arg.channel !== 'trades' || !messageParse.data) { return };
     const trades = [];
     messageParse.data.forEach(tradeEvent => {
       const tradeData = tradesWsObject.data.find(v => v.symbol === tradeEvent.instId);
