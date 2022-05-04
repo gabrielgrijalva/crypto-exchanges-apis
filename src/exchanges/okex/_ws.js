@@ -207,7 +207,7 @@ function Ws(wsSettings = {}) {
    */
   const ordersOnMessage = (message) => {
     const messageParse = JSON.parse(message.toString());
-    if (!messageParse.arg || messageParse.arg.channel !== 'orders') { return };
+    if (!messageParse.arg || messageParse.arg.channel !== 'orders' || !messageParse.data) { return };
     const creationOrders = [];
     const executionOrders = [];
     const cancelationOrders = [];
