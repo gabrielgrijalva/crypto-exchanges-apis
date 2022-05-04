@@ -166,7 +166,7 @@ function Ws(wsSettings = {}) {
    * 
    * 
    * @type {import('../../../typings/_ws').WebSocket} */
-  const webSocket = WebSocket('bybit', wsSettings);
+  const webSocket = WebSocket('bybit-futures', wsSettings);
   webSocket.addOnClose(() => connectWebSocket(webSocket, wsSettings));
   if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocket.addOnMessage((message) => console.log(JSON.parse(message))) };
   /**
