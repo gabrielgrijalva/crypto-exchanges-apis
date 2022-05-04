@@ -213,26 +213,14 @@ function Ws(wsSettings = {}) {
     const cancelationOrders = [];
     messageParse.data.forEach(orderEvent => {
       if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.instId)) { return };
-      if (orderEvent.state === 'live') {
-        if (orderEvent.amendResult === '-1') {
-          cancelationOrders.push(createCancelation(orderEvent));
-        } else {
-          creationOrders.push(createCreationUpdate(orderEvent));
-        }
+      if (orderEvent.state === 'live' || orderEvent.amendResult === '0') {
+        creationOrders.push(createCreationUpdate(orderEvent));
       }
-      if (orderEvent.state === 'partially_filled' || orderEvent.state === 'filled') {
-        if (orderEvent.amendResult === '-1') {
-          cancelationOrders.push(createCancelation(orderEvent));
-        } else {
-          if (orderEvent.uTime === orderEvent.fillTime) {
-            executionOrders.push(createExecution(orderEvent));
-          } else {
-            creationOrders.push(createCreationUpdate(orderEvent));
-          }
-        }
-      }
-      if (orderEvent.state === 'canceled') {
+      if (orderEvent.state === 'canceled' || orderEvent.amendResult === '-1') {
         cancelationOrders.push(createCancelation(orderEvent));
+      }
+      if (orderEvent.fillPx || orderEvent.fillTime || +orderEvent.fillSz) {
+        executionOrders.push(createExecution(orderEvent));
       }
     });
     if (creationOrders.length) { ordersWsObject.events.emit('creations-updates', creationOrders) };
