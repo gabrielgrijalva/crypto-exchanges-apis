@@ -95,7 +95,8 @@ function confirmSubscription(feed, symbol, webSocket, wsSettings) {
         const signatureParams = getSingatureParams(messageParse.message, apiKey, apiSecret);
         webSocket.send(JSON.stringify(Object.assign({}, requestParams, signatureParams)));
       }
-      if (messageParse.event === 'subscribed' && messageParse.feed === feed) {
+      if ((messageParse.event === 'subscribed' && messageParse.feed === feed)
+        || (messageParse.event === 'alert' && messageParse.message === 'Already subscribed to feed, re-requesting')) {
         resolve();
         clearTimeout(subscribeTimeout);
         webSocket.removeOnMessage(confirmOnMessageFunction);
@@ -197,7 +198,7 @@ function Ws(wsSettings = {}) {
   };
   const ordersOnMessageFills = (message) => {
     const messageParse = JSON.parse(message);
-    if (messageParse.feed !== 'fills') { return };
+    if (messageParse.feed !== 'fills' || !messageParse.fills) { return };
     const executionOrders = [];
     messageParse.fills.forEach(fillEvent => {
       if (!ordersWsObject.subscriptions.find(v => v.symbol === fillEvent.instrument)) { return };
@@ -229,7 +230,7 @@ function Ws(wsSettings = {}) {
     const messageParse = JSON.parse(message);
     if (messageParse.feed !== 'open_positions') { return };
     positionsWsObject.data.forEach(positionData => {
-      const positionEvent = messageParse.positions.find(v => v.instrument === positionData.symbol);
+      const positionEvent = (messageParse.positions || []).find(v => v.instrument === positionData.symbol);
       positionData.pxS = positionEvent && positionEvent.balance < 0 ? positionEvent.entry_price : 0;
       positionData.qtyS = positionEvent && positionEvent.balance < 0 ? Math.abs(positionEvent.balance) : 0;
       positionData.pxB = positionEvent && positionEvent.balance > 0 ? positionEvent.entry_price : 0;
@@ -261,17 +262,20 @@ function Ws(wsSettings = {}) {
     if (messageParse.feed !== 'ticker') { return };
     const tickerEvent = messageParse;
     const liquidationData = liquidationsWsObject.data.find(v => v.symbol === tickerEvent.product_id);
+    if (!liquidationData) { return };
     liquidationData.markPx = +tickerEvent.markPrice ? +tickerEvent.markPrice : 0;
   };
   const liquidationsOnMessageOpenPositions = (message) => {
     const messageParse = JSON.parse(message);
     if (messageParse.feed !== 'open_positions') { return };
     liquidationsWsObject.data.forEach(liquidationData => {
-      const positionEvent = messageParse.positions.find(v => v.instrument === liquidationData.symbol);
+      const positionEvent = (messageParse.positions || []).find(v => v.instrument === liquidationData.symbol);
       liquidationData.pxS = positionEvent && positionEvent.balance < 0 ? positionEvent.entry_price : 0;
       liquidationData.qtyS = positionEvent && positionEvent.balance < 0 ? Math.abs(positionEvent.balance) : 0;
       liquidationData.pxB = positionEvent && positionEvent.balance > 0 ? positionEvent.entry_price : 0;
       liquidationData.qtyB = positionEvent && positionEvent.balance > 0 ? Math.abs(positionEvent.balance) : 0;
+      liquidationData.liqPxS = positionEvent && positionEvent.balance < 0 ? positionEvent.liquidation_threshold : 0;
+      liquidationData.liqPxB = positionEvent && positionEvent.balance > 0 ? positionEvent.liquidation_threshold : 0;
     });
   };
   /** @type {import('../../../typings/_ws').liquidationsWsObject} */
@@ -331,11 +335,11 @@ function Ws(wsSettings = {}) {
    */
   const orderBooksOnMessage = (message) => {
     const messageParse = JSON.parse(message);
-    if (messageParse.feed !== 'book_snapshot' || messageParse.feed !== 'book') { return };
+    if (messageParse.feed !== 'book_snapshot' && messageParse.feed !== 'book') { return };
     const orderBookEvent = messageParse;
     const orderBookData = orderBooksWsObject.data.find(v => v.symbol === orderBookEvent.product_id)
     if (!orderBookData) { return };
-    if (Date.now() - +orderBookEvent.timestamp) { return webSocket.close() };
+    if ((Date.now() - +orderBookEvent.timestamp) > 5000) { return webSocket.close() };
     if (messageParse.feed === 'book_snapshot') {
       orderBookEvent.asks.forEach(ask => {
         const update = { id: +ask.price, price: +ask.price, quantity: +ask.qty };
