@@ -186,7 +186,7 @@ function Ws(wsSettings = {}) {
    * 
    * 
    */
-  const ordersOnMessage = (message) => {
+  const ordersOnMessageOrder = (message) => {
     const messageParse = JSON.parse(message);
     if (messageParse.topic !== 'order') { return };
     const creationOrders = [];
@@ -203,7 +203,7 @@ function Ws(wsSettings = {}) {
     if (creationOrders.length) { ordersWsObject.events.emit('creations-updates', creationOrders) };
     if (cancelationOrders.length) { ordersWsObject.events.emit('cancelations', cancelationOrders) };
   };
-  const executionsOnMessage = (message) => {
+  const ordersOnMessageExecution = (message) => {
     const messageParse = JSON.parse(message);
     if (messageParse.topic !== 'execution') { return };
     const executionOrders = [];
@@ -218,8 +218,8 @@ function Ws(wsSettings = {}) {
   /** @type {import('../../../typings/_ws').ordersWsObject} */
   const ordersWsObject = {
     subscribe: async (params) => {
-      if (!webSocket.findOnMessage(ordersOnMessage)) { webSocket.addOnMessage(ordersOnMessage) };
-      if (!webSocket.findOnMessage(executionsOnMessage)) { webSocket.addOnMessage(executionsOnMessage) };
+      if (!webSocket.findOnMessage(ordersOnMessageOrder)) { webSocket.addOnMessage(ordersOnMessageOrder) };
+      if (!webSocket.findOnMessage(ordersOnMessageExecution)) { webSocket.addOnMessage(ordersOnMessageExecution) };
       ordersWsObject.subscriptions.push(Object.assign({}, params));
       await confirmSubscription('order', webSocket);
       await confirmSubscription('execution', webSocket);
