@@ -342,21 +342,18 @@ function Ws(wsSettings = {}) {
     if ((Date.now() - +orderBookEvent.timestamp) > 5000) { return webSocket.close() };
     if (messageParse.feed === 'book_snapshot') {
       orderBookEvent.asks.forEach(ask => {
-        const update = { id: +ask.price, price: +ask.price, quantity: +ask.qty };
-        orderBookData.updateOrderByPriceAsk(update);
+        orderBookData.updateOrderByPriceAsk({ id: +ask.price, price: +ask.price, quantity: +ask.qty });
       });
       orderBookEvent.bids.forEach(bid => {
-        const update = { id: +bid.price, price: +bid.price, quantity: +bid.qty };
-        orderBookData.updateOrderByPriceBid(update);
+        orderBookData.updateOrderByPriceBid({ id: +bid.price, price: +bid.price, quantity: +bid.qty });
       });
     }
     if (messageParse.feed === 'book') {
-      const update = { id: +messageParse.price, price: +messageParse.price, quantity: +messageParse.qty };
       if (orderBookEvent.side === 'sell') {
-        orderBookData.updateOrderByPriceAsk(update);
+        orderBookData.updateOrderByPriceAsk({ id: +messageParse.price, price: +messageParse.price, quantity: +messageParse.qty });
       }
       if (orderBookEvent.side === 'buy') {
-        orderBookData.updateOrderByPriceBid(update);
+        orderBookData.updateOrderByPriceBid({ id: +messageParse.price, price: +messageParse.price, quantity: +messageParse.qty });
       }
     }
   };

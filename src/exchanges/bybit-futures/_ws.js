@@ -356,12 +356,11 @@ function Ws(wsSettings = {}) {
       messageParse.data.forEach(orderBookEvent => {
         const orderBookData = orderBooksWsObject.data.find(v => v.symbol === orderBookEvent.symbol);
         if (!orderBookData) { return };
-        const update = { id: +orderBookEvent.id, price: +orderBookEvent.price, quantity: +orderBookEvent.size };
         if (orderBookEvent.side === 'Sell') {
-          orderBookData.updateOrderByPriceAsk(update);
+          orderBookData.updateOrderByPriceAsk({ id: +orderBookEvent.id, price: +orderBookEvent.price, quantity: +orderBookEvent.size });
         }
         if (orderBookEvent.side === 'Buy') {
-          orderBookData.updateOrderByPriceBid(update);
+          orderBookData.updateOrderByPriceBid({ id: +orderBookEvent.id, price: +orderBookEvent.price, quantity: +orderBookEvent.size });
         }
       });
     }
@@ -369,12 +368,11 @@ function Ws(wsSettings = {}) {
       const updateFunction = (orderBookEvent) => {
         const orderBookData = orderBooksWsObject.data.find(v => v.symbol === orderBookEvent.symbol);
         if (!orderBookData) { return };
-        const update = { id: +orderBookEvent.price, price: +orderBookEvent.price, quantity: +orderBookEvent.size };
         if (orderBookEvent.side === 'Sell') {
-          orderBookData.updateOrderByPriceAsk(update);
+          orderBookData.updateOrderByPriceAsk({ id: +orderBookEvent.price, price: +orderBookEvent.price, quantity: +orderBookEvent.size });
         }
         if (orderBookEvent.side === 'Buy') {
-          orderBookData.updateOrderByPriceBid(update);
+          orderBookData.updateOrderByPriceBid({ id: +orderBookEvent.price, price: +orderBookEvent.price, quantity: +orderBookEvent.size });
         }
       }
       messageParse.data.insert.forEach(updateFunction);

@@ -341,12 +341,11 @@ function Ws(wsSettings = {}) {
       messageParse.data.forEach(orderBookEvent => {
         const orderBookData = orderBooksWsObject.data.find(v => v.symbol === orderBookEvent.symbol);
         if (!orderBookData) { return };
-        const update = { id: +orderBookEvent.id, price: +orderBookEvent.price, quantity: +orderBookEvent.size };
         if (orderBookEvent.side === 'Sell') {
-          orderBookData.updateOrderByPriceAsk(update);
+          orderBookData.updateOrderByPriceAsk({ id: +orderBookEvent.id, price: +orderBookEvent.price, quantity: +orderBookEvent.size });
         }
         if (orderBookEvent.side === 'Buy') {
-          orderBookData.updateOrderByPriceBid(update);
+          orderBookData.updateOrderByPriceBid({ id: +orderBookEvent.id, price: +orderBookEvent.price, quantity: +orderBookEvent.size });
         }
       });
     }
@@ -354,12 +353,11 @@ function Ws(wsSettings = {}) {
       messageParse.data.forEach(orderBookEvent => {
         const orderBookData = orderBooksWsObject.data.find(v => v.symbol === orderBookEvent.symbol);
         if (!orderBookData) { return };
-        const update = { id: +orderBookEvent.id, price: null, quantity: +orderBookEvent.size };
         if (orderBookEvent.side === 'Sell') {
-          orderBookData.updateOrderByIdAsk(update);
+          orderBookData.updateOrderByIdAsk({ id: +orderBookEvent.id, price: null, quantity: +orderBookEvent.size });
         }
         if (orderBookEvent.side === 'Buy') {
-          orderBookData.updateOrderByIdBid(update);
+          orderBookData.updateOrderByIdBid({ id: +orderBookEvent.id, price: null, quantity: +orderBookEvent.size });
         }
       });
     }
@@ -367,12 +365,11 @@ function Ws(wsSettings = {}) {
       messageParse.data.forEach(orderBookEvent => {
         const orderBookData = orderBooksWsObject.data.find(v => v.symbol === orderBookEvent.symbol);
         if (!orderBookData) { return };
-        const update = { id: +orderBookEvent.id, price: null, quantity: null };
         if (orderBookEvent.side === 'Sell') {
-          orderBookData.deleteOrderByIdAsk(update);
+          orderBookData.deleteOrderByIdAsk({ id: +orderBookEvent.id, price: null, quantity: null });
         }
         if (orderBookEvent.side === 'Buy') {
-          orderBookData.deleteOrderByIdBid(update);
+          orderBookData.deleteOrderByIdBid({ id: +orderBookEvent.id, price: null, quantity: null });
         }
       });
     }

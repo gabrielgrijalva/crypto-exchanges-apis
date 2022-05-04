@@ -377,12 +377,10 @@ function Ws(wsSettings = {}) {
     if (!orderBookData.otherData.synchronized) { return };
     if ((Date.now() - +orderBookEvent.E) > 5000) { return webSocketMarketStream.close() };
     orderBookEvent.a.forEach(v => {
-      const update = { id: +v[0], price: +v[0], quantity: +v[1] };
-      orderBookData.updateOrderByPriceAsk(update);
+      orderBookData.updateOrderByPriceAsk({ id: +v[0], price: +v[0], quantity: +v[1] });
     });
     orderBookEvent.b.forEach(v => {
-      const update = { id: +v[0], price: +v[0], quantity: +v[1] };
-      orderBookData.updateOrderByPriceBid(update);
+      orderBookData.updateOrderByPriceBid({ id: +v[0], price: +v[0], quantity: +v[1] });
     });
   };
   const orderBooksOnClose = () => desynchronizeOrderBooks(orderBooksWsObject.data);
