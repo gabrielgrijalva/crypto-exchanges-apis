@@ -7,7 +7,7 @@ const exchanges = [
   'bitstamp',
   'bybit',
   'deribit',
-  'kraken-futures',
+  'kraken',
   'okex',
 ];
 /**

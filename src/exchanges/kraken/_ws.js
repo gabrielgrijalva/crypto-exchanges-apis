@@ -160,7 +160,7 @@ function Ws(wsSettings = {}) {
    * 
    * 
    * @type {import('../../../typings/_ws').WebSocket} */
-  const webSocket = WebSocket('kraken-futures', wsSettings);
+  const webSocket = WebSocket('kraken', wsSettings);
   webSocket.addOnClose(() => connectWebSocket(webSocket, wsSettings));
   if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocket.addOnMessage((message) => console.log(JSON.parse(message))) };
   /**
