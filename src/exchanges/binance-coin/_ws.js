@@ -386,11 +386,15 @@ function Ws(wsSettings = {}) {
       if (!webSocketMarketStream.findOnMessage(orderBooksOnMessage)) { webSocketMarketStream.addOnMessage(orderBooksOnMessage) };
       if (!webSocketMarketStream.findOnClose(orderBooksOnClose)) { webSocketMarketStream.addOnClose(orderBooksOnClose) };
       orderBooksWsObject.subscriptions.push(Object.assign({}, params));
-      orderBooksWsObject.data.push(OrderBookData({
+      const orderBookData = OrderBookData({
         SYMBOL: params.symbol,
         FROZEN_CHECK_INTERVAL: params.frozenCheckInterval,
         PRICE_OVERLAPS_CHECK_INTERVAL: params.priceOverlapsCheckInterval,
-      }));
+      });
+      orderBookData.otherData.snapshot = null;
+      orderBookData.otherData.synchronized = false;
+      orderBookData.otherData.synchronizing = false;
+      orderBooksWsObject.data.push(orderBookData);
       await confirmSubscription(`${params.symbol.toLowerCase()}@depth@100ms`, webSocketMarketStream);
     },
     data: [],

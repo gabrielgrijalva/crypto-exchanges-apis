@@ -391,11 +391,12 @@ function Ws(wsSettings = {}) {
       if (!webSocket.findOnMessage(orderBooksOnMessage)) { webSocket.addOnMessage(orderBooksOnMessage) };
       if (!webSocket.findOnClose(orderBooksOnClose)) { webSocket.addOnClose(orderBooksOnClose) };
       orderBooksWsObject.subscriptions.push(Object.assign({}, params));
-      orderBooksWsObject.data.push(OrderBookData({
+      const orderBookData = OrderBookData({
         SYMBOL: params.symbol,
         FROZEN_CHECK_INTERVAL: params.frozenCheckInterval,
         PRICE_OVERLAPS_CHECK_INTERVAL: params.priceOverlapsCheckInterval,
-      }));
+      });
+      orderBooksWsObject.data.push(orderBookData);
       await confirmSubscription('public', `book.${params.symbol}.100ms`, webSocket);
     },
     data: [],
