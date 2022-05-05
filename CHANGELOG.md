@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2022-05-05
+- Changed websocket to improved implementation.
 ## [2.2.8] - 2022-04-20
 - Changed populators implementation.
 ## [2.2.7] - 2022-04-20
