@@ -92,16 +92,6 @@ function confirmSubscription(stream, webSocketMarketStream) {
   });
 };
 /**
- * @param {import('../../../typings/_rest').Rest} rest
- * @param {import('../../../typings/_ws').orderBooksData} orderBooksData
- */
-async function getOrderBookSnapshot(rest, orderBooksData) {
-  const symbol = orderBooksData.symbol;
-  orderBooksData.otherData.synchronizing = true;
-  orderBooksData.otherData.snapshot = (await rest._getOrderBook({ symbol })).data;
-  orderBooksData.otherData.synchronizing = false;
-};
-/**
  * 
  * @param {import('../../../typings/_ws').orderBooksData[]} orderBooksData
  */
@@ -115,17 +105,23 @@ function desynchronizeOrderBooks(orderBooksData) {
   });
 };
 /**
+ * @param {import('../../../typings/_rest').Rest} rest
+ * @param {import('../../../typings/_ws').orderBooksData} orderBooksData
+ */
+async function getOrderBookSnapshot(rest, orderBooksData) {
+  const symbol = orderBooksData.symbol;
+  orderBooksData.otherData.synchronizing = true;
+  orderBooksData.otherData.snapshot = (await rest._getOrderBook({ symbol })).data;
+  orderBooksData.otherData.synchronizing = false;
+};
+/**
  * 
  * @param {Object} snapshot 
  * @param {import('../../../typings/_ws').orderBooksData} orderBookData
  */
 function synchronizeOrderBookSnapshot(snapshot, orderBookData) {
-  orderBookData.insertSnapshotAsks(snapshot.asks.map(v => {
-    return { id: +v.id, price: +v.price, quantity: +v.quantity };
-  }));
-  orderBookData.insertSnapshotBids(snapshot.bids.map(v => {
-    return { id: +v.id, price: +v.price, quantity: +v.quantity };
-  }));
+  orderBookData.insertSnapshotAsks(snapshot.asks);
+  orderBookData.insertSnapshotBids(snapshot.bids);
 };
 /**
  * 
