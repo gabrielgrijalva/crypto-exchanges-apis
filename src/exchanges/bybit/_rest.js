@@ -76,6 +76,13 @@ function getCandleResolution(interval) {
 };
 /**
  * 
+ * @param {string} symbol 
+ */
+function getBasePath(symbol) {
+  return !/\d/.test(symbol) ? 'v2' : 'futures';
+};
+/**
+ * 
  * 
  * 
  * =================================
@@ -194,7 +201,8 @@ function Rest(restSettings = {}) {
       if (params.type === 'market') {
         data.time_in_force = 'ImmediateOrCancel';
       }
-      const response = await request.private('POST', '/v2/private/order/create', data);
+      const basePath = getBasePath(params.symbol);
+      const response = await request.private('POST', `/${basePath}/private/order/create`, data);
       if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -219,7 +227,8 @@ function Rest(restSettings = {}) {
       const data = {};
       data.symbol = params.symbol;
       data.order_link_id = params.id;
-      const response = await request.private('POST', '/v2/private/order/cancel', data);
+      const basePath = getBasePath(params.symbol);
+      const response = await request.private('POST', `/${basePath}/private/order/cancel`, data);
       if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -243,7 +252,8 @@ function Rest(restSettings = {}) {
     cancelOrdersAll: async (params) => {
       const data = {};
       data.symbol = params.symbol;
-      const response = await request.private('POST', '/v2/private/order/cancelAll', data);
+      const basePath = getBasePath(params.symbol);
+      const response = await request.private('POST', `/${basePath}/private/order/cancelAll`, data);
       if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -266,7 +276,8 @@ function Rest(restSettings = {}) {
       if (params.quantity) {
         data.p_r_qty = params.quantity;
       }
-      const response = await request.private('POST', '/v2/private/order/replace', data);
+      const basePath = getBasePath(params.symbol);
+      const response = await request.private('POST', `/${basePath}/private/order/replace`, data);
       if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -336,11 +347,13 @@ function Rest(restSettings = {}) {
     getPosition: async (params) => {
       const data = {};
       data.symbol = params.symbol;
-      const response = await request.private('GET', '/v2/private/position/list', data);
+      const basePath = getBasePath(params.symbol);
+      const response = await request.private('GET', `/${basePath}/private/position/list`, data);
       if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      const positionResult = response.data.result;
+      const positionResult = basePath === 'v2' ? response.data.result
+        : response.data.result.find(v => v.data.symbol === params.symbol).data;
       const qtyS = positionResult.side === 'Sell' ? +positionResult.size : 0;
       const qtyB = positionResult.side === 'Buy' ? +positionResult.size : 0;
       const pxS = positionResult.side === 'Sell' ? +positionResult.entry_price : 0;
@@ -383,13 +396,15 @@ function Rest(restSettings = {}) {
       // Get position
       const positionData = {};
       positionData.symbol = params.symbol;
-      const positionResponse = await request.private('GET', '/v2/private/position/list', positionData);
+      const basePath = getBasePath(params.symbol);
+      const positionResponse = await request.private('GET', `/${basePath}/private/position/list`, positionData);
       if (positionResponse.data.ret_code !== 0 || positionResponse.status >= 400) {
         return handleResponseError(params, positionResponse.data);
       }
       // Calculate liquidation
       const tickersResult = tickersResponse.data.result;
-      const positionResult = positionResponse.data.result;
+      const positionResult = basePath === 'v2' ? positionResponse.data.result
+        : positionResponse.data.result.find(v => v.data.symbol === params.symbol).data;
       const markPx = +tickersResult[0].mark_price;
       const liqPxS = positionResult.side === 'Sell' ? +positionResult.liq_price : 0;
       const liqPxB = positionResult.side === 'Buy' ? +positionResult.liq_price : 0;
@@ -406,6 +421,8 @@ function Rest(restSettings = {}) {
     getFundingRates: async (params) => {
       const data = {};
       data.symbol = params.symbol;
+      const basePath = getBasePath(params.symbol);
+      if (basePath === 'futures') { return { data: { current: 0, estimated: 0, } } };
       const response = await request.public('GET', '/v2/public/tickers', data);
       if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
