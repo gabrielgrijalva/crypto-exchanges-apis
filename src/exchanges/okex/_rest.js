@@ -526,6 +526,30 @@ function Rest(restSettings = {}) {
       const symbols = [].concat(responseSpot.data.data).concat(responseSwap.data.data).concat(responseOption.data.data).concat(responseFutures.data.data).map(v => v.instId);
       return { data: symbols };
     },
+    /**
+     * 
+     * 
+     * GET ORDER BOOK
+     * 
+     * 
+     */
+    _getOrderBook: async (params) => {
+      const data = {};
+      data.sz = 400;
+      data.instId = params.symbol;
+      const response = await request.public('GET', '/api/v5/market/books', data);
+      if (response.data.code !== '0') {
+        return handleResponseError(params, response.data.data[0]);
+      }
+      const asks = response.data.data[0].asks.map(ask => {
+        return { id: +ask[0], price: +ask[0], quantity: +ask[1] };
+      });
+      const bids = response.data.data[0].bids.map(bid => {
+        return { id: +bid[0], price: +bid[0], quantity: +bid[1] };
+      });
+      const lastUpdateId = +response.data.data[0].ts;
+      return { data: { asks, bids, lastUpdateId } };
+    },
   };
   return rest;
 };

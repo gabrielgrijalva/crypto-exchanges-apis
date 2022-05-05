@@ -2,7 +2,9 @@ const moment = require('moment');
 const Events = require('events');
 const Rest = require('./_rest');
 const WebSocket = require('../../_shared-classes/websocket');
-const OrderBook = require('../../_shared-classes/order-book');
+const OrderBookData = require('../../_shared-classes/order-books-data');
+const OrderBooksDataClient = require('../../_shared-classes/order-books-data-client');
+const OrderBooksDataServer = require('../../_shared-classes/order-books-data-server');
 /**
  * 
  * 
@@ -16,6 +18,7 @@ const OrderBook = require('../../_shared-classes/order-book');
  */
 function createCreationUpdate(data) {
   const eventData = {};
+  eventData.symbol = data.o.s;
   eventData.event = 'creations-updates';
   eventData.id = data.o.c;
   eventData.side = data.o.S.toLowerCase();
@@ -26,6 +29,7 @@ function createCreationUpdate(data) {
 };
 function createExecution(data) {
   const eventData = {};
+  eventData.symbol = data.o.s;
   eventData.event = 'executions';
   eventData.id = data.o.c;
   eventData.side = data.o.S.toLowerCase();
@@ -36,6 +40,7 @@ function createExecution(data) {
 };
 function createCancelation(data) {
   const eventData = {};
+  eventData.symbol = data.o.s;
   eventData.event = 'cancelations';
   eventData.id = data.o.c;
   eventData.timestamp = moment(+data.T).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
@@ -43,57 +48,80 @@ function createCancelation(data) {
 };
 /**
  * 
- * @param {string} stream
+ * @param {'user' | 'market'} type
+ * @param {import('../../../typings/_rest').Rest} rest
  * @param {import('../../../typings/_ws').WebSocket} webSocket 
  * @param {import('../../../typings/_ws').wsSettings} wsSettings
  */
-function connectWebSocket(stream, webSocket, wsSettings) {
-  return new Promise((resolve) => {
+function connectWebSocket(type, rest, webSocket, wsSettings) {
+  return new Promise(async (resolve) => {
     const url = wsSettings.URL;
+    const stream = type === 'user' ? (await rest._getListenKey()).data : 'stream';
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
     webSocket.connect(`${url}/ws/${stream}`);
-    function connectFunction() {
+    function connectOnOpenFunction() {
       resolve();
       clearTimeout(connectTimeout);
-      webSocket.removeOnOpen(connectFunction);
-    };
-    webSocket.addOnOpen(connectFunction, false);
+      webSocket.removeOnOpen(connectOnOpenFunction);
+    }
+    webSocket.addOnOpen(connectOnOpenFunction, false);
+  });
+};
+/**
+ * 
+ * @param {string} stream 
+ * @param {import('../../../typings/_ws').WebSocket} webSocketMarketStream 
+ */
+function confirmSubscription(stream, webSocketMarketStream) {
+  return new Promise((resolve) => {
+    const seconds = Math.floor(Date.now() / 1000).toString();
+    const microseconds = Math.floor(process.hrtime()[1] / 1000).toString();
+    const micLeadingZeros = '0'.repeat(6 - microseconds.length);
+    const subscribeId = +`${seconds}${micLeadingZeros}${microseconds}`;
+    const subscribeTimeout = setTimeout(() => { throw new Error(`Could not subscribe:${stream}`) }, 60000);
+    function confirmOnMessageFunction(message) {
+      const messageParse = JSON.parse(message);
+      if (messageParse.id === subscribeId && !messageParse.result) {
+        resolve();
+        clearTimeout(subscribeTimeout);
+        webSocketMarketStream.removeOnMessage(confirmOnMessageFunction);
+      }
+    }
+    webSocketMarketStream.addOnMessage(confirmOnMessageFunction, false);
+    webSocketMarketStream.send(JSON.stringify({ id: subscribeId, method: 'SUBSCRIBE', params: [stream] }));
+  });
+};
+/**
+ * 
+ * @param {import('../../../typings/_ws').orderBooksData[]} orderBooksData
+ */
+function desynchronizeOrderBooks(orderBooksData) {
+  orderBooksData.forEach(orderBookData => {
+    orderBookData.asks.length = 0;
+    orderBookData.bids.length = 0;
+    orderBookData.otherData.snapshot = null;
+    orderBookData.otherData.synchronized = false;
+    orderBookData.otherData.synchronizing = false;
   });
 };
 /**
  * @param {import('../../../typings/_rest').Rest} rest
- * @param {import('../../../typings/_ws').flags} flags
- * @param {string} symbol
+ * @param {import('../../../typings/_ws').orderBooksData} orderBooksData
  */
-async function getOrderBookSnapshot(rest, flags, symbol) {
-  flags.synchronizing = true;
-  flags.snapshot = (await rest._getOrderBook({ symbol })).data;
-  flags.synchronizing = false;
-};
-/**
- * 
- * @param {import('../../../typings/_ws').flags} flags
- * @param {import('../../../typings/_ws').dataOrderBook} orderBook 
- */
-function desynchronizeOrderBook(flags, orderBook) {
-  flags.snapshot = null;
-  flags.synchronized = false;
-  flags.synchronizing = false;
-  orderBook.asks.length = 0;
-  orderBook.bids.length = 0;
+async function getOrderBookSnapshot(rest, orderBooksData) {
+  const symbol = orderBooksData.symbol;
+  orderBooksData.otherData.synchronizing = true;
+  orderBooksData.otherData.snapshot = (await rest._getOrderBook({ symbol })).data;
+  orderBooksData.otherData.synchronizing = false;
 };
 /**
  * 
  * @param {Object} snapshot 
- * @param {import('../../../typings/_ws').dataOrderBook} orderBook 
+ * @param {import('../../../typings/_ws').orderBooksData} orderBookData
  */
-function synchronizeOrderBookSnapshot(snapshot, orderBook) {
-  orderBook._insertSnapshotAsks(snapshot.asks.map(v => {
-    return { id: +v.id, price: +v.price, quantity: +v.quantity };
-  }));
-  orderBook._insertSnapshotBids(snapshot.bids.map(v => {
-    return { id: +v.id, price: +v.price, quantity: +v.quantity };
-  }));
+function synchronizeOrderBookSnapshot(snapshot, orderBookData) {
+  orderBookData.insertSnapshotAsks(snapshot.asks);
+  orderBookData.insertSnapshotBids(snapshot.bids);
 };
 /**
  * 
@@ -110,282 +138,285 @@ function synchronizeOrderBookSnapshot(snapshot, orderBook) {
  * @param {import('../../../typings/_ws').wsSettings} wsSettings
  */
 function Ws(wsSettings = {}) {
-  // Default ws wsSettings values
+  /**
+   * 
+   * 
+   * DEFAULT WS SETTINGS VALUES
+   * 
+   * 
+   */
   wsSettings.URL = wsSettings.URL || 'wss://dstream.binance.com';
-  // Rest creation
+  /** 
+   * 
+   * 
+   * REST
+   * 
+   * 
+   * @type {import('../../../typings/_rest').Rest} */
   const rest = Rest({
     API_KEY: wsSettings.API_KEY,
     API_SECRET: wsSettings.API_SECRET,
     API_PASSPHRASE: wsSettings.API_PASSPHRASE,
   });
-  // Websocket creation
   /** 
    * 
    * 
-   * @type {import('../../../typings/_ws').Ws} 
+   * USER WEBSOCKET
+   * 
+   * 
+   * @type {import('../../../typings/_ws').WebSocket} */
+  const webSocketUserStream = WebSocket('binance-coin:user-stream', wsSettings);
+  let listenKey = '';
+  let getListenKeyInterval = null;
+  webSocketUserStream.addOnOpen(() => setInterval(async () => { listenKey = (await rest._getListenKey()).data }, 1800000));
+  webSocketUserStream.addOnClose(() => clearInterval(getListenKeyInterval));
+  webSocketUserStream.addOnClose(() => connectWebSocket('user', rest, webSocketUserStream, wsSettings));
+  if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocketUserStream.addOnMessage((message) => console.log(JSON.parse(message))) };
+  /**
+   * 
+   * 
+   * MARKET WEBSOCKET
+   * 
+   * 
+   * @type {import('../../../typings/_ws').WebSocket} */
+  const webSocketMarketStream = WebSocket('binance-coin:market-stream', wsSettings);
+  webSocketMarketStream.addOnClose(() => connectWebSocket('market', rest, webSocketMarketStream, wsSettings));
+  if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocketMarketStream.addOnMessage((message) => console.log(JSON.parse(message))) };
+  /**
+   * 
+   * 
+   * CONNECT WEBSOCKETS
+   * 
+   * 
+   **/
+  async function connectWebSockets() {
+    if (wsSettings.API_KEY && wsSettings.API_SECRET) {
+      listenKey = (await rest._getListenKey()).data;
+      await connectWebSocket('user', rest, webSocketUserStream, wsSettings);
+    }
+    await connectWebSocket('market', rest, webSocketMarketStream, wsSettings);
+  }
+  /** 
+   * 
+   * 
+   * ORDERS
    * 
    * 
    */
+  const ordersOnMessage = (message) => {
+    const messageParse = JSON.parse(message);
+    if (messageParse.e !== 'ORDER_TRADE_UPDATE') { return };
+    const orderEvent = messageParse.o;
+    if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.s)) { return };
+    if (orderEvent.x === 'NEW') {
+      ordersWsObject.events.emit('creations-updates', [createCreationUpdate(messageParse)]);
+    }
+    if (orderEvent.x === 'TRADE' || orderEvent.x === 'CALCULATED') {
+      ordersWsObject.events.emit('executions', [createExecution(messageParse)]);
+    }
+    if (orderEvent.x === 'CANCELED' || orderEvent.x === 'EXPIRED') {
+      ordersWsObject.events.emit('cancelations', [createCancelation(messageParse)]);
+    }
+  };
+  /** @type {import('../../../typings/_ws').ordersWsObject} */
+  const ordersWsObject = {
+    subscribe: async (params) => {
+      if (!webSocketUserStream.findOnMessage(ordersOnMessage)) { webSocketUserStream.addOnMessage(ordersOnMessage) };
+      ordersWsObject.subscriptions.push(Object.assign({}, params));
+    },
+    data: null,
+    events: new Events.EventEmitter(),
+    subscriptions: [],
+  };
+  /** 
+   * 
+   * 
+   * POSITIONS
+   * 
+   * 
+   */
+  const positionsOnMessage = (message) => {
+    const messageParse = JSON.parse(message);
+    if (messageParse.e !== 'ACCOUNT_UPDATE') { return };
+    messageParse.a.P.forEach(positionEvent => {
+      const positionData = positionsWsObject.data.find(v => v.symbol === positionEvent.s);
+      if (!positionData) { return };
+      positionData.pxS = +positionEvent.pa < 0 ? +positionEvent.ep : 0;
+      positionData.pxB = +positionEvent.pa > 0 ? +positionEvent.ep : 0;
+      positionData.qtyS = +positionEvent.pa < 0 ? Math.abs(+positionEvent.pa) : 0;
+      positionData.qtyB = +positionEvent.pa > 0 ? Math.abs(+positionEvent.pa) : 0;
+    });
+  };
+  /** @type {import('../../../typings/_ws').positionsWsObject} */
+  const positionsWsObject = {
+    subscribe: async (params) => {
+      if (!webSocketUserStream.findOnMessage(positionsOnMessage)) { webSocketUserStream.addOnMessage(positionsOnMessage) };
+      positionsWsObject.subscriptions.push(Object.assign({}, params));
+      const position = (await rest.getPosition(params)).data;
+      positionsWsObject.data.push(Object.assign({}, params, position));
+    },
+    data: [],
+    events: null,
+    subscriptions: [],
+  };
+  /** 
+   * 
+   * 
+   * LIQUIDATIONS
+   * 
+   * 
+   */
+  const liquidationsOnMessageUserStream = (message) => {
+    const messageParse = JSON.parse(message);
+    if (!messageParse.id || messageParse.id !== 1000) { return };
+    const reqData = messageParse.result.find(v => v.req.includes('@position'));
+    if (!reqData) { return };
+    liquidationsWsObject.data.forEach(liquidationData => {
+      const positionEvent = reqData.res.positions.find(v => v.symbol === liquidationData.symbol);
+      liquidationData.pxS = positionEvent && +positionEvent.positionAmt < 0 ? +positionEvent.entryPrice : 0;
+      liquidationData.pxB = positionEvent && +positionEvent.positionAmt > 0 ? +positionEvent.entryPrice : 0;
+      liquidationData.qtyS = positionEvent && +positionEvent.positionAmt < 0 ? Math.abs(+positionEvent.positionAmt) : 0;
+      liquidationData.qtyB = positionEvent && +positionEvent.positionAmt > 0 ? Math.abs(+positionEvent.positionAmt) : 0;
+      liquidationData.liqPxS = positionEvent && +positionEvent.positionAmt < 0 ? +positionEvent.liquidationPrice : 0;
+      liquidationData.liqPxB = positionEvent && +positionEvent.positionAmt > 0 ? +positionEvent.liquidationPrice : 0;
+    });
+  };
+  const liquidationsOnMessageMarketStream = (message) => {
+    const messageParse = JSON.parse(message);
+    if (messageParse.e !== 'markPriceUpdate') { return };
+    const liquidationEvent = messageParse;
+    const liquidationData = liquidationsWsObject.data.find(v => v.symbol === liquidationEvent.s);
+    if (!liquidationData) { return };
+    liquidationData.markPx = +liquidationEvent.p;
+    webSocketUserStream.send(JSON.stringify({ id: 1000, method: 'REQUEST', params: [`${listenKey}@position`] }));
+  };
+  /** @type {import('../../../typings/_ws').liquidationsWsObject} */
+  const liquidationsWsObject = {
+    subscribe: async (params) => {
+      if (!webSocketUserStream.findOnMessage(liquidationsOnMessageUserStream)) { webSocketUserStream.addOnMessage(liquidationsOnMessageUserStream) };
+      if (!webSocketMarketStream.findOnMessage(liquidationsOnMessageMarketStream)) { webSocketMarketStream.addOnMessage(liquidationsOnMessageMarketStream) };
+      liquidationsWsObject.subscriptions.push(Object.assign({}, params));
+      const position = (await rest.getPosition(params)).data;
+      const liquidation = (await rest.getLiquidation(params)).data;
+      liquidationsWsObject.data.push(Object.assign({}, params, position, liquidation));
+      await confirmSubscription(`${params.symbol.toLowerCase()}@markPrice`, webSocketMarketStream);
+    },
+    data: [],
+    events: null,
+    subscriptions: [],
+  };
+  /** 
+   * 
+   * 
+   * TRADES
+   * 
+   * 
+   */
+  const tradesOnMessage = (message) => {
+    const messageParse = JSON.parse(message);
+    if (messageParse.e !== 'trade') { return };
+    const tradeEvent = messageParse;
+    const tradeData = tradesWsObject.data.find(v => v.symbol === tradeEvent.s);
+    if (!tradeData) { return };
+    tradeData.side = tradeEvent.m ? 'sell' : 'buy';
+    tradeData.price = +tradeEvent.p;
+    tradeData.quantity = +tradeEvent.q;
+    tradeData.timestamp = moment(+tradeEvent.E).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+    tradesWsObject.events.emit('trades', [Object.assign({}, tradeData)]);
+  };
+  /** @type {import('../../../typings/_ws').tradesWsObject} */
+  const tradesWsObject = {
+    subscribe: async (params) => {
+      if (!webSocketMarketStream.findOnMessage(tradesOnMessage)) { webSocketMarketStream.addOnMessage(tradesOnMessage) };
+      tradesWsObject.subscriptions.push(Object.assign({}, params));
+      const lastPrice = (await rest.getLastPrice(params)).data;
+      tradesWsObject.data.push({ symbol: params.symbol, side: 'buy', price: lastPrice, quantity: 0, timestamp: '' });
+      await confirmSubscription(`${params.symbol.toLowerCase()}@trade`, webSocketMarketStream);
+    },
+    data: [],
+    events: new Events.EventEmitter(),
+    subscriptions: [],
+  };
+  /** 
+   * 
+   * 
+   * ORDER BOOKS
+   * 
+   * 
+   */
+  const orderBooksOnMessage = (message) => {
+    const messageParse = JSON.parse(message);
+    if (messageParse.e !== 'depthUpdate') { return };
+    const orderBookEvent = messageParse;
+    const orderBookData = orderBooksWsObject.data.find(v => v.symbol === orderBookEvent.s);
+    if (!orderBookData) { return };
+    if (!orderBookData.otherData.synchronized) {
+      if (!orderBookData.otherData.synchronizing) {
+        if (!orderBookData.otherData.snapshot) {
+          getOrderBookSnapshot(rest, orderBookData);
+        } else {
+          const snapshot = orderBookData.otherData.snapshot;
+          if (snapshot.lastUpdateId < orderBookEvent.U) {
+            orderBookData.otherData.snapshot = null;
+            orderBookData.otherData.synchronized = false;
+            orderBookData.otherData.synchronizing = false;
+          }
+          if (snapshot.lastUpdateId >= orderBookEvent.U && snapshot.lastUpdateId <= orderBookEvent.u) {
+            orderBookData.otherData.snapshot = null;
+            orderBookData.otherData.synchronized = true;
+            orderBookData.otherData.synchronizing = false;
+            synchronizeOrderBookSnapshot(snapshot, orderBookData);
+          }
+        }
+      }
+    }
+    if (!orderBookData.otherData.synchronized) { return };
+    if ((Date.now() - +orderBookEvent.E) > 5000) { return webSocketMarketStream.close() };
+    orderBookEvent.a.forEach(v => {
+      orderBookData.updateOrderByPriceAsk({ id: +v[0], price: +v[0], quantity: +v[1] });
+    });
+    orderBookEvent.b.forEach(v => {
+      orderBookData.updateOrderByPriceBid({ id: +v[0], price: +v[0], quantity: +v[1] });
+    });
+  };
+  const orderBooksOnClose = () => desynchronizeOrderBooks(orderBooksWsObject.data);
+  /** @type {import('../../../typings/_ws').orderBooksWsObject} */
+  const orderBooksWsObject = {
+    subscribe: async (params) => {
+      if (!webSocketMarketStream.findOnMessage(orderBooksOnMessage)) { webSocketMarketStream.addOnMessage(orderBooksOnMessage) };
+      if (!webSocketMarketStream.findOnClose(orderBooksOnClose)) { webSocketMarketStream.addOnClose(orderBooksOnClose) };
+      orderBooksWsObject.subscriptions.push(Object.assign({}, params));
+      const orderBookData = OrderBookData({
+        SYMBOL: params.symbol,
+        FROZEN_CHECK_INTERVAL: params.frozenCheckInterval,
+        PRICE_OVERLAPS_CHECK_INTERVAL: params.priceOverlapsCheckInterval,
+      });
+      orderBookData.otherData.snapshot = null;
+      orderBookData.otherData.synchronized = false;
+      orderBookData.otherData.synchronizing = false;
+      orderBooksWsObject.data.push(orderBookData);
+      await confirmSubscription(`${params.symbol.toLowerCase()}@depth@100ms`, webSocketMarketStream);
+    },
+    data: [],
+    events: null,
+    subscriptions: [],
+  };
+  /** 
+   * 
+   * 
+   * WS IMPLEMENTATION
+   * 
+   * 
+   * @type {import('../../../typings/_ws').Ws} */
   const ws = {
-    /**
-     * 
-     * 
-     * 
-     * WS ORDERS
-     * 
-     * 
-     * 
-     */
-    getOrders: (params) => {
-      const webSocket = WebSocket('binance-coin:orders:orders', wsSettings);
-      /** @type {import('../../../typings/_ws').ordersWsObjectReturn} */
-      const ordersWsObject = {
-        data: null,
-        events: new Events.EventEmitter(),
-        connect: async () => {
-          const stream = (await rest._getListenKey()).data;
-          setInterval(() => rest._getListenKey(), 1800000);
-          await connectWebSocket(stream, webSocket, wsSettings);
-          webSocket.addOnMessage((message) => {
-            const messageParse = JSON.parse(message);
-            console.log(messageParse);
-            if (messageParse.e !== 'ORDER_TRADE_UPDATE' || messageParse.o.s !== params.symbol) { return };
-            if (messageParse.o.x === 'NEW') {
-              ordersWsObject.events.emit('creations-updates', [createCreationUpdate(messageParse)]);
-            }
-            if (messageParse.o.x === 'TRADE' || messageParse.o.x === 'CALCULATED') {
-              ordersWsObject.events.emit('executions', [createExecution(messageParse)]);
-            }
-            if (messageParse.o.x === 'CANCELED' || messageParse.o.x === 'EXPIRED') {
-              ordersWsObject.events.emit('cancelations', [createCancelation(messageParse)]);
-            }
-          });
-          webSocket.addOnClose(() => { connectWebSocket(stream, webSocket, wsSettings) });
-        },
-      }
-      return ordersWsObject;
-    },
-    /**
-     * 
-     * 
-     * 
-     * WS POSITION
-     * 
-     * 
-     * 
-     */
-    getPosition: (params) => {
-      const webSocket = WebSocket('binance-coin:position:position', wsSettings);
-      /** @type {import('../../../typings/_ws').positionWsObjectReturn} */
-      const positionWsObject = {
-        data: null,
-        events: new Events.EventEmitter(),
-        connect: async () => {
-          const stream = (await rest._getListenKey()).data;
-          setInterval(() => rest._getListenKey(), 1800000);
-          await connectWebSocket(stream, webSocket, wsSettings);
-          // Load rest data
-          const positionRestData = (await rest.getPosition(params)).data;
-          /** @type {import('../../../typings/_ws').dataPosition} */
-          positionWsObject.data = Object.assign({}, positionRestData);
-          webSocket.addOnMessage((message) => {
-            const messageParse = JSON.parse(message);
-            console.log(messageParse);
-            if (messageParse.e !== 'ACCOUNT_UPDATE') { return };
-            const positionEvent = messageParse.a.P.find(v => v.s === params.symbol);
-            if (!positionEvent) { return };
-            positionWsObject.data.pxS = +positionEvent.pa < 0 ? +positionEvent.ep : 0;
-            positionWsObject.data.pxB = +positionEvent.pa > 0 ? +positionEvent.ep : 0;
-            positionWsObject.data.qtyS = +positionEvent.pa < 0 ? Math.abs(+positionEvent.pa) : 0;
-            positionWsObject.data.qtyB = +positionEvent.pa > 0 ? Math.abs(+positionEvent.pa) : 0;
-            positionWsObject.events.emit('update', positionWsObject.data);
-          });
-          webSocket.addOnClose(() => { connectWebSocket(stream, webSocket, wsSettings) });
-        }
-      };
-      return positionWsObject;
-    },
-    /**
-     * 
-     * 
-     * 
-     * WS LIQUIDATION
-     * 
-     * 
-     * 
-     */
-    getLiquidation: (params) => {
-      const webSocketMarkPrice = WebSocket('binance-coin:liquidation:mark-price', wsSettings);
-      const webSocketPosition = WebSocket('binance-coin:liquidation:position', wsSettings);
-      /** @type {import('../../../typings/_ws').liquidationWsObjectReturn} */
-      const liquidationWsObject = {
-        data: null,
-        events: new Events.EventEmitter(),
-        connect: async () => {
-          const streamMarkPrice = `${params.symbol.toLowerCase()}@markPrice@1s`;
-          const streamPosition = (await rest._getListenKey()).data;
-          setInterval(() => rest._getListenKey(), 1800000);
-          await Promise.all([
-            connectWebSocket(streamMarkPrice, webSocketMarkPrice, wsSettings),
-            connectWebSocket(streamPosition, webSocketPosition, wsSettings),
-          ]);
-          // Load rest data
-          const positionRestData = (await rest.getPosition(params)).data;
-          const liquidationRestData = (await rest.getLiquidation(params)).data;
-          // Liquidation data
-          /** @type {import('../../../typings/_ws').dataLiquidation} */
-          liquidationWsObject.data = Object.assign({}, positionRestData, liquidationRestData);
-          webSocketMarkPrice.addOnMessage((message) => {
-            const messageParse = JSON.parse(message);
-            console.log(messageParse);
-            if (messageParse.e !== 'markPriceUpdate') { return };
-            liquidationWsObject.data.markPx = +messageParse.p;
-            liquidationWsObject.events.emit('update', liquidationWsObject.data);
-          });
-          webSocketPosition.addOnMessage((message) => {
-            const messageParsed = JSON.parse(message);
-            console.log(messageParsed);
-            if (messageParsed.e !== 'ACCOUNT_UPDATE') { return };
-            const positionEvent = messageParsed.a.P.find(v => v.s === params.symbol);
-            if (!positionEvent) { return };
-            liquidationWsObject.data.pxS = +positionEvent.pa < 0 ? +positionEvent.ep : 0;
-            liquidationWsObject.data.pxB = +positionEvent.pa > 0 ? +positionEvent.ep : 0;
-            liquidationWsObject.data.qtyS = +positionEvent.pa < 0 ? Math.abs(+positionEvent.pa) : 0;
-            liquidationWsObject.data.qtyB = +positionEvent.pa > 0 ? Math.abs(+positionEvent.pa) : 0;
-            liquidationWsObject.data.liqPxS = +positionEvent.pa < 0 ? liquidationWsObject.data.liqPxS : 0;
-            liquidationWsObject.data.liqPxB = +positionEvent.pa > 0 ? liquidationWsObject.data.liqPxB : 0;
-            liquidationWsObject.events.emit('update', liquidationWsObject.data);
-          });
-          setInterval(async () => {
-            if (!liquidationWsObject.data.qtyS && !liquidationWsObject.data.qtyB) { return };
-            const liquidationInfo = await rest.getLiquidation(params);
-            liquidationWsObject.data.markPx = liquidationInfo.data.markPx;
-            liquidationWsObject.data.liqPxS = liquidationInfo.data.liqPxS;
-            liquidationWsObject.data.liqPxB = liquidationInfo.data.liqPxB;
-          }, 2000);
-          webSocketMarkPrice.addOnClose(() => connectWebSocket(streamMarkPrice, webSocketMarkPrice, wsSettings));
-          webSocketPosition.addOnClose(() => connectWebSocket(streamPosition, webSocketPosition, wsSettings));
-        },
-      };
-      return liquidationWsObject;
-    },
-    /**
-     * 
-     * 
-     * 
-     * WS TRADES
-     * 
-     * 
-     * 
-     */
-    getTrades: (params) => {
-      const webSocket = WebSocket('binance-coin:trades:trades', wsSettings);
-      /** @type {import('../../../typings/_ws').tradesWsObjectReturn} */
-      const tradesWsObject = {
-        data: null,
-        events: new Events.EventEmitter(),
-        connect: async () => {
-          const stream = `${params.symbol.toLowerCase()}@trade`;
-          await connectWebSocket(stream, webSocket, wsSettings);
-          webSocket.addOnMessage((message) => {
-            const messageParse = JSON.parse(message);
-            if (messageParse.e !== 'trade') { return };
-            tradesWsObject.events.emit('update', [{
-              side: messageParse.m ? 'sell' : 'buy',
-              price: +messageParse.p,
-              quantity: +messageParse.q,
-              timestamp: moment(+messageParse.E).utc().format('YYYY-MM-DD HH:mm:ss.SSS'),
-            }]);
-          });
-        },
-      }
-      return tradesWsObject;
-    },
-    /**
-     * 
-     * 
-     * 
-     * WS ORDER BOOK
-     * 
-     * 
-     * 
-     */
-    getOrderBook: (params) => {
-      const webSocket = WebSocket('binance-coin:order-book:order-book', wsSettings);
-      /** @type {import('../../../typings/_ws').orderBookWsObjectReturn} */
-      const orderBookWsObject = {
-        data: null,
-        events: null,
-        connect: async () => {
-          const orderBook = OrderBook({
-            FROZEN_CHECK_INTERVAL: params.frozenCheckInterval,
-            PRICE_OVERLAPS_CHECK_INTERVAL: params.priceOverlapsCheckInterval,
-          });
-          orderBookWsObject.data = orderBook;
-          if (params && params.type === 'server') {
-            orderBookWsObject.data._createServer(params);
-          }
-          if (params && params.type === 'client') {
-            orderBookWsObject.data._connectClient(webSocket, params); return;
-          }
-          // Connect websocket
-          const stream = `${params.symbol.toLowerCase()}@depth`;
-          await connectWebSocket(stream, webSocket, wsSettings);
-          // Order book functionality
-          const flags = { synchronized: false, synchronizing: false, snapshot: null };
-          webSocket.addOnMessage((message) => {
-            const messageParse = JSON.parse(message);
-            if (!flags.synchronized) {
-              if (!flags.synchronizing) {
-                if (!flags.snapshot) {
-                  getOrderBookSnapshot(rest, flags, params.symbol);
-                } else {
-                  const snapshot = flags.snapshot;
-                  if (snapshot.lastUpdateId < messageParse.U) {
-                    flags.snapshot = null;
-                    flags.synchronized = false;
-                    flags.synchronizing = false;
-                  }
-                  if (snapshot.lastUpdateId >= messageParse.U && snapshot.lastUpdateId <= messageParse.u) {
-                    flags.snapshot = null;
-                    flags.synchronized = true;
-                    synchronizeOrderBookSnapshot(snapshot, orderBookWsObject.data);
-                  }
-                }
-              }
-            }
-            if (!flags.synchronized) { return };
-            const timestamp = Date.now();
-            const orderBookTimestamp = +messageParse.E;
-            if (timestamp - orderBookTimestamp > 5000) {
-              webSocket.close();
-            }
-            messageParse.a.forEach(v => {
-              const update = { id: +v[0], price: +v[0], quantity: +v[1] };
-              orderBookWsObject.data._updateOrderByPriceAsk(update);
-            });
-            messageParse.b.forEach(v => {
-              const update = { id: +v[0], price: +v[0], quantity: +v[1] };
-              orderBookWsObject.data._updateOrderByPriceBid(update);
-            })
-          });
-          webSocket.addOnClose(() => {
-            desynchronizeOrderBook(flags, orderBookWsObject.data);
-            connectWebSocket(stream, webSocket, wsSettings);
-          });
-          await (new Promise(resolve => {
-            let counter = 0;
-            const interval = setInterval(() => {
-              counter += 1;
-              if (counter >= 10 || orderBookWsObject.data.asks.length || orderBookWsObject.data.bids.length) {
-                resolve(); clearInterval(interval);
-              }
-            }, 500);
-          }));
-        }
-      };
-      return orderBookWsObject;
-    },
+    connect: connectWebSockets,
+    orders: ordersWsObject,
+    positions: positionsWsObject,
+    liquidations: liquidationsWsObject,
+    trades: tradesWsObject,
+    orderBooks: orderBooksWsObject,
+    orderBooksClient: OrderBooksDataClient(orderBooksWsObject),
+    orderBooksServer: OrderBooksDataServer(orderBooksWsObject),
   };
   return ws;
 }

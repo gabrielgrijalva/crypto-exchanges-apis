@@ -6,9 +6,8 @@ const exchanges = [
   'bitmex',
   'bitstamp',
   'bybit',
-  'bybit-futures',
   'deribit',
-  'kraken-futures',
+  'kraken',
   'okex',
 ];
 /**
@@ -17,8 +16,10 @@ const exchanges = [
 function CryptoExchangesApi(exchange) {
   if (!exchanges.find(v => v === exchange)) throw new Error('Exchange not found.');
   return {
-    FIXER: (() => { try { return require(`./src/exchanges/${exchange}/_fixer`) } catch (err) { return null } })(),
-    POPULATOR: (() => { try { return require(`./src/exchanges/${exchange}/_populator`) } catch (err) { return null } })(),
+    // SHARED IMPLEMENTATIONS
+    FIXER: (() => { try { return require(`./src/_shared-classes/fixer`) } catch (err) { return null } })(),
+    POPULATOR: (() => { try { return require(`./src/_shared-classes/populator`) } catch (err) { return null } })(),
+    // INDIVIDUAL IMPLEMENTATIONS
     REST: (() => { try { return require(`./src/exchanges/${exchange}/_rest`) } catch (err) { return null } })(),
     UTILS: (() => { try { return require(`./src/exchanges/${exchange}/_utils`) } catch (err) { return null } })(),
     WS: (() => { try { return require(`./src/exchanges/${exchange}/_ws`) } catch (err) { return null } })(),
