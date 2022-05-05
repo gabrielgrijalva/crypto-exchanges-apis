@@ -146,7 +146,7 @@ function OrderBooksData(orderBooksSettings = {}) {
     const currentSnapshotAsks = JSON.stringify(orderBooksData.asks.slice(0, 10));
     const currentSnapshotBids = JSON.stringify(orderBooksData.bids.slice(0, 10));
     if (lastSnapshotAsks === currentSnapshotAsks && lastSnapshotBids === currentSnapshotBids) {
-      throw { error: { type: 'order-book-static', params: null, exchange: null } };
+      throw { error: { type: 'order-book-frozen', params: null, exchange: null } };
     }
     lastSnapshotAsks = currentSnapshotAsks;
     lastSnapshotBids = currentSnapshotBids;
