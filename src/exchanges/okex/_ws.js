@@ -196,7 +196,9 @@ function Ws(wsSettings = {}) {
    **/
   async function connectWebSockets() {
     await connectWebSocket('public', webSocketPublic, wsSettings);
-    await connectWebSocket('private', webSocketPrivate, wsSettings);
+    if (wsSettings.API_KEY && wsSettings.API_SECRET && wsSettings.API_PASSPHRASE) {
+      await connectWebSocket('private', webSocketPrivate, wsSettings);
+    }
   };
   /** 
    * 
