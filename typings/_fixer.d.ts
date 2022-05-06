@@ -35,10 +35,9 @@ declare namespace FixerN {
    * 
    */
   type executeParams = {
+    ws: WsN.Ws;
     rest: RestN.Rest;
     utils: UtilsN.Utils;
-    ordersWsObject: WsN.ordersWsObjectReturn;
-    orderBookWsObject: WsN.orderBookWsObjectReturn;
     fixSymbol: string;
     fixPositionQtyS: number;
     fixPositionQtyB: number;

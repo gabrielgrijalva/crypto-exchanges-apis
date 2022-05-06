@@ -86,11 +86,11 @@ async function sendRestCancelOrder(rest, params, errors = 0) {
  * @param {number} currentPositionQtyS 
  * @param {number} currentPositionQtyB 
  * @param {import('../../typings/_utils').Utils} utils 
+ * @param {import('../../typings/_ws').orderBooksData} orderBookData 
  * @param {import('../../typings/_fixer').fixerSettings} fixerSettings
- * @param {import('../../typings/_ws').orderBooksWsObject} orderBooksWsObject 
  * @returns {import('../../typings/_rest').createOrderParams}
  */
-function getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, utils, fixerSettings, orderBooksWsObject) {
+function getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, utils, orderBookData, fixerSettings) {
   /** @type {'sell' | 'buy'} */
   let side = 'sell';
   /** @type {number} */
@@ -98,7 +98,6 @@ function getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPosit
   /** @type {'open' | 'close'} */
   let direction = 'open';
   const type = fixerSettings.TYPE;
-  const orderBookData = orderBooksWsObject.data.find(v => v.symbol === fixSymbol);
   const bestAsk = orderBookData.asks[0].price;
   const bestBid = orderBookData.bids[0].price;
   // OPEN SELL
@@ -147,14 +146,12 @@ function getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPosit
 /**
  * 
  * @param {import('../../typings/_rest').createOrderParams} order 
+ * @param {import('../../typings/_ws').orderBooksData} orderBookData
  * @param {import('../../typings/_fixer').fixerSettings} fixerSettings
- * @param {import('../../typings/_ws').orderBooksWsObject} orderBooksWsObject 
  * @returns {import('../../typings/_rest').updateOrderParams}
  */
-function getFixOrderUpdate(order, fixerSettings, orderBooksWsObject) {
-  const price = order.side === 'sell'
-    ? orderBooksWsObject.data.find(v => v.symbol === order.symbol).asks[0].price
-    : orderBooksWsObject.data.find(v => v.symbol === order.symbol).bids[0].price;
+function getFixOrderUpdate(order, orderBookData, fixerSettings) {
+  const price = order.side === 'sell' ? orderBookData.asks[0].price : orderBookData.bids[0].price;
   const quantity = fixerSettings.TYPE === 'spot' && order.side === 'buy' ?
     round.down((order.price * order.quantity) / price, fixerSettings.QUANTITY_PRECISION) : order.quantity;
   return { id: order.id, price: price, symbol: order.symbol, quantity: quantity };
@@ -220,10 +217,10 @@ function Fixer(fixerSettings) {
      * 
      */
     execute: (params) => {
+      const ws = params.ws;
       const rest = params.rest;
       const utils = params.utils;
-      const ordersWsObject = params.ordersWsObject;
-      const orderBookWsObject = params.orderBookWsObject;
+      const orderBookData = ws.orderBooks.data.find(v => v.symbol === params.fixSymbol);
       const fixSymbol = params.fixSymbol;
       const fixPositionType = params.fixPositionType;
       const fixPositionQtyS = params.fixPositionQtyS;
@@ -262,7 +259,7 @@ function Fixer(fixerSettings) {
             }
           });
         };
-        ordersWsObject.events.on('creations-updates', creationsUpdatesFunc);
+        ws.orders.events.on('creations-updates', creationsUpdatesFunc);
         const executionsFunc = (messages) => {
           console.log('executions'); console.log(messages);
           messages.forEach(message => {
@@ -298,7 +295,7 @@ function Fixer(fixerSettings) {
             }
           });
         };
-        ordersWsObject.events.on('executions', executionsFunc);
+        ws.orders.events.on('executions', executionsFunc);
         const cancelationsFunc = (messages) => {
           console.log('cancelations'); console.log(messages);
           messages.forEach(message => {
@@ -318,12 +315,12 @@ function Fixer(fixerSettings) {
             }
           });
         };
-        ordersWsObject.events.on('cancelations', cancelationsFunc);
+        ws.orders.events.on('cancelations', cancelationsFunc);
         (async function main() {
           if (hedgePercentage < 0.80) { throw new Error('hedgePercentage less than 0.80') };
           if (!order && !creating && !updating && !canceling) {
             if (shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB, fixerSettings)) {
-              creating = getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, utils, fixerSettings, orderBookWsObject);
+              creating = getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, utils, orderBookData, fixerSettings);
               creatingTimeout = setTimeout(() => { throw new Error('creatingTimeout') }, 10000);
               try {
                 await sendRestCreateOrder(rest, creating);
@@ -334,10 +331,10 @@ function Fixer(fixerSettings) {
               }
             }
           } else if (order && !creating && !updating && !canceling && fixPositionType === 'limit'
-            && ((order.side === 'sell' && order.price > orderBookWsObject.data.asks[0].price)
-              || (order.side === 'buy' && order.price < orderBookWsObject.data.bids[0].price))) {
+            && ((order.side === 'sell' && order.price > orderBookData.asks[0].price)
+              || (order.side === 'buy' && order.price < orderBookData.bids[0].price))) {
             if (rest.updateOrder) {
-              updating = getFixOrderUpdate(order, fixerSettings, orderBookWsObject);
+              updating = getFixOrderUpdate(order, orderBookData, fixerSettings);
               updatingTimeout = setTimeout(() => { throw new Error('updatingTimeout') }, 10000);
               try {
                 await sendRestUpdateOrder(rest, updating);
@@ -358,9 +355,9 @@ function Fixer(fixerSettings) {
           }
           if (!shouldCreateFixOrder(fixPositionQtyS, fixPositionQtyB, currentPositionQtyS, currentPositionQtyB, fixerSettings)) {
             resolve();
-            ordersWsObject.events.removeListener('creations-updates', creationsUpdatesFunc);
-            ordersWsObject.events.removeListener('executions', executionsFunc);
-            ordersWsObject.events.removeListener('cancelations', cancelationsFunc);
+            ws.orders.events.removeListener('creations-updates', creationsUpdatesFunc);
+            ws.orders.events.removeListener('executions', executionsFunc);
+            ws.orders.events.removeListener('cancelations', cancelationsFunc);
           } else {
             await wait(100); main();
           }
