@@ -98,11 +98,14 @@ declare namespace RestN {
   type getFundingRatesParams = {
     symbol: string;
   }
+  type getMarkPricesOptionParams = {
+    symbol: string;
+  }
   type _getOrderBookParams = {
     symbol: string;
   }
   type params = createOrderParams | createOrdersParams | cancelOrderParams | cancelOrdersParams | cancelOrdersAllParams | updateOrderParams | updateOrdersParams
-    | getEquityParams | getCandlesParams | getPositionParams | getLastPriceParams | getLiquidationParams | getFundingRatesParams | _getOrderBookParams | null;
+    | getEquityParams | getCandlesParams | getPositionParams | getLastPriceParams | getLiquidationParams | getFundingRatesParams | getMarkPricesOptionParams | _getOrderBookParams | null;
   /**
    * 
    * 
@@ -140,6 +143,10 @@ declare namespace RestN {
   type getFundingRatesResponseData = {
     current: number;
     estimated: number;
+  };
+  type getMarkPricesOptionResponseData = {
+    markPriceOption: number;
+    markPriceUnderlying: number;
   };
   type getInstrumentsSymbolsResponseData = string[];
   type _getListenKeyResponseData = string;
@@ -240,7 +247,8 @@ declare namespace RestN {
     getLastPrice(params: getLastPriceParams): Promise<RestResponse<getLastPriceResponseData>>;
     getLiquidation(params: getLiquidationParams): Promise<RestResponse<getLiquidationResponseData>>;
     getFundingRates(params: getFundingRatesParams): Promise<RestResponse<getFundingRatesResponseData>>;
-    getInstrumentsSymbols(): Promise<RestResponse<getInstrumentsSymbolsResponseData>>
+    getMarkPricesOption?(params: getMarkPricesOptionParams): Promise<RestResponse<getMarkPricesOptionResponseData>>;
+    getInstrumentsSymbols(): Promise<RestResponse<getInstrumentsSymbolsResponseData>>;
     /**
      * CUSTOM EXCHANGE FUNCTIONS
      */

@@ -449,7 +449,15 @@ function Rest(restSettings = {}) {
     /**
      * 
      * 
-     * GET FUNDING RATES
+     * GET MARK PRICES OPTION
+     * 
+     * 
+     */
+    // getMarkPricesOption: async (params) => { },
+    /**
+     * 
+     * 
+     * GET INSTRUMENTS SYMBOLS
      * 
      * 
      */

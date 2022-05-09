@@ -506,6 +506,14 @@ function Rest(restSettings = {}) {
     /**
      * 
      * 
+     * GET MARK PRICES OPTION
+     * 
+     * 
+     */
+    // getMarkPricesOption: async (params) => { },
+    /**
+     * 
+     * 
      * GET INSTRUMENTS SYMBOLS
      * 
      * 
