@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.3.2] - 2022-05-09
+- Corrected error in fixer order books.
 ## [2.3.1] - 2022-05-06
 - Corrected error in fixer implementation.
 ## [2.3.0] - 2022-05-05
