@@ -409,6 +409,7 @@ function Ws(wsSettings = {}) {
     orderBooks: orderBooksWsObject,
     orderBooksClient: OrderBooksDataClient(orderBooksWsObject),
     orderBooksServer: OrderBooksDataServer(orderBooksWsObject),
+    markPricesOptions: null,
   };
   return ws;
 }
