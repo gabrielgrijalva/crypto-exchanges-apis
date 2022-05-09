@@ -313,7 +313,7 @@ function Rest(restSettings = {}) {
      * 
      * 
      */
-    // updateOrder: (params) => {}
+    updateOrder: null,
     /**
      * 
      * 
@@ -321,7 +321,7 @@ function Rest(restSettings = {}) {
      * 
      * 
      */
-    // updateOrders: (params) => {}
+    updateOrders: null,
     /**
      * 
      * 
@@ -470,7 +470,7 @@ function Rest(restSettings = {}) {
      * 
      * 
      */
-    // getMarkPricesOption: async (params) => { },
+    getMarkPricesOption: null,
     /**
      * 
      * 

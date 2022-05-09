@@ -236,8 +236,8 @@ declare namespace RestN {
     /**
      * UPDATE FUNCTIONS
      */
-    updateOrder?(params: updateOrderParams): Promise<RestResponse<updateOrderResponseData>>;
-    updateOrders?(params: updateOrdersParams): Promise<RestResponse<updateOrderResponseData>[]>;
+    updateOrder(params: updateOrderParams): Promise<RestResponse<updateOrderResponseData>>;
+    updateOrders(params: updateOrdersParams): Promise<RestResponse<updateOrderResponseData>[]>;
     /**
      * INFORMATION FUNCTIONS
      */
@@ -247,7 +247,7 @@ declare namespace RestN {
     getLastPrice(params: getLastPriceParams): Promise<RestResponse<getLastPriceResponseData>>;
     getLiquidation(params: getLiquidationParams): Promise<RestResponse<getLiquidationResponseData>>;
     getFundingRates(params: getFundingRatesParams): Promise<RestResponse<getFundingRatesResponseData>>;
-    getMarkPricesOption?(params: getMarkPricesOptionParams): Promise<RestResponse<getMarkPricesOptionResponseData>>;
+    getMarkPricesOption(params: getMarkPricesOptionParams): Promise<RestResponse<getMarkPricesOptionResponseData>>;
     getInstrumentsSymbols(): Promise<RestResponse<getInstrumentsSymbolsResponseData>>;
     /**
      * CUSTOM EXCHANGE FUNCTIONS

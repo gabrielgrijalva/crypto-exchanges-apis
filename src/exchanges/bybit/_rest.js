@@ -439,7 +439,7 @@ function Rest(restSettings = {}) {
      * 
      * 
      */
-    // getMarkPricesOption: async (params) => { },
+    getMarkPricesOption: null,
     /**
      * 
      * 
