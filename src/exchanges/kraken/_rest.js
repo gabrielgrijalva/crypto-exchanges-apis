@@ -313,7 +313,7 @@ function Rest(restSettings = {}) {
      * 
      * 
      */
-    // updateOrder: (params) => {}
+    updateOrder: null,
     /**
      * 
      * 
@@ -321,7 +321,7 @@ function Rest(restSettings = {}) {
      * 
      * 
      */
-    // updateOrders: (params) => {}
+    updateOrders: null,
     /**
      * 
      * 
@@ -463,6 +463,14 @@ function Rest(restSettings = {}) {
       const fundings = { current, estimated };
       return { data: fundings };
     },
+    /**
+     * 
+     * 
+     * GET MARK PRICES OPTION
+     * 
+     * 
+     */
+    getMarkPricesOption: null,
     /**
      * 
      * 

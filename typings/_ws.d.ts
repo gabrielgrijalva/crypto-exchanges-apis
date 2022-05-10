@@ -157,6 +157,24 @@ declare namespace WsN {
    * 
    * 
    * 
+   * WS MARK PRICES OPTIONS
+   * 
+   * 
+   * 
+   */
+  type markPricesOptionsParams = {
+    symbol: string;
+  }
+  type markPricesOptionsData = {
+    symbol: string;
+    markPriceOption: number;
+    markPriceUnderlying: number;
+  }
+  type markPricesOptionsWsObject = { subscribe(params: markPricesOptionsParams): Promise<void>; data: markPricesOptionsData[]; events: null; subscriptions: markPricesOptionsParams[] };
+  /**
+   * 
+   * 
+   * 
    * ORDER BOOK
    * 
    * 
@@ -258,6 +276,7 @@ declare namespace WsN {
     orderBooks: orderBooksWsObject;
     orderBooksServer: orderBooksServerWsObject;
     orderBooksClient: orderBooksClientWsObject;
+    markPricesOptions: markPricesOptionsWsObject;
   }
 }
 export = WsN;

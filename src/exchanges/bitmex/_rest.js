@@ -329,7 +329,6 @@ function Rest(restSettings = {}) {
       const position = { qtyS, qtyB, pxS, pxB };
       return { data: position };
     },
-
     /**
      * 
      * 
@@ -397,6 +396,14 @@ function Rest(restSettings = {}) {
       };
       return { data: fundings };
     },
+    /**
+     * 
+     * 
+     * GET MARK PRICES OPTION
+     * 
+     * 
+     */
+    getMarkPricesOption: null,
     /**
      * 
      * 

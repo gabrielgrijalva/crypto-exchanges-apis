@@ -300,7 +300,7 @@ function Rest(restSettings = {}) {
      * 
      * 
      */
-    // updateOrder: (params) => {}
+    updateOrder: null,
     /**
      * 
      * 
@@ -308,7 +308,7 @@ function Rest(restSettings = {}) {
      * 
      * 
      */
-    // updateOrders: (params) => {}
+    updateOrders: null,
     /**
      * 
      * 
@@ -449,7 +449,15 @@ function Rest(restSettings = {}) {
     /**
      * 
      * 
-     * GET FUNDING RATES
+     * GET MARK PRICES OPTION
+     * 
+     * 
+     */
+    getMarkPricesOption: null,
+    /**
+     * 
+     * 
+     * GET INSTRUMENTS SYMBOLS
      * 
      * 
      */

@@ -109,16 +109,6 @@ function confirmSubscription(topic, webSocket) {
 };
 /**
  * 
- * @param {import('../../../typings/_ws').orderBooksData[]} orderBooksData
- */
-function desynchronizeOrderBooks(orderBooksData) {
-  orderBooksData.forEach(orderBookData => {
-    orderBookData.asks.length = 0;
-    orderBookData.bids.length = 0;
-  });
-};
-/**
- * 
  * 
  * 
  * =================================
@@ -160,7 +150,14 @@ function Ws(wsSettings = {}) {
    * 
    * @type {import('../../../typings/_ws').WebSocket} */
   const webSocket = WebSocket('bitmex', wsSettings);
-  webSocket.addOnClose(() => connectWebSocket(webSocket, wsSettings));
+  webSocket.addOnClose(async () => {
+    await connectWebSocket(webSocket, wsSettings);
+    ordersWsObject.subscriptions.forEach(params => ordersWsObject.subscribe(params));
+    positionsWsObject.subscriptions.forEach(params => positionsWsObject.subscribe(params));
+    liquidationsWsObject.subscriptions.forEach(params => liquidationsWsObject.subscribe(params));
+    tradesWsObject.subscriptions.forEach(params => tradesWsObject.subscribe(params));
+    orderBooksWsObject.subscriptions.forEach(params => orderBooksWsObject.subscribe(params));
+  });
   if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocket.addOnMessage((message) => console.log(JSON.parse(message))) };
   /**
    * 
@@ -205,7 +202,9 @@ function Ws(wsSettings = {}) {
   const ordersWsObject = {
     subscribe: async (params) => {
       if (!webSocket.findOnMessage(ordersOnMessage)) { webSocket.addOnMessage(ordersOnMessage) };
-      ordersWsObject.subscriptions.push(Object.assign({}, params));
+      if (!ordersWsObject.subscriptions.find(v => JSON.stringify(v) === JSON.stringify(params))) {
+        ordersWsObject.subscriptions.push(Object.assign({}, params));
+      }
       await confirmSubscription(`execution:${params.symbol}`, webSocket);
     },
     data: null,
@@ -236,9 +235,13 @@ function Ws(wsSettings = {}) {
   const positionsWsObject = {
     subscribe: async (params) => {
       if (!webSocket.findOnMessage(positionsOnMessage)) { webSocket.addOnMessage(positionsOnMessage) };
-      positionsWsObject.subscriptions.push(Object.assign({}, params));
-      const position = (await rest.getPosition(params)).data;
-      positionsWsObject.data.push(Object.assign({}, params, position));
+      const positionData = (await rest.getPosition(params)).data;
+      if (!positionsWsObject.subscriptions.find(v => JSON.stringify(v) === JSON.stringify(params))) {
+        positionsWsObject.subscriptions.push(Object.assign({}, params));
+        positionsWsObject.data.push(Object.assign({}, params, positionData));
+      } else {
+        Object.assign(positionsWsObject.data.find(v => v.symbol === params.symbol), positionData);
+      }
       await confirmSubscription(`position:${params.symbol}`, webSocket);
     },
     data: [],
@@ -281,10 +284,14 @@ function Ws(wsSettings = {}) {
     subscribe: async (params) => {
       if (!webSocket.findOnMessage(liquidationsOnMessageInstrument)) { webSocket.addOnMessage(liquidationsOnMessageInstrument) };
       if (!webSocket.findOnMessage(liquidationsOnMessagePosition)) { webSocket.addOnMessage(liquidationsOnMessagePosition) };
-      liquidationsWsObject.subscriptions.push(Object.assign({}, params));
-      const position = (await rest.getPosition(params)).data;
-      const liquidation = (await rest.getLiquidation(params)).data;
-      liquidationsWsObject.data.push(Object.assign({}, params, position, liquidation));
+      const positionData = (await rest.getPosition(params)).data;
+      const liquidationData = (await rest.getLiquidation(params)).data;
+      if (!liquidationsWsObject.subscriptions.find(v => JSON.stringify(v) === JSON.stringify(params))) {
+        liquidationsWsObject.subscriptions.push(Object.assign({}, params));
+        liquidationsWsObject.data.push(Object.assign({}, params, positionData, liquidationData));
+      } else {
+        Object.assign(liquidationsWsObject.data.find(v => v.symbol === params.symbol), positionData, liquidationData);
+      }
       await confirmSubscription(`instrument:${params.symbol}`, webSocket);
       await confirmSubscription(`position:${params.symbol}`, webSocket);
     },
@@ -318,9 +325,13 @@ function Ws(wsSettings = {}) {
   const tradesWsObject = {
     subscribe: async (params) => {
       if (!webSocket.findOnMessage(tradesOnMessage)) { webSocket.addOnMessage(tradesOnMessage) };
-      tradesWsObject.subscriptions.push(Object.assign({}, params));
-      const lastPrice = (await rest.getLastPrice(params)).data;
-      tradesWsObject.data.push({ symbol: params.symbol, side: 'buy', price: lastPrice, quantity: 0, timestamp: '' });
+      const lastPriceData = (await rest.getLastPrice(params)).data;
+      if (!tradesWsObject.subscriptions.find(v => JSON.stringify(v) === JSON.stringify(params))) {
+        tradesWsObject.subscriptions.push(Object.assign({}, params));
+        tradesWsObject.data.push({ symbol: params.symbol, side: 'buy', price: lastPriceData, quantity: 0, timestamp: '' });
+      } else {
+        Object.assign(tradesWsObject.data.find(v => v.symbol === params.symbol), { price: lastPriceData });
+      }
       await confirmSubscription(`trade:${params.symbol}`, webSocket);
     },
     data: [],
@@ -374,19 +385,21 @@ function Ws(wsSettings = {}) {
       });
     }
   };
-  const orderBooksOnClose = () => desynchronizeOrderBooks(orderBooksWsObject.data);
   /** @type {import('../../../typings/_ws').orderBooksWsObject} */
   const orderBooksWsObject = {
     subscribe: async (params) => {
       if (!webSocket.findOnMessage(orderBooksOnMessage)) { webSocket.addOnMessage(orderBooksOnMessage) };
-      if (!webSocket.findOnClose(orderBooksOnClose)) { webSocket.addOnClose(orderBooksOnClose) };
-      orderBooksWsObject.subscriptions.push(Object.assign({}, params));
-      const orderBookData = OrderBookData({
-        SYMBOL: params.symbol,
-        FROZEN_CHECK_INTERVAL: params.frozenCheckInterval,
-        PRICE_OVERLAPS_CHECK_INTERVAL: params.priceOverlapsCheckInterval,
-      });
-      orderBooksWsObject.data.push(orderBookData);
+      if (!orderBooksWsObject.subscriptions.find(v => JSON.stringify(v) === JSON.stringify(params))) {
+        orderBooksWsObject.subscriptions.push(Object.assign({}, params));
+        orderBooksWsObject.data.push(OrderBookData({
+          SYMBOL: params.symbol,
+          FROZEN_CHECK_INTERVAL: params.frozenCheckInterval,
+          PRICE_OVERLAPS_CHECK_INTERVAL: params.priceOverlapsCheckInterval,
+        }));
+      }
+      const orderBookData = orderBooksWsObject.data.find(v => v.symbol === params.symbol);
+      orderBookData.asks.length = 0;
+      orderBookData.bids.length = 0;
       await confirmSubscription(`orderBookL2:${params.symbol}`, webSocket);
     },
     data: [],
@@ -409,6 +422,7 @@ function Ws(wsSettings = {}) {
     orderBooks: orderBooksWsObject,
     orderBooksClient: OrderBooksDataClient(orderBooksWsObject),
     orderBooksServer: OrderBooksDataServer(orderBooksWsObject),
+    markPricesOptions: null,
   };
   return ws;
 }

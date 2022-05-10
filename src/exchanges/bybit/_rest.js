@@ -435,6 +435,14 @@ function Rest(restSettings = {}) {
     /**
      * 
      * 
+     * GET MARK PRICES OPTION
+     * 
+     * 
+     */
+    getMarkPricesOption: null,
+    /**
+     * 
+     * 
      * GET INSTRUMENTS SYMBOLS
      * 
      * 

@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.3.3] - 2022-05-10
+- Corrections in all exchanges _ws implementations.
 ## [2.3.2] - 2022-05-09
 - Corrected error in fixer order books.
 ## [2.3.1] - 2022-05-06

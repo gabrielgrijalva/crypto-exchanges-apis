@@ -392,6 +392,24 @@ function Rest(restSettings = {}) {
     /**
      * 
      * 
+     * GET MARK PRICES OPTION
+     * 
+     * 
+     */
+    getMarkPricesOption: async (params) => {
+      const data = {};
+      data.instrument_name = params.symbol;
+      const response = await request.public('GET', '/api/v2/public/ticker', data);
+      if (response.status >= 400) {
+        return handleResponseError(params, response.data);
+      }
+      const markPriceOption = +response.data.result.mark_price;
+      const markPriceUnderlying = +response.data.result.underlying_price;
+      return { data: { markPriceOption, markPriceUnderlying } };
+    },
+    /**
+     * 
+     * 
      * GET INSTRUMENTS SYMBOLS
      * 
      * 

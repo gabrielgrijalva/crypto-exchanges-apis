@@ -92,19 +92,6 @@ function confirmSubscription(stream, webSocketMarketStream) {
   });
 };
 /**
- * 
- * @param {import('../../../typings/_ws').orderBooksData[]} orderBooksData
- */
-function desynchronizeOrderBooks(orderBooksData) {
-  orderBooksData.forEach(orderBookData => {
-    orderBookData.asks.length = 0;
-    orderBookData.bids.length = 0;
-    orderBookData.otherData.snapshot = null;
-    orderBookData.otherData.synchronized = false;
-    orderBookData.otherData.synchronizing = false;
-  });
-};
-/**
  * @param {import('../../../typings/_rest').Rest} rest
  * @param {import('../../../typings/_ws').orderBooksData} orderBooksData
  */
@@ -167,9 +154,9 @@ function Ws(wsSettings = {}) {
    * @type {import('../../../typings/_ws').WebSocket} */
   const webSocketUserStream = WebSocket('binance-coin:user-stream', wsSettings);
   let listenKey = '';
-  let getListenKeyInterval = null;
-  webSocketUserStream.addOnOpen(() => setInterval(async () => { listenKey = (await rest._getListenKey()).data }, 1800000));
-  webSocketUserStream.addOnClose(() => clearInterval(getListenKeyInterval));
+  let listenKeyInterval = null;
+  webSocketUserStream.addOnOpen(() => listenKeyInterval = setInterval(async () => listenKey = (await rest._getListenKey()).data, 1800000));
+  webSocketUserStream.addOnClose(() => clearInterval(listenKeyInterval));
   webSocketUserStream.addOnClose(() => connectWebSocket('user', rest, webSocketUserStream, wsSettings));
   if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocketUserStream.addOnMessage((message) => console.log(JSON.parse(message))) };
   /**
@@ -180,7 +167,12 @@ function Ws(wsSettings = {}) {
    * 
    * @type {import('../../../typings/_ws').WebSocket} */
   const webSocketMarketStream = WebSocket('binance-coin:market-stream', wsSettings);
-  webSocketMarketStream.addOnClose(() => connectWebSocket('market', rest, webSocketMarketStream, wsSettings));
+  webSocketMarketStream.addOnClose(async () => {
+    await connectWebSocket('market', rest, webSocketMarketStream, wsSettings);
+    liquidationsWsObject.subscriptions.forEach(params => liquidationsWsObject.subscribe(params));
+    tradesWsObject.subscriptions.forEach(params => tradesWsObject.subscribe(params));
+    orderBooksWsObject.subscriptions.forEach(params => orderBooksWsObject.subscribe(params));
+  });
   if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocketMarketStream.addOnMessage((message) => console.log(JSON.parse(message))) };
   /**
    * 
@@ -222,7 +214,9 @@ function Ws(wsSettings = {}) {
   const ordersWsObject = {
     subscribe: async (params) => {
       if (!webSocketUserStream.findOnMessage(ordersOnMessage)) { webSocketUserStream.addOnMessage(ordersOnMessage) };
-      ordersWsObject.subscriptions.push(Object.assign({}, params));
+      if (!ordersWsObject.subscriptions.find(v => JSON.stringify(v) === JSON.stringify(params))) {
+        ordersWsObject.subscriptions.push(Object.assign({}, params));
+      }
     },
     data: null,
     events: new Events.EventEmitter(),
@@ -251,9 +245,13 @@ function Ws(wsSettings = {}) {
   const positionsWsObject = {
     subscribe: async (params) => {
       if (!webSocketUserStream.findOnMessage(positionsOnMessage)) { webSocketUserStream.addOnMessage(positionsOnMessage) };
-      positionsWsObject.subscriptions.push(Object.assign({}, params));
-      const position = (await rest.getPosition(params)).data;
-      positionsWsObject.data.push(Object.assign({}, params, position));
+      const positionData = (await rest.getPosition(params)).data;
+      if (!positionsWsObject.subscriptions.find(v => JSON.stringify(v) === JSON.stringify(params))) {
+        positionsWsObject.subscriptions.push(Object.assign({}, params));
+        positionsWsObject.data.push(Object.assign({}, params, positionData));
+      } else {
+        Object.assign(positionsWsObject.data.find(v => v.symbol === params.symbol), positionData);
+      }
     },
     data: [],
     events: null,
@@ -295,10 +293,14 @@ function Ws(wsSettings = {}) {
     subscribe: async (params) => {
       if (!webSocketUserStream.findOnMessage(liquidationsOnMessageUserStream)) { webSocketUserStream.addOnMessage(liquidationsOnMessageUserStream) };
       if (!webSocketMarketStream.findOnMessage(liquidationsOnMessageMarketStream)) { webSocketMarketStream.addOnMessage(liquidationsOnMessageMarketStream) };
-      liquidationsWsObject.subscriptions.push(Object.assign({}, params));
-      const position = (await rest.getPosition(params)).data;
-      const liquidation = (await rest.getLiquidation(params)).data;
-      liquidationsWsObject.data.push(Object.assign({}, params, position, liquidation));
+      const positionData = (await rest.getPosition(params)).data;
+      const liquidationData = (await rest.getLiquidation(params)).data;
+      if (!liquidationsWsObject.subscriptions.find(v => JSON.stringify(v) === JSON.stringify(params))) {
+        liquidationsWsObject.subscriptions.push(Object.assign({}, params));
+        liquidationsWsObject.data.push(Object.assign({}, params, positionData, liquidationData));
+      } else {
+        Object.assign(liquidationsWsObject.data.find(v => v.symbol === params.symbol), positionData, liquidationData);
+      }
       await confirmSubscription(`${params.symbol.toLowerCase()}@markPrice`, webSocketMarketStream);
     },
     data: [],
@@ -328,9 +330,13 @@ function Ws(wsSettings = {}) {
   const tradesWsObject = {
     subscribe: async (params) => {
       if (!webSocketMarketStream.findOnMessage(tradesOnMessage)) { webSocketMarketStream.addOnMessage(tradesOnMessage) };
-      tradesWsObject.subscriptions.push(Object.assign({}, params));
-      const lastPrice = (await rest.getLastPrice(params)).data;
-      tradesWsObject.data.push({ symbol: params.symbol, side: 'buy', price: lastPrice, quantity: 0, timestamp: '' });
+      const lastPriceData = (await rest.getLastPrice(params)).data;
+      if (!tradesWsObject.subscriptions.find(v => JSON.stringify(v) === JSON.stringify(params))) {
+        tradesWsObject.subscriptions.push(Object.assign({}, params));
+        tradesWsObject.data.push({ symbol: params.symbol, side: 'buy', price: lastPriceData, quantity: 0, timestamp: '' });
+      } else {
+        Object.assign(tradesWsObject.data.find(v => v.symbol === params.symbol), { price: lastPriceData });
+      }
       await confirmSubscription(`${params.symbol.toLowerCase()}@trade`, webSocketMarketStream);
     },
     data: [],
@@ -379,22 +385,24 @@ function Ws(wsSettings = {}) {
       orderBookData.updateOrderByPriceBid({ id: +v[0], price: +v[0], quantity: +v[1] });
     });
   };
-  const orderBooksOnClose = () => desynchronizeOrderBooks(orderBooksWsObject.data);
   /** @type {import('../../../typings/_ws').orderBooksWsObject} */
   const orderBooksWsObject = {
     subscribe: async (params) => {
       if (!webSocketMarketStream.findOnMessage(orderBooksOnMessage)) { webSocketMarketStream.addOnMessage(orderBooksOnMessage) };
-      if (!webSocketMarketStream.findOnClose(orderBooksOnClose)) { webSocketMarketStream.addOnClose(orderBooksOnClose) };
-      orderBooksWsObject.subscriptions.push(Object.assign({}, params));
-      const orderBookData = OrderBookData({
-        SYMBOL: params.symbol,
-        FROZEN_CHECK_INTERVAL: params.frozenCheckInterval,
-        PRICE_OVERLAPS_CHECK_INTERVAL: params.priceOverlapsCheckInterval,
-      });
+      if (!orderBooksWsObject.subscriptions.find(v => JSON.stringify(v) === JSON.stringify(params))) {
+        orderBooksWsObject.subscriptions.push(Object.assign({}, params));
+        orderBooksWsObject.data.push(OrderBookData({
+          SYMBOL: params.symbol,
+          FROZEN_CHECK_INTERVAL: params.frozenCheckInterval,
+          PRICE_OVERLAPS_CHECK_INTERVAL: params.priceOverlapsCheckInterval,
+        }));
+      }
+      const orderBookData = orderBooksWsObject.data.find(v => v.symbol === params.symbol);
+      orderBookData.asks.length = 0;
+      orderBookData.bids.length = 0;
       orderBookData.otherData.snapshot = null;
       orderBookData.otherData.synchronized = false;
       orderBookData.otherData.synchronizing = false;
-      orderBooksWsObject.data.push(orderBookData);
       await confirmSubscription(`${params.symbol.toLowerCase()}@depth@100ms`, webSocketMarketStream);
     },
     data: [],
@@ -417,6 +425,7 @@ function Ws(wsSettings = {}) {
     orderBooks: orderBooksWsObject,
     orderBooksClient: OrderBooksDataClient(orderBooksWsObject),
     orderBooksServer: OrderBooksDataServer(orderBooksWsObject),
+    markPricesOptions: null,
   };
   return ws;
 }
