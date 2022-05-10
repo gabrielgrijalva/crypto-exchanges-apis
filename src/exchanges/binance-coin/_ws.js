@@ -167,9 +167,9 @@ function Ws(wsSettings = {}) {
    * @type {import('../../../typings/_ws').WebSocket} */
   const webSocketUserStream = WebSocket('binance-coin:user-stream', wsSettings);
   let listenKey = '';
-  let getListenKeyInterval = null;
-  webSocketUserStream.addOnOpen(() => setInterval(async () => { listenKey = (await rest._getListenKey()).data }, 1800000));
-  webSocketUserStream.addOnClose(() => clearInterval(getListenKeyInterval));
+  let listenKeyInterval = null;
+  webSocketUserStream.addOnOpen(() => listenKeyInterval = setInterval(async () => listenKey = (await rest._getListenKey()).data, 1800000));
+  webSocketUserStream.addOnClose(() => clearInterval(listenKeyInterval));
   webSocketUserStream.addOnClose(() => connectWebSocket('user', rest, webSocketUserStream, wsSettings));
   if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocketUserStream.addOnMessage((message) => console.log(JSON.parse(message))) };
   /**
