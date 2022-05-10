@@ -88,6 +88,7 @@ declare namespace RestN {
   type getPositionParams = {
     symbol: string;
   }
+  type getPositionOptionParams = getPositionParams;
   type getLastPriceParams = {
     symbol: string;
   }
@@ -104,8 +105,8 @@ declare namespace RestN {
   type _getOrderBookParams = {
     symbol: string;
   }
-  type params = createOrderParams | createOrdersParams | cancelOrderParams | cancelOrdersParams | cancelOrdersAllParams | updateOrderParams | updateOrdersParams
-    | getEquityParams | getCandlesParams | getPositionParams | getLastPriceParams | getLiquidationParams | getFundingRatesParams | getMarkPricesOptionParams | _getOrderBookParams | null;
+  type params = createOrderParams | createOrdersParams | cancelOrderParams | cancelOrdersParams | cancelOrdersAllParams | updateOrderParams | updateOrdersParams | getEquityParams
+    | getCandlesParams | getPositionParams | getPositionOptionParams | getLastPriceParams | getLiquidationParams | getFundingRatesParams | getMarkPricesOptionParams | _getOrderBookParams | null;
   /**
    * 
    * 
@@ -133,6 +134,10 @@ declare namespace RestN {
     pxB: number;
     qtyS: number;
     qtyB: number;
+  };
+  type getPositionOptionResponseData = getPositionResponseData & {
+    vegaS: number;
+    vegaB: number;
   };
   type getLastPriceResponseData = number;
   type getLiquidationResponseData = {
@@ -244,6 +249,7 @@ declare namespace RestN {
     getEquity(params: getEquityParams): Promise<RestResponse<getEquityResponseData>>;
     getCandles(params: getCandlesParams): Promise<RestResponse<getCandlesResponseData>>;
     getPosition(params: getPositionParams): Promise<RestResponse<getPositionResponseData>>;
+    getPositionOption(params: getPositionOptionParams): Promise<RestResponse<getPositionOptionResponseData>>;
     getLastPrice(params: getLastPriceParams): Promise<RestResponse<getLastPriceResponseData>>;
     getLiquidation(params: getLiquidationParams): Promise<RestResponse<getLiquidationResponseData>>;
     getFundingRates(params: getFundingRatesParams): Promise<RestResponse<getFundingRatesResponseData>>;

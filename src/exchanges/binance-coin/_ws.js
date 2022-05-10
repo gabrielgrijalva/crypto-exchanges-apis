@@ -420,6 +420,7 @@ function Ws(wsSettings = {}) {
     connect: connectWebSockets,
     orders: ordersWsObject,
     positions: positionsWsObject,
+    positionsOptions: null,
     liquidations: liquidationsWsObject,
     trades: tradesWsObject,
     orderBooks: orderBooksWsObject,
