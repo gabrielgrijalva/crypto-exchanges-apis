@@ -112,21 +112,6 @@ declare namespace WsN {
    * 
    * 
    * 
-   * WS POSITIONS OPTIONS
-   * 
-   * 
-   * 
-   */
-  type positionsOptionsParams = positionsParams;
-  type positionsOptionsData = positionsData & {
-    vegaS: number;
-    vegaB: number;
-  }
-  type positionsOptionsWsObject = { subscribe(params: positionsOptionsParams): Promise<void>; data: positionsOptionsData[]; events: null; subscriptions: positionsOptionsParams[] };
-  /**
-   * 
-   * 
-   * 
    * WS LIQUIDATIONS
    * 
    * 
@@ -286,7 +271,6 @@ declare namespace WsN {
     connect(): Promise<void>;
     orders: ordersWsObject;
     positions: positionsWsObject;
-    positionsOptions: positionsOptionsWsObject;
     liquidations: liquidationsWsObject;
     trades: tradesWsObject;
     orderBooks: orderBooksWsObject;

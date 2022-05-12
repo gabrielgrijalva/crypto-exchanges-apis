@@ -180,7 +180,6 @@ function Ws(wsSettings = {}) {
     await connectWebSocket(webSocket, wsSettings);
     ordersWsObject.subscriptions.forEach(params => ordersWsObject.subscribe(params));
     positionsWsObject.subscriptions.forEach(params => positionsWsObject.subscribe(params));
-    positionsOptionsWsObject.subscriptions.forEach(params => positionsOptionsWsObject.subscribe(params));
     liquidationsWsObject.subscriptions.forEach(params => liquidationsWsObject.subscribe(params));
     tradesWsObject.subscriptions.forEach(params => tradesWsObject.subscribe(params));
     orderBooksWsObject.subscriptions.forEach(params => orderBooksWsObject.subscribe(params));
@@ -270,44 +269,6 @@ function Ws(wsSettings = {}) {
         positionsWsObject.data.push(Object.assign({}, params, positionData));
       } else {
         Object.assign(positionsWsObject.data.find(v => v.symbol === params.symbol), positionData);
-      }
-      await confirmSubscription('private', `user.changes.${params.symbol}.raw`, webSocket);
-    },
-    data: [],
-    events: null,
-    subscriptions: [],
-  };
-  /** 
-   * 
-   * 
-   * POSITIONS OPTIONS
-   * 
-   * 
-   */
-  const positionsOptionsOnMessage = (message) => {
-    const messageParse = JSON.parse(message);
-    if (!messageParse.params || !messageParse.params.channel.includes('user.changes')) { return };
-    messageParse.params.data.positions.forEach(changeEvent => {
-      const positionOptionData = positionsOptionsWsObject.data.find(v => v.symbol === changeEvent.instrument_name);
-      if (!positionOptionData) { return };
-      positionOptionData.pxS = changeEvent.direction === 'sell' ? +changeEvent.average_price : 0;
-      positionOptionData.pxB = changeEvent.direction === 'buy' ? +changeEvent.average_price : 0;
-      positionOptionData.qtyS = changeEvent.direction === 'sell' ? Math.abs(+changeEvent.size) : 0;
-      positionOptionData.qtyB = changeEvent.direction === 'buy' ? Math.abs(+changeEvent.size) : 0;
-      positionOptionData.vegaS = changeEvent.direction === 'sell' ? +changeEvent.vega : 0;
-      positionOptionData.vegaB = changeEvent.direction === 'buy' ? +changeEvent.vega : 0;
-    });
-  };
-  /** @type {import('../../../typings/_ws').positionsOptionsWsObject} */
-  const positionsOptionsWsObject = {
-    subscribe: async (params) => {
-      if (!webSocket.findOnMessage(positionsOptionsOnMessage)) { webSocket.addOnMessage(positionsOptionsOnMessage) };
-      const positionOptionData = (await rest.getPositionOption(params)).data;
-      if (!positionsOptionsWsObject.subscriptions.find(v => JSON.stringify(v) === JSON.stringify(params))) {
-        positionsOptionsWsObject.subscriptions.push(Object.assign({}, params));
-        positionsOptionsWsObject.data.push(Object.assign({}, params, positionOptionData));
-      } else {
-        Object.assign(positionsOptionsWsObject.data.find(v => v.symbol === params.symbol), positionOptionData);
       }
       await confirmSubscription('private', `user.changes.${params.symbol}.raw`, webSocket);
     },
@@ -496,7 +457,6 @@ function Ws(wsSettings = {}) {
     connect: connectWebSockets,
     orders: ordersWsObject,
     positions: positionsWsObject,
-    positionsOptions: positionsOptionsWsObject,
     liquidations: liquidationsWsObject,
     trades: tradesWsObject,
     orderBooks: orderBooksWsObject,
