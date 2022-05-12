@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.3.4] - 2022-05-12
+- Removed unnecessary position options implementation.
 ## [2.3.3] - 2022-05-10
 - Corrections in all exchanges _ws implementations.
 ## [2.3.2] - 2022-05-09
