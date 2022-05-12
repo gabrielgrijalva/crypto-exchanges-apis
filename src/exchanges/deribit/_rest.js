@@ -335,30 +335,6 @@ function Rest(restSettings = {}) {
     /**
      * 
      * 
-     * GET POSITION OPTION
-     * 
-     * 
-     */
-    getPositionOption: async (params) => {
-      const data = {};
-      data.instrument_name = params.symbol;
-      const response = await request.private('GET', '/api/v2/private/get_position', data);
-      if (response.status >= 400) {
-        return handleResponseError(params, response.data);
-      }
-      const positionOptionResult = response.data.result;
-      const qtyS = positionOptionResult.direction === 'sell' ? Math.abs(+positionOptionResult.size) : 0;
-      const qtyB = positionOptionResult.direction === 'buy' ? Math.abs(+positionOptionResult.size) : 0;
-      const pxS = positionOptionResult.direction === 'sell' ? +positionOptionResult.average_price : 0;
-      const pxB = positionOptionResult.direction === 'buy' ? +positionOptionResult.average_price : 0;
-      const vegaS = positionOptionResult.direction === 'sell' ? +positionOptionResult.vega : 0;
-      const vegaB = positionOptionResult.direction === 'buy' ? +positionOptionResult.vega : 0;
-      const position = { qtyS, qtyB, pxS, pxB, vegaS, vegaB };
-      return { data: position };
-    },
-    /**
-     * 
-     * 
      * GET LAST PRICE
      * 
      * 

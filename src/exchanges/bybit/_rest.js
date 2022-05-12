@@ -364,14 +364,6 @@ function Rest(restSettings = {}) {
     /**
      * 
      * 
-     * GET POSITION OPTION
-     * 
-     * 
-     */
-    getPositionOption: null,
-    /**
-     * 
-     * 
      * GET LAST PRICE
      * 
      * 
