@@ -183,6 +183,7 @@ function Ws(wsSettings = {}) {
     liquidationsWsObject.subscriptions.forEach(params => liquidationsWsObject.subscribe(params));
     tradesWsObject.subscriptions.forEach(params => tradesWsObject.subscribe(params));
     orderBooksWsObject.subscriptions.forEach(params => orderBooksWsObject.subscribe(params));
+    markPricesOptionsWsObject.subscriptions.forEach(params => markPricesOptionsWsObject.subscribe(params));
   });
   if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocket.addOnMessage((message) => console.log(JSON.parse(message))) };
   /**
@@ -377,35 +378,6 @@ function Ws(wsSettings = {}) {
   /** 
    * 
    * 
-   * MARK PRICES OPTIONS
-   * 
-   * 
-   */
-  const markPricesOptionsOnMessage = (message) => {
-    const messageParse = JSON.parse(message);
-    if (!messageParse.params || !messageParse.params.channel.includes('ticker')) { return };
-    const tickerEvent = messageParse.params.data;
-    const markPricesData = markPricesOptionsWsObject.data.find(v => v.symbol === tickerEvent.instrument_name);
-    if (!markPricesData) { return };
-    markPricesData.markPriceOption = +tickerEvent.mark_price ? +tickerEvent.mark_price : markPricesData.markPriceOption;
-    markPricesData.markPriceUnderlying = +tickerEvent.underlying_price ? +tickerEvent.underlying_price : markPricesData.markPriceUnderlying;
-  };
-  /** @type {import('../../../typings/_ws').markPricesOptionsWsObject} */
-  const markPricesOptionsWsObject = {
-    subscribe: async (params) => {
-      if (!webSocket.findOnMessage(markPricesOptionsOnMessage)) { webSocket.addOnMessage(markPricesOptionsOnMessage) };
-      markPricesOptionsWsObject.subscriptions.push(Object.assign({}, params));
-      const markPrices = (await rest.getMarkPricesOption(params)).data;
-      markPricesOptionsWsObject.data.push(Object.assign({}, markPrices, params));
-      await confirmSubscription('public', `ticker.${params.symbol}.100ms`, webSocket);
-    },
-    data: [],
-    events: null,
-    subscriptions: [],
-  };
-  /** 
-   * 
-   * 
    * ORDER BOOKS
    * 
    * 
@@ -440,6 +412,35 @@ function Ws(wsSettings = {}) {
       orderBookData.asks.length = 0;
       orderBookData.bids.length = 0;
       await confirmSubscription('public', `book.${params.symbol}.100ms`, webSocket);
+    },
+    data: [],
+    events: null,
+    subscriptions: [],
+  };
+  /** 
+   * 
+   * 
+   * MARK PRICES OPTIONS
+   * 
+   * 
+   */
+  const markPricesOptionsOnMessage = (message) => {
+    const messageParse = JSON.parse(message);
+    if (!messageParse.params || !messageParse.params.channel.includes('ticker')) { return };
+    const tickerEvent = messageParse.params.data;
+    const markPricesData = markPricesOptionsWsObject.data.find(v => v.symbol === tickerEvent.instrument_name);
+    if (!markPricesData) { return };
+    markPricesData.markPriceOption = +tickerEvent.mark_price ? +tickerEvent.mark_price : markPricesData.markPriceOption;
+    markPricesData.markPriceUnderlying = +tickerEvent.underlying_price ? +tickerEvent.underlying_price : markPricesData.markPriceUnderlying;
+  };
+  /** @type {import('../../../typings/_ws').markPricesOptionsWsObject} */
+  const markPricesOptionsWsObject = {
+    subscribe: async (params) => {
+      if (!webSocket.findOnMessage(markPricesOptionsOnMessage)) { webSocket.addOnMessage(markPricesOptionsOnMessage) };
+      markPricesOptionsWsObject.subscriptions.push(Object.assign({}, params));
+      const markPrices = (await rest.getMarkPricesOption(params)).data;
+      markPricesOptionsWsObject.data.push(Object.assign({}, markPrices, params));
+      await confirmSubscription('public', `ticker.${params.symbol}.100ms`, webSocket);
     },
     data: [],
     events: null,

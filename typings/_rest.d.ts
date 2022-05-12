@@ -104,8 +104,8 @@ declare namespace RestN {
   type _getOrderBookParams = {
     symbol: string;
   }
-  type params = createOrderParams | createOrdersParams | cancelOrderParams | cancelOrdersParams | cancelOrdersAllParams | updateOrderParams | updateOrdersParams
-    | getEquityParams | getCandlesParams | getPositionParams | getLastPriceParams | getLiquidationParams | getFundingRatesParams | getMarkPricesOptionParams | _getOrderBookParams | null;
+  type params = createOrderParams | createOrdersParams | cancelOrderParams | cancelOrdersParams | cancelOrdersAllParams | updateOrderParams | updateOrdersParams | getEquityParams
+    | getCandlesParams | getPositionParams | getLastPriceParams | getLiquidationParams | getFundingRatesParams | getMarkPricesOptionParams | _getOrderBookParams | null;
   /**
    * 
    * 
