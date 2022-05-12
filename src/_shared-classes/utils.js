@@ -394,6 +394,14 @@ function Utils(utilsSettings) {
       }
       throw new Error('Could not find function of getChangePxByPercentage');
     })(),
+    /**
+     * 
+     * 
+     * GET CHANGE PX BY PERCENTAGE
+     * 
+     * 
+     */
+    getOptionStrikePxFromSymbol: null,
   };
   return utils;
 }

@@ -17,6 +17,7 @@ const UtilsFactory = require('../../_shared-classes/utils');
 function Utils(utilsSettings) {
   const utils = UtilsFactory(utilsSettings);
   utils.getOrderId = () => uuid();
+  utils.getOptionStrikePxFromSymbol = (symbol) => +symbol.split('-')[2];
   return utils;
 };
 module.exports = Utils;
