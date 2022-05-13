@@ -53,6 +53,7 @@ declare namespace UtilsN {
     getNBValueFromPosition(px: number, qty: number): number;
     getNQValueFromPosition(px: number, qty: number): number;
     getChangePxByPercentage(px: number, per: number): number;
+    getOptionKindFromSymbol(symbol: string): 'call' | 'put';
     getOptionStrikePxFromSymbol(symbol: string): number;
   }
 }

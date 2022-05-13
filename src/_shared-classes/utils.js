@@ -401,6 +401,14 @@ function Utils(utilsSettings) {
      * 
      * 
      */
+    getOptionKindFromSymbol: null,
+    /**
+     * 
+     * 
+     * GET CHANGE PX BY PERCENTAGE
+     * 
+     * 
+     */
     getOptionStrikePxFromSymbol: null,
   };
   return utils;
