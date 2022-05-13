@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.3.7] - 2022-05-13
+- Corrected error in typings definitions.
 ## [2.3.6] - 2022-05-13
 - Implemented new utils get option kind function.
 ## [2.3.5] - 2022-05-12
