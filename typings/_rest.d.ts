@@ -170,9 +170,9 @@ declare namespace RestN {
     'post-only-reject' |
     'insufficient-funds' |
     'request-not-accepted';
-  type RestErrorResponseData = {
+  type RestErrorResponseData<T> = {
     type: restErrorResponseDataType;
-    params: params;
+    params: T;
     exchange: any;
   }
   /**
@@ -218,7 +218,7 @@ declare namespace RestN {
    */
   type RestResponse<T> = {
     data?: T;
-    error?: RestErrorResponseData;
+    error?: RestErrorResponseData<T>;
   }
   export interface Rest {
     request: Request;
