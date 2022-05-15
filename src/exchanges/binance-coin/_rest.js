@@ -300,7 +300,23 @@ function Rest(restSettings = {}) {
      * 
      * 
      */
-    updateOrder: null,
+    updateOrder: async (params) => {
+      const data = {};
+      data.side = params.side.toUpperCase();
+      data.symbol = params.symbol;
+      data.origClientOrderId = params.id;
+      if (params.price) {
+        data.price = `${params.price}`;
+      }
+      if (params.quantity) {
+        data.quantity = `${params.quantity}`;
+      }
+      const response = await request.private('PUT', '/dapi/v1/order', data);
+      if (response.status >= 400) {
+        return handleResponseError(params, response.data);
+      }
+      return { data: params };
+    },
     /**
      * 
      * 
@@ -308,7 +324,33 @@ function Rest(restSettings = {}) {
      * 
      * 
      */
-    updateOrders: null,
+    updateOrders: async (params) => {
+      const data = {};
+      data.batchOrders = `[${params.reduce((a, v) => {
+        const orderData = {};
+        orderData.side = v.side.toUpperCase();
+        orderData.symbol = v.symbol;
+        orderData.quantity = `${v.quantity}`;
+        orderData.origClientOrderId = v.id;
+        if (v.price) {
+          orderData.price = `${v.price}`;
+        }
+        if (v.quantity) {
+          orderData.quantity = `${v.quantity}`;
+        }
+        return `${!a ? '' : `${a},`}${JSON.stringify(orderData)}`;
+      }, '')}]`;
+      const response = await request.private('PUT', '/dapi/v1/batchOrders', data);
+      if (response.status >= 400) {
+        return handleResponseError(params, response.data);
+      }
+      return response.data.map((v, i) => {
+        if (v.code && v.code < 0) {
+          return handleResponseError(params[i], v);
+        }
+        return { data: params[i] };
+      });
+    },
     /**
      * 
      * 

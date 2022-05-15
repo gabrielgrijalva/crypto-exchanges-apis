@@ -200,7 +200,7 @@ function Ws(wsSettings = {}) {
     if (messageParse.e !== 'ORDER_TRADE_UPDATE') { return };
     const orderEvent = messageParse.o;
     if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.s)) { return };
-    if (orderEvent.x === 'NEW') {
+    if (orderEvent.x === 'NEW' || orderEvent.x === 'AMENDMENT') {
       ordersWsObject.events.emit('creations-updates', [createCreationUpdate(messageParse)]);
     }
     if (orderEvent.x === 'TRADE' || orderEvent.x === 'CALCULATED') {
