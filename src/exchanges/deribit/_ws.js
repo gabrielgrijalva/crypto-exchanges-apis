@@ -258,6 +258,7 @@ function Ws(wsSettings = {}) {
       positionData.qtyS = changeEvent.direction === 'sell' ? Math.abs(+changeEvent.size) : 0;
       positionData.qtyB = changeEvent.direction === 'buy' ? Math.abs(+changeEvent.size) : 0;
     });
+    positionsWsObject.events.emit('update', positionsWsObject.data);
   };
   /** @type {import('../../../typings/_ws').positionsWsObject} */
   const positionsWsObject = {
@@ -273,7 +274,7 @@ function Ws(wsSettings = {}) {
       await confirmSubscription('private', `user.changes.${params.symbol}.raw`, webSocket);
     },
     data: [],
-    events: null,
+    events: new Events.EventEmitter(),
     subscriptions: [],
   };
   /** 

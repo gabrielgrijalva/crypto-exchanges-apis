@@ -245,6 +245,7 @@ function Ws(wsSettings = {}) {
       positionData.qtyS = positionEvent.side === 'Sell' ? +positionEvent.size : 0;
       positionData.qtyB = positionEvent.side === 'Buy' ? +positionEvent.size : 0;
     });
+    positionsWsObject.events.emit('update', positionsWsObject.data);
   };
   /** @type {import('../../../typings/_ws').positionsWsObject} */
   const positionsWsObject = {
@@ -260,7 +261,7 @@ function Ws(wsSettings = {}) {
       await confirmSubscription('position', webSocket);
     },
     data: [],
-    events: null,
+    events: new Events.EventEmitter,
     subscriptions: [],
   };
   /** 

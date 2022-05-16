@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.3.9] - 2022-05-16
+- Implemented positions ws events emitter.
 ## [2.3.8] - 2022-05-16
 - Implemented binance-usds.
 ## [2.3.7] - 2022-05-13

@@ -107,7 +107,13 @@ declare namespace WsN {
     qtyS: number;
     qtyB: number;
   }
-  type positionsWsObject = { subscribe(params: positionsParams): Promise<void>; data: positionsData[]; events: null; subscriptions: positionsParams[] };
+  type positionsEventEmitter = Events.EventEmitter & {
+    // Emit 'event' functions
+    emit(event: 'update', data: positionsData[]);
+    // On 'event' functions
+    on(event: 'update', listener: (data: positionsData[]) => void);
+  }
+  type positionsWsObject = { subscribe(params: positionsParams): Promise<void>; data: positionsData[]; events: positionsEventEmitter; subscriptions: positionsParams[] };
   /**
    * 
    * 
