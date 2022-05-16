@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.3.8] - 2022-05-16
+- Implemented binance-usds.
 ## [2.3.7] - 2022-05-13
 - Corrected error in typings definitions.
 ## [2.3.6] - 2022-05-13
