@@ -230,6 +230,7 @@ function Ws(wsSettings = {}) {
       positionData.qtyS = +positionEvent.currentQty < 0 ? Math.abs(+positionEvent.currentQty) : 0;
       positionData.qtyB = +positionEvent.currentQty > 0 ? Math.abs(+positionEvent.currentQty) : 0;
     });
+    positionsWsObject.events.emit('update', positionsWsObject.data);
   };
   /** @type {import('../../../typings/_ws').positionsWsObject} */
   const positionsWsObject = {
@@ -245,7 +246,7 @@ function Ws(wsSettings = {}) {
       await confirmSubscription(`position:${params.symbol}`, webSocket);
     },
     data: [],
-    events: null,
+    events: new Events.EventEmitter(),
     subscriptions: [],
   };
   /** 

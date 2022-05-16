@@ -240,6 +240,7 @@ function Ws(wsSettings = {}) {
       positionData.qtyS = +positionEvent.pa < 0 ? Math.abs(+positionEvent.pa) : 0;
       positionData.qtyB = +positionEvent.pa > 0 ? Math.abs(+positionEvent.pa) : 0;
     });
+    positionsWsObject.events.emit('update', positionsWsObject.data);
   };
   /** @type {import('../../../typings/_ws').positionsWsObject} */
   const positionsWsObject = {
@@ -254,7 +255,7 @@ function Ws(wsSettings = {}) {
       }
     },
     data: [],
-    events: null,
+    events: new Events.EventEmitter(),
     subscriptions: [],
   };
   /** 

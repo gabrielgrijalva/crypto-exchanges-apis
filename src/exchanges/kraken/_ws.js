@@ -235,6 +235,7 @@ function Ws(wsSettings = {}) {
       positionData.pxB = positionEvent && positionEvent.balance > 0 ? positionEvent.entry_price : 0;
       positionData.qtyB = positionEvent && positionEvent.balance > 0 ? Math.abs(positionEvent.balance) : 0;
     });
+    positionsWsObject.events.emit('update', positionsWsObject.data);
   };
   /** @type {import('../../../typings/_ws').positionsWsObject} */
   const positionsWsObject = {
@@ -250,7 +251,7 @@ function Ws(wsSettings = {}) {
       await confirmSubscription('open_positions', '', webSocket, wsSettings);
     },
     data: [],
-    events: null,
+    events: new Events.EventEmitter(),
     subscriptions: [],
   };
   /** 
