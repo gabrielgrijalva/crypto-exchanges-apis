@@ -121,7 +121,7 @@ declare namespace WsN {
     asset: string;
     symbol: string;
   }
-  type liquidationsData = positionsData & {
+  type liquidationsData = (liquidationsParams & positionsData) & {
     markPx: number;
     liqPxS: number;
     liqPxB: number;

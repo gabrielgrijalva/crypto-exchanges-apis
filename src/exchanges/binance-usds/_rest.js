@@ -153,7 +153,7 @@ function getPrivateFunction(restSettings) {
  */
 function Rest(restSettings = {}) {
   // Default rest restSettings values
-  restSettings.URL = restSettings.URL || 'https://dapi.binance.com';
+  restSettings.URL = restSettings.URL || 'https://fapi.binance.com';
   restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || false;
   restSettings.REQUESTS_REFILL_LIMIT = restSettings.REQUESTS_REFILL_LIMIT || 1200;
   restSettings.REQUESTS_REFILL_AMOUNT = restSettings.REQUESTS_REFILL_AMOUNT || 1200;
@@ -199,7 +199,7 @@ function Rest(restSettings = {}) {
         data.price = `${params.price}`;
         data.timeInForce = 'GTX';
       }
-      const response = await request.private('POST', '/dapi/v1/order', data);
+      const response = await request.private('POST', '/fapi/v1/order', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -227,7 +227,7 @@ function Rest(restSettings = {}) {
         }
         return `${!a ? '' : `${a},`}${JSON.stringify(orderData)}`;
       }, '')}]`;
-      const response = await request.private('POST', '/dapi/v1/batchOrders', data);
+      const response = await request.private('POST', '/fapi/v1/batchOrders', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -249,7 +249,7 @@ function Rest(restSettings = {}) {
       const data = {};
       data.symbol = params.symbol;
       data.origClientOrderId = params.id;
-      const response = await request.private('DELETE', '/dapi/v1/order', data);
+      const response = await request.private('DELETE', '/fapi/v1/order', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -266,7 +266,7 @@ function Rest(restSettings = {}) {
       const data = {};
       data.symbol = params[0].symbol;
       data.origClientOrderIdList = `[${params.reduce((a, v) => `${!a ? '' : `${a},`}"${v.id}"`, '')}]`;
-      const response = await request.private('DELETE', '/dapi/v1/batchOrders', data);
+      const response = await request.private('DELETE', '/fapi/v1/batchOrders', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -287,7 +287,7 @@ function Rest(restSettings = {}) {
     cancelOrdersAll: async (params) => {
       const data = {};
       data.symbol = params.symbol;
-      const response = await request.private('DELETE', '/dapi/v1/allOpenOrders', data);
+      const response = await request.private('DELETE', '/fapi/v1/allOpenOrders', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -302,16 +302,15 @@ function Rest(restSettings = {}) {
      */
     updateOrder: async (params) => {
       const data = {};
-      data.side = params.side.toUpperCase();
-      data.symbol = params.symbol;
       data.origClientOrderId = params.id;
+      data.quantity = `${params.quantity}`;
       if (params.price) {
         data.price = `${params.price}`;
       }
       if (params.quantity) {
         data.quantity = `${params.quantity}`;
       }
-      const response = await request.private('PUT', '/dapi/v1/order', data);
+      const response = await request.private('PUT', '/fapi/v1/order', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -324,33 +323,7 @@ function Rest(restSettings = {}) {
      * 
      * 
      */
-    updateOrders: async (params) => {
-      const data = {};
-      data.batchOrders = `[${params.reduce((a, v) => {
-        const orderData = {};
-        orderData.side = v.side.toUpperCase();
-        orderData.symbol = v.symbol;
-        orderData.quantity = `${v.quantity}`;
-        orderData.origClientOrderId = v.id;
-        if (v.price) {
-          orderData.price = `${v.price}`;
-        }
-        if (v.quantity) {
-          orderData.quantity = `${v.quantity}`;
-        }
-        return `${!a ? '' : `${a},`}${JSON.stringify(orderData)}`;
-      }, '')}]`;
-      const response = await request.private('PUT', '/dapi/v1/batchOrders', data);
-      if (response.status >= 400) {
-        return handleResponseError(params, response.data);
-      }
-      return response.data.map((v, i) => {
-        if (v.code && v.code < 0) {
-          return handleResponseError(params[i], v);
-        }
-        return { data: params[i] };
-      });
-    },
+    updateOrders: null,
     /**
      * 
      * 
@@ -360,7 +333,7 @@ function Rest(restSettings = {}) {
      */
     getEquity: async (params) => {
       const data = {};
-      const response = await request.private('GET', '/dapi/v1/account', data);
+      const response = await request.private('GET', '/fapi/v1/account', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -385,7 +358,7 @@ function Rest(restSettings = {}) {
         : moment.utc(params.start).add(17193600000, 'milliseconds').valueOf();
       data.endTime = data.endTime < timestamp ? data.endTime : timestamp;
       data.limit = 1500;
-      const response = await request.public('GET', '/dapi/v1/klines', data);
+      const response = await request.public('GET', '/fapi/v1/klines', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -410,7 +383,7 @@ function Rest(restSettings = {}) {
      */
     getPosition: async (params) => {
       const data = {};
-      const response = await request.private('GET', '/dapi/v1/positionRisk', data);
+      const response = await request.private('GET', '/fapi/v1/positionRisk', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -432,7 +405,7 @@ function Rest(restSettings = {}) {
     getLastPrice: async (params) => {
       const data = {};
       data.symbol = params.symbol;
-      const response = await request.public('GET', '/dapi/v1/trades', data);
+      const response = await request.public('GET', '/fapi/v1/trades', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -450,19 +423,19 @@ function Rest(restSettings = {}) {
       // Get premium index 
       const premiumIndexData = {};
       premiumIndexData.symbol = params.symbol;
-      const premiumIndexResponse = await request.public('GET', '/dapi/v1/premiumIndex', premiumIndexData);
+      const premiumIndexResponse = await request.public('GET', '/fapi/v1/premiumIndex', premiumIndexData);
       if (premiumIndexResponse.status >= 400) {
         return handleResponseError(params, premiumIndexResponse.data);
       }
       // Get position
       const positionData = {};
-      const positionResponse = await request.private('GET', '/dapi/v1/positionRisk', positionData);
+      const positionResponse = await request.private('GET', '/fapi/v1/positionRisk', positionData);
       if (positionResponse.status >= 400) {
         return handleResponseError(params, positionResponse.data);
       }
       // Calculate liquidation
       const position = positionResponse.data.find(v => v.symbol === params.symbol);
-      const markPx = +premiumIndexResponse.data[0].markPrice;
+      const markPx = +premiumIndexResponse.data.markPrice;
       const liqPxS = position && +position.positionAmt < 0 ? +position.liquidationPrice : 0;
       const liqPxB = position && +position.positionAmt > 0 ? +position.liquidationPrice : 0;
       const liquidation = { markPx, liqPxS, liqPxB, };
@@ -478,11 +451,11 @@ function Rest(restSettings = {}) {
     getFundingRates: async (params) => {
       const data = {};
       data.symbol = params.symbol;
-      const response = await request.public('GET', '/dapi/v1/premiumIndex', data);
+      const response = await request.public('GET', '/fapi/v1/premiumIndex', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      const responseData = response.data[0];
+      const responseData = response.data;
       const current = responseData ? +responseData.lastFundingRate : 0;
       const estimated = responseData ? +responseData.lastFundingRate : 0;
       const fundings = { current, estimated, };
@@ -505,7 +478,7 @@ function Rest(restSettings = {}) {
      */
     getInstrumentsSymbols: async () => {
       const data = {};
-      const response = await request.public('GET', '/dapi/v1/exchangeInfo', data);
+      const response = await request.public('GET', '/fapi/v1/exchangeInfo', data);
       if (response.status >= 400) {
         return handleResponseError(null, response.data);
       }
@@ -521,7 +494,7 @@ function Rest(restSettings = {}) {
      */
     _getListenKey: async () => {
       const data = {};
-      const response = await request.private('POST', '/dapi/v1/listenKey', data);
+      const response = await request.private('POST', '/fapi/v1/listenKey', data);
       if (response.status >= 400) {
         return handleResponseError(null, response.data);
       }
@@ -538,7 +511,7 @@ function Rest(restSettings = {}) {
     _getOrderBook: async (params) => {
       const data = {};
       data.symbol = params.symbol;
-      const response = await request.public('GET', '/dapi/v1/depth', data);
+      const response = await request.public('GET', '/fapi/v1/depth', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }

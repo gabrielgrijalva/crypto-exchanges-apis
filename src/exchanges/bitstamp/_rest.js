@@ -15,7 +15,7 @@ const Request = require('../../_shared-classes/request');
 /**
  * @param {import('../../../typings/_rest').params} params
  * @param {Object | string} responseData 
- * @returns {{ error: import('../../../typings/_rest').RestErrorResponseData }}
+ * @returns {{ error: import('../../../typings/_rest').RestErrorResponseData<any> }}
  */
 function handleResponseError(params, responseData) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */

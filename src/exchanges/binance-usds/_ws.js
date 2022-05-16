@@ -132,7 +132,7 @@ function Ws(wsSettings = {}) {
    * 
    * 
    */
-  wsSettings.URL = wsSettings.URL || 'wss://dstream.binance.com';
+  wsSettings.URL = wsSettings.URL || 'wss://fstream.binance.com';
   /** 
    * 
    * 
@@ -152,7 +152,7 @@ function Ws(wsSettings = {}) {
    * 
    * 
    * @type {import('../../../typings/_ws').WebSocket} */
-  const webSocketUserStream = WebSocket('binance-coin:user-stream', wsSettings);
+  const webSocketUserStream = WebSocket('binance-usds:user-stream', wsSettings);
   let listenKey = '';
   let listenKeyInterval = null;
   webSocketUserStream.addOnOpen(() => listenKeyInterval = setInterval(async () => listenKey = (await rest._getListenKey()).data, 1800000));
@@ -166,7 +166,7 @@ function Ws(wsSettings = {}) {
    * 
    * 
    * @type {import('../../../typings/_ws').WebSocket} */
-  const webSocketMarketStream = WebSocket('binance-coin:market-stream', wsSettings);
+  const webSocketMarketStream = WebSocket('binance-usds:market-stream', wsSettings);
   webSocketMarketStream.addOnClose(async () => {
     await connectWebSocket('market', rest, webSocketMarketStream, wsSettings);
     liquidationsWsObject.subscriptions.forEach(params => liquidationsWsObject.subscribe(params));
@@ -200,7 +200,7 @@ function Ws(wsSettings = {}) {
     if (messageParse.e !== 'ORDER_TRADE_UPDATE') { return };
     const orderEvent = messageParse.o;
     if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.s)) { return };
-    if (orderEvent.x === 'NEW' || orderEvent.x === 'AMENDMENT') {
+    if (orderEvent.x === 'NEW') {
       ordersWsObject.events.emit('creations-updates', [createCreationUpdate(messageParse)]);
     }
     if (orderEvent.x === 'TRADE' || orderEvent.x === 'CALCULATED') {
@@ -266,17 +266,17 @@ function Ws(wsSettings = {}) {
    */
   const liquidationsOnMessageUserStream = (message) => {
     const messageParse = JSON.parse(message);
-    if (!messageParse.id || messageParse.id !== 1000) { return };
-    const reqData = messageParse.result.find(v => v.req.includes('@position'));
-    if (!reqData) { return };
-    liquidationsWsObject.data.forEach(liquidationData => {
-      const positionEvent = reqData.res.positions.find(v => v.symbol === liquidationData.symbol);
-      liquidationData.pxS = positionEvent && +positionEvent.positionAmt < 0 ? +positionEvent.entryPrice : 0;
-      liquidationData.pxB = positionEvent && +positionEvent.positionAmt > 0 ? +positionEvent.entryPrice : 0;
-      liquidationData.qtyS = positionEvent && +positionEvent.positionAmt < 0 ? Math.abs(+positionEvent.positionAmt) : 0;
-      liquidationData.qtyB = positionEvent && +positionEvent.positionAmt > 0 ? Math.abs(+positionEvent.positionAmt) : 0;
-      liquidationData.liqPxS = positionEvent && +positionEvent.positionAmt < 0 ? +positionEvent.liquidationPrice : 0;
-      liquidationData.liqPxB = positionEvent && +positionEvent.positionAmt > 0 ? +positionEvent.liquidationPrice : 0;
+    if (messageParse.e !== 'ACCOUNT_UPDATE') { return };
+    messageParse.a.P.forEach(async positionEvent => {
+      const liquidationData = liquidationsWsObject.data.find(v => v.symbol === positionEvent.s);
+      if (!liquidationData) { return };
+      const liquidationResponseData = (await rest.getLiquidation({ asset: liquidationData.asset, symbol: liquidationData.symbol })).data;
+      liquidationData.pxS = +positionEvent.pa < 0 ? +positionEvent.ep : 0;
+      liquidationData.pxB = +positionEvent.pa > 0 ? +positionEvent.ep : 0;
+      liquidationData.qtyS = +positionEvent.pa < 0 ? Math.abs(+positionEvent.pa) : 0;
+      liquidationData.qtyB = +positionEvent.pa > 0 ? Math.abs(+positionEvent.pa) : 0;
+      liquidationData.liqPxS = liquidationResponseData.liqPxS;
+      liquidationData.liqPxB = liquidationResponseData.liqPxB;
     });
   };
   const liquidationsOnMessageMarketStream = (message) => {

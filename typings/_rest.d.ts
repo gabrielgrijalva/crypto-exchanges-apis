@@ -72,6 +72,7 @@ declare namespace RestN {
   }
   type updateOrderParams = {
     id: string;
+    side: string;
     price?: number;
     symbol: string;
     quantity?: number;
