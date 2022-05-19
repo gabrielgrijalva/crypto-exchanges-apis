@@ -67,6 +67,15 @@ function getCandleResolution(interval) {
 };
 /**
  * 
+ * @param {string} asset
+ */
+function getEquityDivisor(asset) {
+  if (asset === 'XBt') { return 100000000 };
+  if (asset === 'USDt') { return 1000000 };
+  throw new Error('Could not get divisor for asset');
+};
+/**
+ * 
  * 
  * 
  * =================================
@@ -276,7 +285,8 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      const equity = round.normal(response.data.marginBalance / 100000000, 8);
+      const divisor = getEquityDivisor(params.asset);
+      const equity = round.normal(response.data.marginBalance / divisor, 8);
       return { data: equity };
     },
     /**
