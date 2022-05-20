@@ -79,14 +79,21 @@ function confirmSubscription(stream, webSocketMarketStream) {
     const micLeadingZeros = '0'.repeat(6 - microseconds.length);
     const subscribeId = +`${seconds}${micLeadingZeros}${microseconds}`;
     const subscribeTimeout = setTimeout(() => { throw new Error(`Could not subscribe:${stream}`) }, 60000);
+    function confirmOnCloseFunction() {
+      clearTimeout(subscribeTimeout);
+      webSocketMarketStream.removeOnClose(confirmOnCloseFunction);
+      webSocketMarketStream.removeOnMessage(confirmOnMessageFunction);
+    }
     function confirmOnMessageFunction(message) {
       const messageParse = JSON.parse(message);
       if (messageParse.id === subscribeId && !messageParse.result) {
         resolve();
         clearTimeout(subscribeTimeout);
+        webSocketMarketStream.removeOnClose(confirmOnCloseFunction);
         webSocketMarketStream.removeOnMessage(confirmOnMessageFunction);
       }
     }
+    webSocketMarketStream.addOnClose(confirmOnCloseFunction, false);
     webSocketMarketStream.addOnMessage(confirmOnMessageFunction, false);
     webSocketMarketStream.send(JSON.stringify({ id: subscribeId, method: 'SUBSCRIBE', params: [stream] }));
   });
