@@ -110,14 +110,21 @@ function confirmSubscription(symbol, channel, webSocket) {
   return new Promise((resolve) => {
     const instType = symbol.includes('SWAP') ? 'SWAP' : 'FUTURES';
     const subscribeTimeout = setTimeout(() => { throw new Error(`Could not subscribe:${symbol}|${channel}`) }, 60000);
+    function confirmOnCloseFunction() {
+      clearTimeout(subscribeTimeout);
+      webSocket.removeOnClose(confirmOnCloseFunction);
+      webSocket.removeOnMessage(confirmOnMessageFunction);
+    }
     function confirmOnMessageFunction(message) {
       const messageParse = JSON.parse(message.toString());
       if (messageParse.event === 'subscribe' && messageParse.arg.channel === channel) {
         resolve();
         clearTimeout(subscribeTimeout);
+        webSocket.removeOnClose(confirmOnCloseFunction);
         webSocket.removeOnMessage(confirmOnMessageFunction);
       }
     }
+    webSocket.addOnClose(confirmOnCloseFunction, false);
     webSocket.addOnMessage(confirmOnMessageFunction, false);
     webSocket.send(JSON.stringify({ op: 'subscribe', args: [{ channel: channel, instType: instType, instId: symbol, }] }));
   });

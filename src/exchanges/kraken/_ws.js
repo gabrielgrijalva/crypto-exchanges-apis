@@ -89,6 +89,11 @@ function confirmSubscription(feed, symbol, webSocket, wsSettings) {
     const apiSecret = wsSettings.API_SECRET;
     const requestParams = !symbol ? { feed, event: 'subscribe' } : { feed, event: 'subscribe', product_ids: [symbol] };
     const subscribeTimeout = setTimeout(() => { throw new Error(`Could not subscribe:${feed}|${symbol}`) }, 60000);
+    function confirmOnCloseFunction() {
+      clearTimeout(subscribeTimeout);
+      webSocket.removeOnClose(confirmOnCloseFunction);
+      webSocket.removeOnMessage(confirmOnMessageFunction);
+    }
     function confirmOnMessageFunction(message) {
       const messageParse = JSON.parse(message);
       if (messageParse.event === 'challenge' && messageParse.message) {
@@ -99,9 +104,11 @@ function confirmSubscription(feed, symbol, webSocket, wsSettings) {
         || (messageParse.event === 'alert' && messageParse.message === 'Already subscribed to feed, re-requesting')) {
         resolve();
         clearTimeout(subscribeTimeout);
+        webSocket.removeOnClose(confirmOnCloseFunction);
         webSocket.removeOnMessage(confirmOnMessageFunction);
       }
     }
+    webSocket.addOnClose(confirmOnCloseFunction, false);
     webSocket.addOnMessage(confirmOnMessageFunction, false);
     webSocket.send(!apiKey || !apiSecret
       ? JSON.stringify(requestParams)

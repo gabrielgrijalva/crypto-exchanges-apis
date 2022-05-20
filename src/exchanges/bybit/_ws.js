@@ -101,15 +101,22 @@ function connectWebSocket(webSocket, wsSettings) {
 function confirmSubscription(topic, webSocket) {
   return new Promise((resolve) => {
     const subscribeTimeout = setTimeout(() => { throw new Error(`Could not subscribe:${topic}`) }, 60000);
+    function confirmOnCloseFunction() {
+      clearTimeout(subscribeTimeout);
+      webSocket.removeOnClose(confirmOnCloseFunction);
+      webSocket.removeOnMessage(confirmOnMessageFunction);
+    }
     function confirmOnMessageFunction(message) {
       const messageParse = JSON.parse(message);
       if ((messageParse.request && messageParse.request.args[0] === topic)
         && (messageParse.success || messageParse.ret_msg.includes('error:topic:already subscribed'))) {
         resolve();
         clearTimeout(subscribeTimeout);
+        webSocket.removeOnClose(confirmOnCloseFunction);
         webSocket.removeOnMessage(confirmOnMessageFunction);
       }
     }
+    webSocket.addOnClose(confirmOnCloseFunction, false);
     webSocket.addOnMessage(confirmOnMessageFunction, false);
     webSocket.send(JSON.stringify({ op: 'subscribe', args: [topic] }));
   });

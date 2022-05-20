@@ -121,14 +121,21 @@ function confirmSubscription(method, channel, webSocket) {
     const micLeadingZeros = '0'.repeat(6 - microseconds.length);
     const subscribeId = +`${seconds}${micLeadingZeros}${microseconds}`;
     const subscribeTimeout = setTimeout(() => { throw new Error(`Could not subscribe:${channel}`) }, 60000);
+    function confirmOnCloseFunction() {
+      clearTimeout(subscribeTimeout);
+      webSocket.removeOnClose(confirmOnCloseFunction);
+      webSocket.removeOnMessage(confirmOnMessageFunction);
+    }
     function confirmOnMessageFunction(message) {
       const messageParse = JSON.parse(message);
       if (messageParse.id === subscribeId && messageParse.result && !messageParse.error) {
         resolve();
         clearTimeout(subscribeTimeout);
+        webSocket.removeOnClose(confirmOnCloseFunction);
         webSocket.removeOnMessage(confirmOnMessageFunction);
       }
     }
+    webSocket.addOnClose(confirmOnCloseFunction, false);
     webSocket.addOnMessage(confirmOnMessageFunction, false);
     webSocket.send(JSON.stringify({ jsonrpc: '2.0', method: `${method}/subscribe`, id: subscribeId, params: { channels: [channel] } }));
   });
