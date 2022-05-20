@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.4.2] - 2022-05-20
+- Corrected errors in okex rest.
 ## [2.4.1] - 2022-05-20
 - Added close event functions to exchanges websockets implementations.
 ## [2.4.0] - 2022-05-19
