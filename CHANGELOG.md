@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.4.3] - 2022-05-25
+- Corrected error in deribit order book implementation.
 ## [2.4.2] - 2022-05-20
 - Corrected errors in okex rest.
 ## [2.4.1] - 2022-05-20
