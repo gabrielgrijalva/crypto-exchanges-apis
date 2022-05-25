@@ -176,9 +176,9 @@ function Ws(wsSettings = {}) {
   const webSocketMarketStream = WebSocket('binance-coin:market-stream', wsSettings);
   webSocketMarketStream.addOnClose(async () => {
     await connectWebSocket('market', rest, webSocketMarketStream, wsSettings);
-    liquidationsWsObject.subscriptions.forEach(params => liquidationsWsObject.subscribe(params));
-    tradesWsObject.subscriptions.forEach(params => tradesWsObject.subscribe(params));
-    orderBooksWsObject.subscriptions.forEach(params => orderBooksWsObject.subscribe(params));
+    for (const params of liquidationsWsObject.subscriptions) await liquidationsWsObject.subscribe(params);
+    for (const params of tradesWsObject.subscriptions) await tradesWsObject.subscribe(params);
+    for (const params of orderBooksWsObject.subscriptions) await orderBooksWsObject.subscribe(params);
   });
   if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocketMarketStream.addOnMessage((message) => console.log(JSON.parse(message))) };
   /**
