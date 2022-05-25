@@ -218,7 +218,7 @@ declare namespace WsN {
     host: string;
     broadcast: number;
   };
-  type orderBooksServerWsObject = { create(params: orderBooksServerParams): void; }
+  type orderBooksServerWsObject = { create(params: orderBooksServerParams): Promise<void>; }
   /**
    * 
    * 
@@ -232,7 +232,7 @@ declare namespace WsN {
     port: number;
     host: string;
   };
-  type orderBooksClientWsObject = { connect(params: orderBooksClientParams): void; };
+  type orderBooksClientWsObject = { connect(params: orderBooksClientParams): Promise<void>; };
   /**
    * 
    * 

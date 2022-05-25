@@ -160,11 +160,11 @@ function Ws(wsSettings = {}) {
   const webSocket = WebSocket('kraken', wsSettings);
   webSocket.addOnClose(async () => {
     await connectWebSocket(webSocket, wsSettings);
-    ordersWsObject.subscriptions.forEach(params => ordersWsObject.subscribe(params));
-    positionsWsObject.subscriptions.forEach(params => positionsWsObject.subscribe(params));
-    liquidationsWsObject.subscriptions.forEach(params => liquidationsWsObject.subscribe(params));
-    tradesWsObject.subscriptions.forEach(params => tradesWsObject.subscribe(params));
-    orderBooksWsObject.subscriptions.forEach(params => orderBooksWsObject.subscribe(params));
+    for (const params of ordersWsObject.subscriptions) await ordersWsObject.subscribe(params);
+    for (const params of positionsWsObject.subscriptions) await positionsWsObject.subscribe(params);
+    for (const params of liquidationsWsObject.subscriptions) await liquidationsWsObject.subscribe(params);
+    for (const params of tradesWsObject.subscriptions) await tradesWsObject.subscribe(params);
+    for (const params of orderBooksWsObject.subscriptions) await orderBooksWsObject.subscribe(params);
   });
   if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocket.addOnMessage((message) => console.log(JSON.parse(message))) };
   /**
