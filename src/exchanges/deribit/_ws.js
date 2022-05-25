@@ -396,7 +396,6 @@ function Ws(wsSettings = {}) {
     const orderBookEvent = messageParse.params.data;
     const orderBookData = orderBooksWsObject.data.find(v => v.symbol === orderBookEvent.instrument_name);
     if (!orderBookData) { return };
-    if ((Date.now() - +orderBookEvent.timestamp) > 5000) { return webSocket.close() };
     orderBookEvent.asks.forEach(ask => {
       orderBookData.updateOrderByPriceAsk({ id: +ask[1], price: +ask[1], quantity: +ask[2] });
     });
