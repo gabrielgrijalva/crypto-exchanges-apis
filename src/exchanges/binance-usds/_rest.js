@@ -300,22 +300,7 @@ function Rest(restSettings = {}) {
      * 
      * 
      */
-    updateOrder: async (params) => {
-      const data = {};
-      data.origClientOrderId = params.id;
-      data.quantity = `${params.quantity}`;
-      if (params.price) {
-        data.price = `${params.price}`;
-      }
-      if (params.quantity) {
-        data.quantity = `${params.quantity}`;
-      }
-      const response = await request.private('PUT', '/fapi/v1/order', data);
-      if (response.status >= 400) {
-        return handleResponseError(params, response.data);
-      }
-      return { data: params };
-    },
+    updateOrder: null,
     /**
      * 
      * 
