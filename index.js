@@ -7,6 +7,7 @@ const exchanges = [
   'bitmex',
   'bitstamp',
   'bybit',
+  'coinex',
   'deribit',
   'kraken',
   'okex',
