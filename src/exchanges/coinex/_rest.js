@@ -25,6 +25,9 @@ function handleResponseError(params, responseData) {
     if (+responseData.code === 3103) {
       type = 'order-not-found';
     }
+    if (+responseData.code === 3129) {
+      type = 'post-only-reject';
+    }
     if (+responseData.code === 3007 || +responseData.code === 3008 || +responseData.code === 4001
       || +responseData.code === 4002 || +responseData.code === 4003) {
       type = 'request-not-accepted';
