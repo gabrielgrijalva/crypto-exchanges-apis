@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.4.6] - 2022-06-01
+- Added error handler to coinex rest.
 ## [2.4.5] - 2022-06-01
 - Implemented coinex exchange.
 ## [2.4.4] - 2022-05-25
