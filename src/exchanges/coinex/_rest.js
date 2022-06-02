@@ -279,7 +279,8 @@ function Rest(restSettings = {}) {
       if (+response.data.code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      const equity = +response.data.data[params.asset].balance_total;
+      const asset = response.data.data[params.asset];
+      const equity = (+asset.balance_total) + (+asset.margin) + (+asset.profit_unreal);
       return { data: equity };
     },
     /**
