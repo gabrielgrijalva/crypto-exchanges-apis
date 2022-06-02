@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.4.8] - 2022-06-02
+- Corrected error in coinex rest implementation.
 ## [2.4.7] - 2022-06-01
 - Corrected rest error handling in okex exchange.
 ## [2.4.6] - 2022-06-01
