@@ -240,6 +240,7 @@ function Fixer(fixerSettings) {
         let creatingTimeout = null;
         let updatingTimeout = null;
         let cancelingTimeout = null;
+        let creatingHoldEvents = [];
         let currentPositionQtyS = currentPosition.qtyS;
         let currentPositionQtyB = currentPosition.qtyB;
         const creationsUpdatesFunc = (messages) => {
@@ -250,12 +251,15 @@ function Fixer(fixerSettings) {
               order = creating;
               creating = null;
               clearTimeout(creatingTimeout);
-            };
-            if (updating && updating.id === message.id) {
+            }
+            else if (updating && updating.id === message.id) {
               order.price = message.price;
               order.quantity = message.quantity;
               updating = null;
               clearTimeout(updatingTimeout);
+            }
+            else if (creating && !creating.id) {
+              creatingHoldEvents.push(message);
             }
           });
         };
@@ -328,7 +332,9 @@ function Fixer(fixerSettings) {
               creating = getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPositionQtyB, fixPositionType, currentPositionQtyS, currentPositionQtyB, ws, utils, fixerSettings);
               creatingTimeout = setTimeout(() => { throw new Error('creatingTimeout') }, 10000);
               try {
-                await sendRestCreateOrder(rest, creating);
+                const response = await sendRestCreateOrder(rest, creating);
+                creating.id = creating.id || response.id;
+                creatingHoldEvents.length ? creationsUpdatesFunc(creatingHoldEvents.splice(0)) : null;
               } catch (error) {
                 if (error.type === 'post-only-reject') { creating = null }
                 else if (error.type === 'insufficient-funds') { creating = null; hedgePercentage -= 0.0050; }
