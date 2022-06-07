@@ -151,10 +151,11 @@ function getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPosit
  * @returns {import('../../typings/_rest').updateOrderParams}
  */
 function getFixOrderUpdate(ws, order, fixerSettings) {
+  const side = order.side;
   const price = order.side === 'sell' ? ws.orderBooks.data[0].asks[0].price : ws.orderBooks.data[0].bids[0].price;
   const quantity = fixerSettings.TYPE === 'spot' && order.side === 'buy' ?
     round.down((order.price * order.quantity) / price, fixerSettings.QUANTITY_PRECISION) : order.quantity;
-  return { id: order.id, price: price, symbol: order.symbol, quantity: quantity };
+  return { id: order.id, side: side, price: price, symbol: order.symbol, quantity: quantity };
 };
 /**
  * 
