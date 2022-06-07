@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.4.11] - 2022-06-07
+- Corrected error in populator of timezone default.
 ## [2.4.10] - 2022-06-07
 - Corrected fixer errors.
 ## [2.4.9] - 2022-06-07
