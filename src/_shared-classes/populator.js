@@ -52,7 +52,7 @@ function Populator(populatorSettings) {
   populatorSettings.USER = populatorSettings.USER || 'root';
   populatorSettings.DATABASE = populatorSettings.DATABASE || '';
   populatorSettings.PASSWORD = populatorSettings.PASSWORD || '';
-  populatorSettings.TIMEZONE = populatorSettings.TIMEZONE || '';
+  populatorSettings.TIMEZONE = populatorSettings.TIMEZONE || 'Z';
   // Create database connection
   const connection = mysql.createConnection({
     port: populatorSettings.PORT,
