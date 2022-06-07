@@ -208,7 +208,13 @@ function Ws(wsSettings = {}) {
       ordersWsObject.events.emit('creations-updates', [createCreationUpdate(orderEvent)]);
     }
     if (orderEvent.last_deal_time === orderEvent.update_time) {
-      ordersWsObject.events.emit('executions', [createExecution(orderEvent)]);
+      if (orderEvent.type === 1) {
+        ordersWsObject.events.emit('executions', [createExecution(orderEvent)]);
+      }
+      if (orderEvent.type === 2 && !(+orderEvent.left)) {
+        orderEvent.last_deal_amount = orderEvent.amount;
+        ordersWsObject.events.emit('executions', [createExecution(orderEvent)]);
+      }
     }
     if (messageParse.params[0] === 3 && +orderEvent.left) {
       ordersWsObject.events.emit('cancelations', [createCancelation(orderEvent)]);
