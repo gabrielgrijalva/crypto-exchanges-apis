@@ -263,6 +263,11 @@ function Fixer(fixerSettings) {
           console.log('executions'); console.log(messages);
           messages.forEach(message => {
             if (message.symbol !== fixSymbol) { return };
+            if (creating && creating.id === message.id) {
+              order = creating;
+              creating = null;
+              clearTimeout(creatingTimeout);
+            }
             if (message.id === order.id) {
               orderQtyF = round.normal(orderQtyF + message.quantity, fixerSettings.QUANTITY_PRECISION);
               if (order.direction === 'open') {
