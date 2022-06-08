@@ -189,6 +189,10 @@ function Rest(restSettings = {}) {
         data.orderType = 'post';
         data.limitPrice = params.price;
       }
+      if (params.type === 'limit-market') {
+        data.orderType = 'lmt';
+        data.limitPrice = params.price;
+      }
       const response = await request.private('POST', '/api/v3/sendorder', data);
       if (response.status >= 400
         || response.data.error
@@ -220,6 +224,10 @@ function Rest(restSettings = {}) {
         }
         if (v.type === 'limit') {
           orderData.orderType = 'post';
+          orderData.limitPrice = v.price;
+        }
+        if (v.type === 'limit-market') {
+          orderData.orderType = 'lmt';
           orderData.limitPrice = v.price;
         }
         return orderData;

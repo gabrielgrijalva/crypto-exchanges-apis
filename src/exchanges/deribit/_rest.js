@@ -168,13 +168,17 @@ function Rest(restSettings = {}) {
       data.amount = params.quantity;
       data.label = params.id;
       if (params.type === 'limit') {
-        data.type = params.type;
+        data.type = 'limit';
         data.price = params.price;
         data.post_only = true;
         data.reject_post_only = true;
       }
+      if (params.type === 'limit-market') {
+        data.type = 'limit';
+        data.price = params.price;
+      }
       if (params.type === 'market') {
-        data.type = params.type;
+        data.type = 'market';
         data.time_in_force = 'good_til_cancelled';
       }
       const response = await request.private('GET', `/api/v2/private/${params.side}`, data);

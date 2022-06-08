@@ -180,8 +180,12 @@ function Rest(restSettings = {}) {
         data.price = params.price;
         data.option = 1;
       }
+      if (params.type === 'limit-market') {
+        data.price = params.price;
+        data.option = 0;
+      }
       data.timestamp = Date.now();
-      const response = await request.private('POST', `/order/put_${params.type}`, data);
+      const response = await request.private('POST', `/order/put_${params.type === 'market' ? 'market' : 'limit'}`, data);
       if (+response.data.code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
