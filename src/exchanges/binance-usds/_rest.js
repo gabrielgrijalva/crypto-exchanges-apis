@@ -199,6 +199,9 @@ function Rest(restSettings = {}) {
         data.price = `${params.price}`;
         data.timeInForce = 'GTX';
       }
+      if (params.type === 'limit-market') {
+        data.price = `${params.price}`;
+      }
       const response = await request.private('POST', '/fapi/v1/order', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
@@ -224,6 +227,9 @@ function Rest(restSettings = {}) {
         if (v.type === 'limit') {
           orderData.price = `${v.price}`;
           orderData.timeInForce = 'GTX';
+        }
+        if (v.type === 'limit-market') {
+          orderData.price = `${v.price}`;
         }
         return `${!a ? '' : `${a},`}${JSON.stringify(orderData)}`;
       }, '')}]`;

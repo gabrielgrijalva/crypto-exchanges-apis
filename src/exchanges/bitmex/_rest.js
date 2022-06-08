@@ -174,6 +174,9 @@ function Rest(restSettings = {}) {
         data.price = params.price;
         data.execInst = 'ParticipateDoNotInitiate';
       }
+      if (params.type === 'limit-market') {
+        data.price = params.price;
+      }
       const response = await request.private('POST', '/api/v1/order', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);

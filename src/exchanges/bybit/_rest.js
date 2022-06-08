@@ -201,6 +201,9 @@ function Rest(restSettings = {}) {
       if (params.type === 'market') {
         data.time_in_force = 'ImmediateOrCancel';
       }
+      if (params.type === 'limit-market') {
+        data.price = params.price;
+      }
       const basePath = getBasePath(params.symbol);
       const response = await request.private('POST', `/${basePath}/private/order/create`, data);
       if (+response.data.ret_code !== 0 || response.status >= 400) {
