@@ -172,20 +172,30 @@ function Rest(restSettings = {}) {
      * 
      */
     createOrder: async (params) => {
+      let requestPath = '';
       const data = {};
       data.side = params.side === 'sell' ? 1 : 2;
       data.market = params.symbol;
       data.amount = `${params.quantity}`;
+      data.timestamp = Date.now();
       if (params.type === 'limit') {
+        requestPath = 'limit';
+        data.price = params.price;
+      }
+      if (params.type === 'market') {
+        requestPath = 'market';
+      }
+      if (params.type === 'post-only') {
+        requestPath = 'limit';
         data.price = params.price;
         data.option = 1;
       }
-      if (params.type === 'limit-market') {
+      if (params.type === 'immidiate-or-cancel') {
+        requestPath = 'limit';
         data.price = params.price;
-        data.option = 0;
+        data.effect_type = 2;
       }
-      data.timestamp = Date.now();
-      const response = await request.private('POST', `/order/put_${params.type === 'market' ? 'market' : 'limit'}`, data);
+      const response = await request.private('POST', `/order/put_${requestPath}`, data);
       if (+response.data.code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data);
       }

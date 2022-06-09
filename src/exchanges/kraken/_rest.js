@@ -182,15 +182,19 @@ function Rest(restSettings = {}) {
       data.size = params.quantity;
       data.symbol = params.symbol;
       data.cliOrdId = params.id;
+      if (params.type === 'limit') {
+        data.orderType = 'lmt';
+        data.limitPrice = params.price;
+      }
       if (params.type === 'market') {
         data.orderType = 'mkt';
       }
-      if (params.type === 'limit') {
+      if (params.type === 'post-only') {
         data.orderType = 'post';
         data.limitPrice = params.price;
       }
-      if (params.type === 'limit-market') {
-        data.orderType = 'lmt';
+      if (params.type === 'immidiate-or-cancel') {
+        data.orderType = 'ioc';
         data.limitPrice = params.price;
       }
       const response = await request.private('POST', '/api/v3/sendorder', data);
@@ -219,15 +223,19 @@ function Rest(restSettings = {}) {
         orderData.size = v.quantity;
         orderData.symbol = v.symbol;
         orderData.cliOrdId = v.id;
+        if (v.type === 'limit') {
+          orderData.orderType = 'lmt';
+          orderData.limitPrice = v.price;
+        }
         if (v.type === 'market') {
           orderData.orderType = 'mkt';
         }
-        if (v.type === 'limit') {
+        if (v.type === 'post-only') {
           orderData.orderType = 'post';
           orderData.limitPrice = v.price;
         }
-        if (v.type === 'limit-market') {
-          orderData.orderType = 'lmt';
+        if (v.type === 'immidiate-or-cancel') {
+          orderData.orderType = 'ioc';
           orderData.limitPrice = v.price;
         }
         return orderData;

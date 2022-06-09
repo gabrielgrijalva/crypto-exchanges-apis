@@ -189,16 +189,20 @@ function Rest(restSettings = {}) {
       data.side = params.side;
       data.posSide = 'net';
       data.sz = `${params.quantity}`;
+      if (params.type === 'limit') {
+        data.px = `${params.price}`;
+        data.ordType = 'limit';
+      }
       if (params.type === 'market') {
         data.ordType = 'market';
       }
-      if (params.type === 'limit') {
+      if (params.type === 'post-only') {
+        data.px = `${params.price}`;
         data.ordType = 'post_only';
-        data.px = `${params.price}`;
       }
-      if (params.type === 'limit-market') {
-        data.ordType = 'limit';
+      if (params.type === 'immidiate-or-cancel') {
         data.px = `${params.price}`;
+        data.ordType = 'ioc';
       }
       const response = await request.private('POST', '/api/v5/trade/order', data);
       if (response.data.code !== '0') {
@@ -222,16 +226,20 @@ function Rest(restSettings = {}) {
         orderData.side = v.side;
         orderData.posSide = 'net';
         orderData.sz = `${v.quantity}`;
+        if (v.type === 'limit') {
+          orderData.px = `${v.price}`;
+          orderData.ordType = 'limit';
+        }
         if (v.type === 'market') {
           orderData.ordType = 'market';
         }
-        if (v.type === 'limit') {
+        if (v.type === 'post-only') {
+          orderData.px = `${v.price}`;
           orderData.ordType = 'post_only';
-          orderData.px = `${v.price}`;
         }
-        if (v.type === 'limit-market') {
-          orderData.ordType = 'limit';
+        if (v.type === 'immidiate-or-cancel') {
           orderData.px = `${v.price}`;
+          orderData.ordType = 'ioc';
         }
         return orderData;
       });
