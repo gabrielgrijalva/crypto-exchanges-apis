@@ -41,7 +41,7 @@ declare namespace FixerN {
     fixSymbol: string;
     fixPositionQtyS: number;
     fixPositionQtyB: number;
-    fixPositionType: 'limit' | 'market';
+    fixPositionType: 'market' | 'post-only';
   };
   /**
    * 

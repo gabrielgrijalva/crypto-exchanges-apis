@@ -82,7 +82,7 @@ async function sendRestCancelOrder(rest, params, errors = 0) {
  * @param {string} fixSymbol
  * @param {number} fixPositionQtyS 
  * @param {number} fixPositionQtyB
- * @param {'limit' | 'market'} fixPositionType 
+ * @param {'market' | 'post-only'} fixPositionType 
  * @param {number} currentPositionQtyS 
  * @param {number} currentPositionQtyB 
  * @param {import('../../typings/_ws').Ws} ws
@@ -135,7 +135,7 @@ function getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPosit
   orderParams.id = utils.getOrderId(fixSymbol);
   orderParams.side = side;
   orderParams.type = fixPositionType;
-  if (orderParams.type === 'limit') {
+  if (orderParams.type === 'post-only') {
     orderParams.price = orderParams.side === 'sell' ? bestAsk : bestBid;
   }
   orderParams.symbol = fixSymbol;
@@ -341,7 +341,7 @@ function Fixer(fixerSettings) {
                 else throw error;
               }
             }
-          } else if (order && !creating && !updating && !canceling && fixPositionType === 'limit'
+          } else if (order && !creating && !updating && !canceling && fixPositionType === 'post-only'
             && ((order.side === 'sell' && order.price > ws.orderBooks.data[0].asks[0].price)
               || (order.side === 'buy' && order.price < ws.orderBooks.data[0].bids[0].price))) {
             if (rest.updateOrder) {
