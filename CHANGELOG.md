@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.6.2] - 2022-06-09
+- Corrected error in fixer.
 ## [2.6.1] - 2022-06-09
 - Changed fixer to post only orders.
 ## [2.6.0] - 2022-06-09

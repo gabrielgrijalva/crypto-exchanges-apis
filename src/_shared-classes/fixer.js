@@ -333,7 +333,7 @@ function Fixer(fixerSettings) {
               creatingTimeout = setTimeout(() => { throw new Error('creatingTimeout') }, 10000);
               try {
                 const response = await sendRestCreateOrder(rest, creating);
-                creating.id = creating.id || response.id;
+                if (creating && !creating.id) creating.id = response.id;
                 creatingHoldEvents.length ? creationsUpdatesFunc(creatingHoldEvents.splice(0)) : null;
               } catch (error) {
                 if (error.type === 'post-only-reject') { creating = null }
