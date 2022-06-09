@@ -170,16 +170,20 @@ function Rest(restSettings = {}) {
       if (params.type === 'limit') {
         data.type = 'limit';
         data.price = params.price;
-        data.post_only = true;
-        data.reject_post_only = true;
-      }
-      if (params.type === 'limit-market') {
-        data.type = 'limit';
-        data.price = params.price;
       }
       if (params.type === 'market') {
         data.type = 'market';
-        data.time_in_force = 'good_til_cancelled';
+      }
+      if (params.type === 'post-only') {
+        data.type = 'limit';
+        data.price = params.price;
+        data.post_only = true;
+        data.reject_post_only = true;
+      }
+      if (params.type === 'immidiate-or-cancel') {
+        data.type = 'limit';
+        data.price = params.price;
+        data.time_in_force = 'immediate_or_cancel';
       }
       const response = await request.private('GET', `/api/v2/private/${params.side}`, data);
       if (response.status >= 400) {

@@ -55,7 +55,7 @@ declare namespace RestN {
   type createOrderParams = {
     id: string;
     side: 'sell' | 'buy';
-    type: 'limit' | 'market' | 'limit-market';
+    type: 'limit' | 'market' | 'post-only' | 'immidiate-or-cancel';
     price?: number;
     symbol: string;
     quantity: number;

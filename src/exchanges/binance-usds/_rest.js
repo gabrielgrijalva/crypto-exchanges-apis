@@ -191,16 +191,24 @@ function Rest(restSettings = {}) {
     createOrder: async (params) => {
       const data = {};
       data.side = params.side.toUpperCase();
-      data.type = params.type.toUpperCase();
       data.symbol = params.symbol;
       data.quantity = `${params.quantity}`;
       data.newClientOrderId = params.id;
       if (params.type === 'limit') {
+        data.type = 'LIMIT';
+        data.price = `${params.price}`;
+      }
+      if (params.type === 'market') {
+        data.type === 'MARKET';
+      }
+      if (params.type === 'post-only') {
+        data.type = 'LIMIT';
         data.price = `${params.price}`;
         data.timeInForce = 'GTX';
       }
-      if (params.type === 'limit-market') {
+      if (params.type === 'immidiate-or-cancel') {
         data.price = `${params.price}`;
+        data.timeInForce = 'IOC';
       }
       const response = await request.private('POST', '/fapi/v1/order', data);
       if (response.status >= 400) {
@@ -225,11 +233,20 @@ function Rest(restSettings = {}) {
         orderData.quantity = `${v.quantity}`;
         orderData.newClientOrderId = v.id;
         if (v.type === 'limit') {
+          orderData.type = 'LIMIT';
+          orderData.price = `${v.price}`;
+        }
+        if (v.type === 'market') {
+          orderData.type === 'MARKET';
+        }
+        if (v.type === 'post-only') {
+          orderData.type = 'LIMIT';
           orderData.price = `${v.price}`;
           orderData.timeInForce = 'GTX';
         }
-        if (v.type === 'limit-market') {
+        if (v.type === 'immidiate-or-cancel') {
           orderData.price = `${v.price}`;
+          orderData.timeInForce = 'IOC';
         }
         return `${!a ? '' : `${a},`}${JSON.stringify(orderData)}`;
       }, '')}]`;

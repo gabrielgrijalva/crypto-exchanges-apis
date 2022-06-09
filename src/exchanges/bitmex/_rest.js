@@ -168,14 +168,23 @@ function Rest(restSettings = {}) {
       data.side = params.side === 'sell' ? 'Sell' : 'Buy';
       data.symbol = params.symbol;
       data.clOrdID = params.id;
-      data.ordType = params.type === 'limit' ? 'Limit' : 'Market';
       data.orderQty = params.quantity;
       if (params.type === 'limit') {
         data.price = params.price;
+        data.ordType = 'Limit';
+      }
+      if (params.type === 'market') {
+        data.ordType = 'Market';
+      }
+      if (params.type === 'post-only') {
+        data.price = params.price;
+        data.ordType = 'Limit';
         data.execInst = 'ParticipateDoNotInitiate';
       }
-      if (params.type === 'limit-market') {
+      if (params.type === 'immidiate-or-cancel') {
         data.price = params.price;
+        data.ordType = 'Limit';
+        data.timeInForce = 'ImmediateOrCancel';
       }
       const response = await request.private('POST', '/api/v1/order', data);
       if (response.status >= 400) {

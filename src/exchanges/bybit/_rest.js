@@ -192,17 +192,25 @@ function Rest(restSettings = {}) {
       data.qty = params.quantity;
       data.side = params.side === 'sell' ? 'Sell' : 'Buy';
       data.symbol = params.symbol;
-      data.order_type = params.type === 'market' ? 'Market' : 'Limit';
       data.order_link_id = params.id;
       if (params.type === 'limit') {
         data.price = params.price;
-        data.time_in_force = 'PostOnly';
+        data.order_type = 'Limit';
+        data.time_in_force = 'GoodTillCancel';
       }
       if (params.type === 'market') {
+        data.order_type = 'Market';
         data.time_in_force = 'ImmediateOrCancel';
       }
-      if (params.type === 'limit-market') {
+      if (params.type === 'post-only') {
         data.price = params.price;
+        data.order_type = 'Limit';
+        data.time_in_force = 'PostOnly';
+      }
+      if (params.type === 'immidiate-or-cancel') {
+        data.price = params.price;
+        data.order_type = 'Limit';
+        data.time_in_force = 'ImmediateOrCancel';
       }
       const basePath = getBasePath(params.symbol);
       const response = await request.private('POST', `/${basePath}/private/order/create`, data);
