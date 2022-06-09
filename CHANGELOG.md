@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.6.0] - 2022-06-09
+- Changed rest order types and added immidiate or cancel.
 ## [2.5.0] - 2022-06-08
 - Implemented limit-market create order in rest exchanges.
 ## [2.4.12] - 2022-06-07
