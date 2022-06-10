@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.6.3] - 2022-06-10
+- Added immidiate-or-cancel error handler to rest kraken.
 ## [2.6.2] - 2022-06-09
 - Corrected error in fixer.
 ## [2.6.1] - 2022-06-09
