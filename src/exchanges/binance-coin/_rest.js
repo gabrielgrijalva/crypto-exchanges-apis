@@ -199,7 +199,7 @@ function Rest(restSettings = {}) {
         data.price = `${params.price}`;
       }
       if (params.type === 'market') {
-        data.type === 'MARKET';
+        data.type = 'MARKET';
       }
       if (params.type === 'post-only') {
         data.type = 'LIMIT';
@@ -207,6 +207,7 @@ function Rest(restSettings = {}) {
         data.timeInForce = 'GTX';
       }
       if (params.type === 'immidiate-or-cancel') {
+        data.type = 'LIMIT';
         data.price = `${params.price}`;
         data.timeInForce = 'IOC';
       }
@@ -236,7 +237,7 @@ function Rest(restSettings = {}) {
           orderData.price = `${v.price}`;
         }
         if (v.type === 'market') {
-          orderData.type === 'MARKET';
+          orderData.type = 'MARKET';
         }
         if (v.type === 'post-only') {
           orderData.type = 'LIMIT';
@@ -244,6 +245,7 @@ function Rest(restSettings = {}) {
           orderData.timeInForce = 'GTX';
         }
         if (v.type === 'immidiate-or-cancel') {
+          orderData.type = 'LIMIT';
           orderData.price = `${v.price}`;
           orderData.timeInForce = 'IOC';
         }
