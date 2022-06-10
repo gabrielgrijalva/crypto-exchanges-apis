@@ -170,7 +170,8 @@ declare namespace RestN {
     'order-not-found' |
     'post-only-reject' |
     'insufficient-funds' |
-    'request-not-accepted';
+    'request-not-accepted' |
+    'immidiate-or-cancel-reject';
   type RestErrorResponseData<T> = {
     type: restErrorResponseDataType;
     params: T;

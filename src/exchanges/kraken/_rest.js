@@ -36,6 +36,9 @@ function handleResponseError(params, responseData) {
     if (status === 'postWouldExecute') {
       type = 'post-only-reject';
     }
+    if (status === 'iocWouldNotExecute') {
+      type = 'immidiate-or-cancel-reject';
+    }
     if (status === 'insufficientAvailableFunds') {
       type = 'insufficient-funds';
     }
