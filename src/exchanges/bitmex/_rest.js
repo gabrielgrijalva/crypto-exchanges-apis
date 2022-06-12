@@ -24,6 +24,9 @@ function handleResponseError(params, responseData) {
   let type = 'unknown';
   if (responseData.error) {
     const errorMessage = responseData.error.message || responseData.error;
+    if (errorMessage === 'Request timeout') {
+      type = 'request-timeout';
+    }
     if (errorMessage.includes('Not Found')
       || errorMessage.includes('Invalid ordStatus')
       || errorMessage.includes('Invalid origClOrdID')

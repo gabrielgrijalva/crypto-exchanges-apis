@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.6.5] - 2022-06-11
+- Added error handler to bitmex rest.
 ## [2.6.4] - 2022-06-10
 - Corrected error in binances rest implementations.
 ## [2.6.3] - 2022-06-10
