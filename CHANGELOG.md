@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.6.7] - 2022-06-15
+- Added error handler to okex rest.
 ## [2.6.6] - 2022-06-13
 - Corrected error in deribit ws.
 ## [2.6.5] - 2022-06-11
