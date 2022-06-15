@@ -29,7 +29,7 @@ function handleResponseError(params, responseData) {
     if (errorCode === '50004' || errorCode === '50102') {
       type = 'request-timeout';
     }
-    if (errorCode === '50001' || errorCode === '50013' || errorCode === '50026') {
+    if (errorCode === '50001' || errorCode === '50013' || errorCode === '50026' || errorCode === '51506') {
       type = 'request-not-accepted';
     }
     if (errorCode === '51008' || errorCode === '51127' || errorCode === '51131' || errorCode === '51502'
