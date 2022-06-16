@@ -98,10 +98,10 @@ function getPrivateFunction(restSettings) {
    * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
    */
   async function private(method, path, data) {
-    const timestamp = Date.now();
+    const timestamp = `${moment.utc().unix()}`;
     const dataString = method === 'GET' ? qs.stringify(data) : '';
     const queryString = method === 'POST' ? JSON.stringify(data) : '';
-    const digest = `${method}\n${path}\n${queryString}\n${crypto.createHash('sha512').update(dataString).digest('hex')}`;
+    const digest = `${method}\n${path}\n${queryString}\n${crypto.createHash('sha512').update(dataString).digest('hex')}\n${timestamp}`;
     const signature = crypto.createHmac('sha512', restSettings.API_SECRET).update(digest).digest('hex');
     const requestSendParams = {
       url: `${restSettings.URL}${path}?${queryString}`,
@@ -189,7 +189,7 @@ function Rest(restSettings = {}) {
         data.tif = 'ioc';
         data.price = params.price;
       }
-      const response = await request.private('POST', `/futures/${settle}/orders`, data);
+      const response = await request.private('POST', `/api/v4/futures/${settle}/orders`, data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -212,7 +212,7 @@ function Rest(restSettings = {}) {
      */
     cancelOrder: async (params) => {
       const data = {};
-      const response = await request.private('DELETE', `/futures/${settle}/orders/${params.id}`, data);
+      const response = await request.private('DELETE', `/api/v4/futures/${settle}/orders/${params.id}`, data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -236,7 +236,7 @@ function Rest(restSettings = {}) {
     cancelOrdersAll: async (params) => {
       const data = {};
       data.contract = params.symbol;
-      const response = await request.private('DELETE', `/futures/${settle}/orders`, data);
+      const response = await request.private('DELETE', `/api/v4/futures/${settle}/orders`, data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -267,7 +267,7 @@ function Rest(restSettings = {}) {
      */
     getEquity: async (params) => {
       const data = {};
-      const response = await request.private('GET', `/futures/${settle}/accounts`, data);
+      const response = await request.private('GET', `/api/v4/futures/${settle}/accounts`, data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -286,7 +286,7 @@ function Rest(restSettings = {}) {
       data.contract = params.symbol;
       data.from = moment.utc(params.start).unix();
       data.interval = getCandleResolution(params.interval);
-      const response = await request.public('GET', `/futures/${settle}/candlesticks`, data);
+      const response = await request.public('GET', `/api/v4/futures/${settle}/candlesticks`, data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -311,7 +311,7 @@ function Rest(restSettings = {}) {
      */
     getPosition: async (params) => {
       const data = {};
-      const response = await request.private('GET', `/futures/${settle}/positions/${params.symbol}`, data);
+      const response = await request.private('GET', `/api/v4/futures/${settle}/positions/${params.symbol}`, data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -332,7 +332,7 @@ function Rest(restSettings = {}) {
     getLastPrice: async (params) => {
       const data = {};
       data.contract = params.symbol;
-      const response = await request.public('GET', `/futures/${settle}/tickers`, data);
+      const response = await request.public('GET', `/api/v4/futures/${settle}/tickers`, data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -350,13 +350,13 @@ function Rest(restSettings = {}) {
       // Get tickers 
       const tickersData = {};
       tickersData.contract = params.symbol;
-      const tickersResponse = await request.public('GET', `/futures/${settle}/tickers`, tickersData);
+      const tickersResponse = await request.public('GET', `/api/v4/futures/${settle}/tickers`, tickersData);
       if (tickersResponse.status >= 400) {
         return handleResponseError(params, tickersResponse.data);
       }
       // Get position
       const positionData = {};
-      const positionResponse = await request.private('GET', `/futures/${settle}/positions/${params.symbol}`, positionData);
+      const positionResponse = await request.private('GET', `/api/v4/futures/${settle}/positions/${params.symbol}`, positionData);
       if (positionResponse.status >= 400) {
         return handleResponseError(params, positionResponse.data);
       }
@@ -377,7 +377,7 @@ function Rest(restSettings = {}) {
     getFundingRates: async (params) => {
       const data = {};
       data.contract = params.symbol;
-      const response = await request.public('GET', `/futures/${settle}/tickers`, data);
+      const response = await request.public('GET', `/api/v4/futures/${settle}/tickers`, data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
@@ -403,7 +403,7 @@ function Rest(restSettings = {}) {
      */
     getInstrumentsSymbols: async () => {
       const data = {};
-      const response = await request.public('GET', `/futures/${settle}/contracts`, data);
+      const response = await request.public('GET', `/api/v4/futures/${settle}/contracts`, data);
       if (response.status >= 400) {
         return handleResponseError(null, response.data);
       }
