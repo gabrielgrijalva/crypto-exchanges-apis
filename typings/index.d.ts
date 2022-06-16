@@ -12,7 +12,7 @@ import WsN = require('./_ws');
  * 
  * 
  */
-type exchanges = 'binance-coin' | 'binance-usds' | 'bitmex' | 'bitstamp' | 'bybit' | 'coinex' | 'deribit' | 'kraken' | 'okex';
+type exchanges = 'binance-coin' | 'binance-usds' | 'bitmex' | 'bitstamp' | 'bybit' | 'coinex' | 'deribit' | 'gate.io-btc' | 'kraken' | 'okex';
 interface CryptoExchangeApi {
   FIXER(fixerSettings: FixerN.fixerSettings): FixerN.Fixer;
   POPULATOR(populatorSettings: PopulatorN.populatorSettings): PopulatorN.Populator;
