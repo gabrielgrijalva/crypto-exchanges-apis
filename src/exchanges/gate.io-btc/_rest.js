@@ -99,19 +99,19 @@ function getPrivateFunction(restSettings) {
    */
   async function private(method, path, data) {
     const timestamp = `${moment.utc().unix()}`;
-    const dataString = method === 'GET' ? qs.stringify(data) : '';
-    const queryString = method === 'POST' ? JSON.stringify(data) : '';
+    const dataString = method === 'POST' ? JSON.stringify(data) : '';
+    const queryString = method === 'GET' ? qs.stringify(data) : '';
     const digest = `${method}\n${path}\n${queryString}\n${crypto.createHash('sha512').update(dataString).digest('hex')}\n${timestamp}`;
     const signature = crypto.createHmac('sha512', restSettings.API_SECRET).update(digest).digest('hex');
     const requestSendParams = {
       url: `${restSettings.URL}${path}?${queryString}`,
       method: method,
       headers: {
-        Key: restSettings.API_KEY,
-        Sign: signature,
-        Timestamp: timestamp,
+        'KEY': restSettings.API_KEY,
+        'SIGN': signature,
+        'Timestamp': timestamp,
       },
-      body: dataString,
+      data: dataString,
     };
     const response = await this.send(requestSendParams);
     return response;
@@ -176,18 +176,19 @@ function Rest(restSettings = {}) {
       data.contract = params.symbol;
       if (params.type === 'limit') {
         data.tif = 'gtc';
-        data.price = params.price;
+        data.price = `${params.price}`;
       }
       if (params.type === 'market') {
-        data.price = 0;
+        data.tif = 'ioc';
+        data.price = '0';
       }
       if (params.type === 'post-only') {
         data.tif = 'poc';
-        data.price = params.price;
+        data.price = `${params.price}`;
       }
       if (params.type === 'immidiate-or-cancel') {
         data.tif = 'ioc';
-        data.price = params.price;
+        data.price = `${params.price}`;
       }
       const response = await request.private('POST', `/api/v4/futures/${settle}/orders`, data);
       if (response.status >= 400) {
