@@ -215,10 +215,10 @@ function Ws(wsSettings = {}) {
     const cancelationOrders = [];
     messageParse.result.forEach(orderEvent => {
       if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.contract)) { return };
-      if (orderEvent.status === 'put' || orderEvent.status === 'updated') {
+      if (orderEvent.finish_as === '_new') {
         creationOrders.push(createCreationUpdate(orderEvent));
       }
-      if (orderEvent.status === 'finished' && orderEvent.finish_as === 'canceled') {
+      if (orderEvent.finish_as === 'cancelled') {
         cancelationOrders.push(createCancelation(orderEvent));
       }
     });
