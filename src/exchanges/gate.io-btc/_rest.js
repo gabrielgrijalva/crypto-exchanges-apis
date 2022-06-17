@@ -411,6 +411,28 @@ function Rest(restSettings = {}) {
       const symbols = response.data.map(v => v.name);
       return { data: symbols };
     },
+    /**
+     * 
+     * 
+     * GET INSTRUMENTS SYMBOLS
+     * 
+     * 
+     */
+    _getOrderBook: async (params) => {
+      const data = {};
+      data.contract = params.symbol;
+      data.interval = '0';
+      data.limit = 200;
+      data.with_id = true;
+      const response = await request.public('GET', `/futures/${settle}/order_book`, data);
+      if (response.status >= 400) {
+        return handleResponseError(null, response.data);
+      }
+      const lastUpdateId = response.data.id;
+      const asks = response.data.asks.map(ask => { return { id: +ask.p, price: +ask.p, quantity: +ask.s } });
+      const bids = response.data.bids.map(bid => { return { id: +bid.p, price: +bid.p, quantity: +bid.s } });
+      return { data: { asks, bids, lastUpdateId } };
+    },
   };
   return rest;
 };
