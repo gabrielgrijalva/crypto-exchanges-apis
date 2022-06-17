@@ -1,3 +1,4 @@
+const qs = require('qs');
 const crypto = require('crypto');
 const moment = require('moment');
 const Events = require('events');
@@ -50,13 +51,14 @@ function createCancelation(data) {
 };
 /** 
  * @param {string} channel
+ * @param {string} event
+ * @param {number} time
  * @param {string} apiKey
  * @param {string} apiSecret
  */
-function getAuth(channel, apiKey, apiSecret) {
+function getAuth(channel, event, time, apiKey, apiSecret) {
   if (!apiKey || !apiSecret) { return };
-  const timestamp = `${Date.now()}`;
-  const digest = `chanel=${channel}&event=subscribe&time=${timestamp}`;
+  const digest = qs.stringify({ channel, event, time });
   const signature = crypto.createHmac('sha512', apiSecret).update(digest).digest('hex');
   return { method: 'api_key', KEY: apiKey, SIGN: signature };
 };
@@ -92,7 +94,7 @@ function confirmSubscription(private, channel, payload, webSocket, wsSettings) {
     const event = 'subscribe';
     const apiKey = wsSettings.API_KEY;
     const apiSecret = wsSettings.API_SECRET;
-    const auth = private ? getAuth(channel, apiKey, apiSecret) : null;
+    const auth = private ? getAuth(channel, event, time, apiKey, apiSecret) : null;
     const subscribeTimeout = setTimeout(() => { throw new Error(`Could not subscribe:${channel}`) }, 60000);
     function confirmOnCloseFunction() {
       clearTimeout(subscribeTimeout);
