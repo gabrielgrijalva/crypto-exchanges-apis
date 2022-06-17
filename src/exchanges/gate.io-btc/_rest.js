@@ -424,7 +424,7 @@ function Rest(restSettings = {}) {
       data.interval = '0';
       data.limit = 200;
       data.with_id = true;
-      const response = await request.public('GET', `/futures/${settle}/order_book`, data);
+      const response = await request.public('GET', `/api/v4/futures/${settle}/order_book`, data);
       if (response.status >= 400) {
         return handleResponseError(null, response.data);
       }
