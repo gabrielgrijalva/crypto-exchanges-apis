@@ -9,7 +9,7 @@ const exchanges = [
   'bybit',
   'coinex',
   'deribit',
-  'gate.io-btc',
+  'gateio-btc',
   'kraken',
   'okex',
 ];
