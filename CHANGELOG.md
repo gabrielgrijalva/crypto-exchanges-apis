@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.6.8] - 2022-06-17
+- Implemented gate.io-btc exchange implementation.
 ## [2.6.7] - 2022-06-15
 - Added error handler to okex rest.
 ## [2.6.6] - 2022-06-13
