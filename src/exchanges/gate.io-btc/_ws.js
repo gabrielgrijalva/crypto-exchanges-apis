@@ -385,7 +385,7 @@ function Ws(wsSettings = {}) {
    */
   const orderBooksOnMessage = (message) => {
     const messageParse = JSON.parse(message);
-    if (messageParse.method !== 'futures.order_book_update' || messageParse.event !== 'update') { return };
+    if (messageParse.channel !== 'futures.order_book_update' || messageParse.event !== 'update') { return };
     const orderBookEvent = messageParse.result;
     const orderBookData = orderBooksWsObject.data.find(v => v.symbol === orderBookEvent.s);
     if (!orderBookData) { return };
