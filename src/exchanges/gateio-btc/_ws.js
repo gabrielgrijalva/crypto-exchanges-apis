@@ -176,7 +176,7 @@ function Ws(wsSettings = {}) {
    * 
    * 
    * @type {import('../../../typings/_ws').WebSocket} */
-  const webSocket = WebSocket('gate.io-btc', wsSettings);
+  const webSocket = WebSocket('gateio-btc', wsSettings);
   webSocket.addOnMessage(message => {
     const messageParse = JSON.parse(message);
     if (messageParse.channel !== 'futures.ping') { return };
