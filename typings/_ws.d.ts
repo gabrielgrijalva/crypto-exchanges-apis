@@ -22,6 +22,7 @@ declare namespace WsN {
     URL?: string;
     API_KEY?: string;
     API_SECRET?: string;
+    API_USER_ID?: string;
     API_PASSPHRASE?: string;
     WS_SEND_PING_WAIT?: number;
     WS_ON_MESSAGE_LOGS?: boolean;
