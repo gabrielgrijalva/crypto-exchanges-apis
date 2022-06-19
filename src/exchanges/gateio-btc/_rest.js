@@ -272,7 +272,7 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      const equity = response.data.currency === params.asset ? +response.data.total : 0;
+      const equity = response.data.currency === params.asset ? (+response.data.total + +response.data.unrealised_pnl) : 0;
       return { data: equity };
     },
     /**
