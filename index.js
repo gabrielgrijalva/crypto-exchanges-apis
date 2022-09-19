@@ -11,7 +11,7 @@ const exchanges = [
   'deribit',
   'gateio-btc',
   'kraken',
-  'okex',
+  'okx',
 ];
 /**
  * @type {import('./typings/index')}

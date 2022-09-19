@@ -147,7 +147,7 @@ function getPrivateFunction(restSettings) {
  */
 function Rest(restSettings = {}) {
   // Default rest restSettings values
-  restSettings.URL = restSettings.URL || 'https://aws.okex.com';
+  restSettings.URL = restSettings.URL || 'https://aws.okx.com';
   restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || false;
   restSettings.REQUESTS_REFILL_LIMIT = restSettings.REQUESTS_REFILL_LIMIT || 60;
   restSettings.REQUESTS_REFILL_AMOUNT = restSettings.REQUESTS_REFILL_AMOUNT || 60;
