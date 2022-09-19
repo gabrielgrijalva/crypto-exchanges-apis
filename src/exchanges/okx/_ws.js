@@ -151,7 +151,7 @@ function Ws(wsSettings = {}) {
    * 
    * 
    */
-  wsSettings.URL = wsSettings.URL || 'wss://ws.okex.com:8443/ws/v5';
+  wsSettings.URL = wsSettings.URL || 'wss://wsaws.okx.com:8443/ws/v5';
   /** 
    * 
    * 
@@ -171,7 +171,7 @@ function Ws(wsSettings = {}) {
    * 
    * 
    * @type {import('../../../typings/_ws').WebSocket} */
-  const webSocketPublic = WebSocket('okex:public', wsSettings);
+  const webSocketPublic = WebSocket('okx:public', wsSettings);
   webSocketPublic.addOnClose(async () => {
     await connectWebSocket('public', webSocketPublic, wsSettings);
     for (const params of liquidationsWsObject.subscriptions) await liquidationsWsObject.subscribe(params);
@@ -186,7 +186,7 @@ function Ws(wsSettings = {}) {
    * 
    * 
    * @type {import('../../../typings/_ws').WebSocket} */
-  const webSocketPrivate = WebSocket('okex:private', wsSettings);
+  const webSocketPrivate = WebSocket('okx:private', wsSettings);
   webSocketPrivate.addOnClose(async () => {
     await connectWebSocket('private', webSocketPrivate, wsSettings)
     for (const params of ordersWsObject.subscriptions) await ordersWsObject.subscribe(params);
