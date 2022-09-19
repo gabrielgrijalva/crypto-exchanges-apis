@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.7.0] - 2022-09-19
+- Changed okex to okx.
 ## [2.6.10] - 2022-06-19
 - Corrected error in gateio-btc rest.
 ## [2.6.9] - 2022-06-17
