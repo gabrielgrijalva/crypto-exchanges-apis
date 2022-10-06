@@ -12,6 +12,7 @@ const exchanges = [
   'gateio-btc',
   'kraken',
   'okx',
+  'phemex',
 ];
 /**
  * @type {import('./typings/index')}
