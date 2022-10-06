@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.8.0] - 2022-10-06
+- Implemented phemex api.
 ## [2.7.0] - 2022-09-19
 - Changed okex to okx.
 ## [2.6.10] - 2022-06-19
