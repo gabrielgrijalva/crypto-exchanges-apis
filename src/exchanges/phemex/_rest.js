@@ -295,27 +295,38 @@ function Rest(restSettings = {}) {
       const data ={};
       data.clOrdID = params.id;
       data.symbol = params.symbol;
-      let response = await request.private('GET', '/exchange/order', data, '');
-      if (response.data.code) {
-        return handleResponseError(params, response.data);
-      }
-      if (!response.data.data[0]) {
-        console.log('Error: Order to ammend not found')
-        return handleResponseError(params, response.data);
+
+      let responseOrderID = await request.private('GET', '/exchange/order', data, '');
+      if (responseOrderID.data.code) {
+        return handleResponseError(params, responseOrderID.data);
       }
 
-      // Ammend order by orderID
+      // Retry updateOrder if orderID isn't found on first try but no error is thrown by server
 
-      data.orderID = response.data.data[0].orderID;
+      if (!responseOrderID.data.data || !responseOrderID.data.data.length) { 
+        console.log('Empty response query orderID by clOrdID. Update Order Retry.')
+        responseOrderID = await request.private('GET', '/exchange/order', data, '');
+        if (responseOrderID.data.code) {
+          return handleResponseError(params, responseOrderID.data);
+        }
+        if (!responseOrderID.data.data || !responseOrderID.data.data.length) {
+          console.log('Empty response on retry. No error code.')
+          return handleResponseError(params, responseOrderID.data);
+        }
+        console.log('Successful response on retry.')
+      }
+
+      data.orderID = responseOrderID.data.data[0].orderID;
       if (params.price) {
         data.priceEp = params.price * priceScale;
       }
       if (params.quantity) {
-        data.orderQty = params.quantity  * priceScale;
+        data.orderQty = params.quantity;
       }
-      response = await request.private('PUT', '/orders/replace', data, '');
-      if (response.data.code) {
-        return handleResponseError(params, response.data);
+
+      let responseOrderUpdate = await request.private('PUT', '/orders/replace', data, '');
+      if (responseOrderUpdate.data.code) {
+        return handleResponseError(params, responseOrderUpdate.data);
       }
       return { data: params }
     },
