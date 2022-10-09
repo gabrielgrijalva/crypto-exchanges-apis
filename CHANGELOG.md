@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.8.2] - 2022-10-06
+- Changed candle populator to each 30s.
+## [2.8.1] - 2022-10-06
+- Minor bugfixes in phemex api.
 ## [2.8.0] - 2022-10-06
 - Implemented phemex api.
 ## [2.7.0] - 2022-09-19
