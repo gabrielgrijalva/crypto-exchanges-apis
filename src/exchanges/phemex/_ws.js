@@ -256,10 +256,10 @@ function Ws(wsSettings = {}) {
     messageParse.positions.forEach(positionEvent => {
       const positionData = positionsWsObject.data.find(v => v.symbol === positionEvent.symbol);
       if (!positionData) { return };
-      positionData.pxS = positionEvent && positionEvent.side == 'Sell' ? Math.abs(+positionEvent.size) : 0;
-      positionData.pxB = positionEvent && positionEvent.side == 'Buy' ? Math.abs(+positionEvent.size) : 0;
-      positionData.qtyS = positionEvent && positionEvent.side == 'Sell' ? +positionEvent.avgEntryPriceEp / priceScale : 0;
-      positionData.qtyB = positionEvent && positionEvent.side == 'Buy' ? +positionEvent.avgEntryPriceEp / priceScale : 0;
+      positionData.pxS = positionEvent && positionEvent.side == 'Sell' ? +positionEvent.avgEntryPriceEp / priceScale : 0;
+      positionData.pxB = positionEvent && positionEvent.side == 'Buy' ? +positionEvent.avgEntryPriceEp / priceScale : 0;
+      positionData.qtyS = positionEvent && positionEvent.side == 'Sell' ? Math.abs(+positionEvent.size) : 0;
+      positionData.qtyB = positionEvent && positionEvent.side == 'Buy' ? Math.abs(+positionEvent.size) : 0;
     });
     positionsWsObject.events.emit('update', positionsWsObject.data);
   };
