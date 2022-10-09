@@ -1,6 +1,6 @@
 {
   "name": "@gabrielgrijalva/crypto-exchanges-apis",
-  "version": "2.8.3.1",
+  "version": "2.8.4",
   "description": "Crypto Exchanges APIs libraries",
   "main": "./index.js",
   "typings": "./typings/index.d.ts",
@@ -20,4 +20,4 @@
     "uuid": "^8.3.2",
     "ws": "^8.2.3"
   }
-}
+}git com

@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [2.8.3.1] - 2022-10-06
+## [2.8.4] - 2022-10-06
 - NPM Publish error fix.
 ## [2.8.3] - 2022-10-06
 - WS positions bugfix.
