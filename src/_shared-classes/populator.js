@@ -103,7 +103,7 @@ function Populator(populatorSettings) {
     candlesCron: (params) => {
       const table = params.table;
       const interval = params.interval;
-      new CronJob('00 * * * * *', async () => {
+      new CronJob('00/30 * * * * *', async () => {
         const timestamp = moment(round.down(moment.utc().valueOf() / interval, 0)
           * params.interval).utc().subtract(params.interval, 'milliseconds');
         let candle = null;
