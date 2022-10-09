@@ -311,6 +311,8 @@ function Rest(restSettings = {}) {
         }
         if (!responseOrderID.data.data || !responseOrderID.data.data.length) {
           console.log('Empty response on retry. No error code.')
+          // Send order not found error if orderID isn't found in retry
+          responseOrderID.data.code = 10002;
           return handleResponseError(params, responseOrderID.data);
         }
         console.log('Successful response on retry.')
