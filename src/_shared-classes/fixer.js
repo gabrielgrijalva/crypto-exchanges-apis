@@ -98,6 +98,7 @@ function getFixOrderCreate(hedgePercentage, fixSymbol, fixPositionQtyS, fixPosit
   /** @type {'open' | 'close'} */
   let direction = 'open';
   const type = fixerSettings.TYPE;
+  if (!ws || !ws.orderBooks || !ws.orderBooks.data || !ws.orderBooks.data[0].asks || !ws.orderBooks.data[0].bids) { return }
   const bestAsk = ws.orderBooks.data[0].asks[0].price;
   const bestBid = ws.orderBooks.data[0].bids[0].price;
   // OPEN SELL

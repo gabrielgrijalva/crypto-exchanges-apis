@@ -2,6 +2,7 @@ const qs = require('qs');
 const crypto = require('crypto');
 const moment = require('moment');
 const Request = require('../../_shared-classes/request');
+const wait = require('../../_utils/wait');
 
 // Phemex Exclusive Settings Scale
 
@@ -305,6 +306,7 @@ function Rest(restSettings = {}) {
 
       if (!responseOrderID.data.data || !responseOrderID.data.data.length) { 
         console.log('Empty response query orderID by clOrdID. Update Order Retry.')
+        await wait(100);
         responseOrderID = await request.private('GET', '/exchange/order', data, '');
         if (responseOrderID.data.code) {
           return handleResponseError(params, responseOrderID.data);

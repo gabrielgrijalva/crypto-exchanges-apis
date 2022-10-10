@@ -430,7 +430,10 @@ function Rest(restSettings = {}) {
       data.instId = params.symbol;
       const response = await request.private('GET', '/api/v5/account/positions', null, data);
       if (response.data.code !== '0') {
-        return handleResponseError(params, response.data.data[0] || response.data);
+        if (response && response.data && response.data.data){
+          return handleResponseError(params, response.data.data[0]);
+        }
+        return handleResponseError(params, response.data);
       }
       const positionData = response.data.data.find(v => v.instId === params.symbol);
       const qtyS = positionData && +positionData.pos < 0 ? Math.abs(+positionData.pos) : 0;
