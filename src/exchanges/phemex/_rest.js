@@ -305,19 +305,33 @@ function Rest(restSettings = {}) {
       // Retry updateOrder if orderID isn't found on first try but no error is thrown by server
 
       if (!responseOrderID.data.data || !responseOrderID.data.data.length) { 
-        console.log('Empty response query orderID by clOrdID. Update Order Retry.')
-        await wait(100);
-        responseOrderID = await request.private('GET', '/exchange/order', data, '');
-        if (responseOrderID.data.code) {
-          return handleResponseError(params, responseOrderID.data);
+
+        console.log('Empty response query orderID by clOrdID.')
+
+        let retryCount = 0;
+
+        while(retryCount < 10){
+          retryCount++;
+          console.log(`Query orderID by clOrdID Retry (${retryCount}).`)
+          await wait(100);
+          responseOrderID = await request.private('GET', '/exchange/order', data, '');
+          if (responseOrderID.data.code) {
+            return handleResponseError(params, responseOrderID.data);
+          }
+          if (responseOrderID.data.data && responseOrderID.data.data.length){
+            break;
+          }
         }
+
         if (!responseOrderID.data.data || !responseOrderID.data.data.length) {
           console.log('Empty response on retry. No error code.')
           // Send order not found error if orderID isn't found in retry
           responseOrderID.data.code = 10002;
           return handleResponseError(params, responseOrderID.data);
         }
+
         console.log('Successful response on retry.')
+
       }
 
       data.orderID = responseOrderID.data.data[0].orderID;
