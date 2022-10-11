@@ -1,9 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [2.8.4] - 2022-10-06
+## [2.8.6] - 2022-10-10
+- Modified Phemex update order implementation.
+## [2.8.5] - 2022-10-08
+- Minor bug fixes.
+## [2.8.4] - 2022-10-08
 - NPM Publish error fix.
-## [2.8.3] - 2022-10-06
+## [2.8.3] - 2022-10-08
 - WS positions bugfix.
 ## [2.8.2] - 2022-10-06
 - Changed candle populator to each 30s.
