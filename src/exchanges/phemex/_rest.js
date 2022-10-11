@@ -306,7 +306,7 @@ function Rest(restSettings = {}) {
 
       if (!responseOrderID.data.data || !responseOrderID.data.data.length) { 
         console.log('Empty response query orderID by clOrdID. Update Order Retry.')
-        await wait(100);
+        await wait(1000);
         responseOrderID = await request.private('GET', '/exchange/order', data, '');
         if (responseOrderID.data.code) {
           return handleResponseError(params, responseOrderID.data);
