@@ -195,6 +195,7 @@ declare namespace RestN {
     data?: string;
     method: string;
     headers?: any;
+    requestConsumption?: number;
   }
   type requestSendReturn = {
     data: any;
@@ -205,9 +206,10 @@ declare namespace RestN {
     remaining: number;
     timestamps: number[];
     send(params: requestSendParams): Promise<requestSendReturn>;
+    updateRequestLimit(params: number);
     key(method: string, path: string, data: any): Promise<requestSendReturn>;
-    public(method: string, path: string, data: any): Promise<requestSendReturn>;
-    private(method: string, path: string, data: any, query?: any): Promise<requestSendReturn>;
+    public(method: string, path: string, data: any, requestConsumption?: number): Promise<requestSendReturn>;
+    private(method: string, path: string, data: any, query?: any, requestConsumption?: number): Promise<requestSendReturn>;
   }
   /**
    * 

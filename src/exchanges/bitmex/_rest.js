@@ -193,6 +193,9 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
+      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      }
       return { data: params };
     },
     /**
@@ -217,6 +220,9 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
+      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      }
       return { data: params };
     },
     /**
@@ -232,6 +238,9 @@ function Rest(restSettings = {}) {
       const response = await request.private('DELETE', '/api/v1/order', data);
       if (response.status >= 400) {
         return params.map(v => handleResponseError(v, response.data));
+      }
+      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
       }
       return response.data.map((v, i) => {
         if (v.error) {
@@ -254,6 +263,9 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
+      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      }
       return { data: params };
     },
     /**
@@ -275,6 +287,9 @@ function Rest(restSettings = {}) {
       const response = await request.private('PUT', '/api/v1/order', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
+      }
+      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
       }
       return { data: params };
     },
@@ -300,6 +315,9 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
+      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      }
       const divisor = getEquityDivisor(params.asset);
       const equity = round.normal(response.data.marginBalance / divisor, 8);
       return { data: equity };
@@ -320,6 +338,9 @@ function Rest(restSettings = {}) {
       const response = await request.private('GET', '/api/udf/history', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
+      }
+      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
       }
       const candles = response.data.t.map((v, i, a) => {
         const candle = {};
@@ -347,6 +368,9 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
+      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      }
       const qtyS = Math.abs(response.data[0] && +response.data[0].currentQty < 0 ? +response.data[0].currentQty : 0);
       const qtyB = Math.abs(response.data[0] && +response.data[0].currentQty > 0 ? +response.data[0].currentQty : 0);
       const pxS = qtyS ? +response.data[0].avgEntryPrice : 0;
@@ -369,6 +393,9 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
+      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      }
       const price = +response.data[0].price;
       return { data: price };
     },
@@ -387,12 +414,18 @@ function Rest(restSettings = {}) {
       if (positionResponse.status >= 400) {
         return handleResponseError(params, positionResponse.data);
       }
+      if (positionResponse.headers && positionResponse.headers['x-ratelimit-remaining-1s']){
+        await request.updateRequestLimit(positionResponse.headers['x-ratelimit-remaining-1s'])
+      }
       // Get instrument
       const instrumentData = {};
       instrumentData.symbol = params.symbol;
       const instrumentResponse = await request.private('GET', '/api/v1/instrument', instrumentData);
       if (instrumentResponse.status >= 400) {
         return handleResponseError(params, instrumentResponse.data);
+      }
+      if (instrumentResponse.headers && instrumentResponse.headers['x-ratelimit-remaining-1s']){
+        await request.updateRequestLimit(instrumentResponse.headers['x-ratelimit-remaining-1s'])
       }
       // Calculate liquidation
       const markPx = +instrumentResponse.data[0].markPrice;
@@ -414,6 +447,9 @@ function Rest(restSettings = {}) {
       const response = await request.private('GET', '/api/v1/instrument', data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
+      }
+      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
       }
       const fundings = {
         current: +response.data[0].fundingRate,
@@ -441,6 +477,9 @@ function Rest(restSettings = {}) {
       const response = await request.private('GET', '/api/v1/instrument', data);
       if (response.status >= 400) {
         return handleResponseError(null, response.data);
+      }
+      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
       }
       const symbols = response.data.map(v => v.symbol);
       return { data: symbols };

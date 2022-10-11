@@ -36,13 +36,19 @@ function Request(requestSettings) {
     send: (params) => {
       request.timestamps.unshift(Date.now());
       request.timestamps.splice(restSettings.REQUESTS_TIMESTAMPS);
-      request.remaining = request.remaining > 0 ? request.remaining - 1 : 0;
+      request.remaining = request.remaining > 0 ? request.remaining - params.requestConsumption : 0;
+      console.log('Request consumption: ', params.requestConsumption)
       return RestRequest.send(params);
+    },
+    updateRequestLimit: (params) => {
+      request.remaining = Number(params)
+      console.log('Remaining requests: ', request.remaining)
     },
     key: key,
     public: public,
     private: private,
   };
+  console.log('Initial requests: ', request.remaining)
   if (restSettings.REQUESTS_REFILL) { createRefillSetInterval(request, restSettings) };
   return request;
 };
