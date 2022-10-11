@@ -96,7 +96,7 @@ function getPrivateFunction(restSettings) {
    * @this {import('../../../typings/_rest').Request} 
    * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
    */
-  async function private(method, path, data) {
+  async function private(method, path, data, requestConsumption = 1) {
     const headers = {};
     const dataStringified = qs.stringify(data);
     if (restSettings.API_KEY && restSettings.API_SECRET) {
@@ -111,6 +111,7 @@ function getPrivateFunction(restSettings) {
       url: `${restSettings.URL}${path}?${dataStringified}`,
       method: method,
       headers: headers,
+      requestConsumption
     };
     const response = await this.send(requestSendParams);
     return response;
@@ -193,8 +194,12 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
-        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      if (response.headers && response.headers['x-ratelimit-remaining']){
+        console.log('Request headers: ', response.headers);
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining'])
+        if (response.headers['x-ratelimit-remaining-1s']){
+          await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+        }
       }
       return { data: params };
     },
@@ -220,8 +225,12 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
-        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      if (response.headers && response.headers['x-ratelimit-remaining']){
+        console.log('Request headers: ', response.headers);
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining'])
+        if (response.headers['x-ratelimit-remaining-1s']){
+          await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+        }
       }
       return { data: params };
     },
@@ -239,8 +248,12 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return params.map(v => handleResponseError(v, response.data));
       }
-      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
-        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      if (response.headers && response.headers['x-ratelimit-remaining']){
+        console.log('Request headers: ', response.headers);
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining'])
+        if (response.headers['x-ratelimit-remaining-1s']){
+          await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+        }
       }
       return response.data.map((v, i) => {
         if (v.error) {
@@ -263,8 +276,12 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
-        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      if (response.headers && response.headers['x-ratelimit-remaining']){
+        console.log('Request headers: ', response.headers);
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining'])
+        if (response.headers['x-ratelimit-remaining-1s']){
+          await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+        }
       }
       return { data: params };
     },
@@ -288,8 +305,12 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
-        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      if (response.headers && response.headers['x-ratelimit-remaining']){
+        console.log('Request headers: ', response.headers);
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining'])
+        if (response.headers['x-ratelimit-remaining-1s']){
+          await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+        }
       }
       return { data: params };
     },
@@ -315,8 +336,12 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
-        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      if (response.headers && response.headers['x-ratelimit-remaining']){
+        console.log('Request headers: ', response.headers);
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining'])
+        if (response.headers['x-ratelimit-remaining-1s']){
+          await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+        }
       }
       const divisor = getEquityDivisor(params.asset);
       const equity = round.normal(response.data.marginBalance / divisor, 8);
@@ -339,8 +364,12 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
-        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      if (response.headers && response.headers['x-ratelimit-remaining']){
+        console.log('Request headers: ', response.headers);
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining'])
+        if (response.headers['x-ratelimit-remaining-1s']){
+          await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+        }
       }
       const candles = response.data.t.map((v, i, a) => {
         const candle = {};
@@ -368,8 +397,12 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
-        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      if (response.headers && response.headers['x-ratelimit-remaining']){
+        console.log('Request headers: ', response.headers);
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining'])
+        if (response.headers['x-ratelimit-remaining-1s']){
+          await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+        }
       }
       const qtyS = Math.abs(response.data[0] && +response.data[0].currentQty < 0 ? +response.data[0].currentQty : 0);
       const qtyB = Math.abs(response.data[0] && +response.data[0].currentQty > 0 ? +response.data[0].currentQty : 0);
@@ -393,8 +426,12 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
-        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      if (response.headers && response.headers['x-ratelimit-remaining']){
+        console.log('Request headers: ', response.headers);
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining'])
+        if (response.headers['x-ratelimit-remaining-1s']){
+          await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+        }
       }
       const price = +response.data[0].price;
       return { data: price };
@@ -414,8 +451,12 @@ function Rest(restSettings = {}) {
       if (positionResponse.status >= 400) {
         return handleResponseError(params, positionResponse.data);
       }
-      if (positionResponse.headers && positionResponse.headers['x-ratelimit-remaining-1s']){
-        await request.updateRequestLimit(positionResponse.headers['x-ratelimit-remaining-1s'])
+      if (positionResponse.headers && positionResponse.headers['x-ratelimit-remaining']){
+        console.log('Request headers: ', positionResponse.headers)
+        await request.updateRequestLimit(positionResponse.headers['x-ratelimit-remaining'])
+        if (positionResponse.headers['x-ratelimit-remaining-1s']){
+          await request.updateRequestLimit(positionResponse.headers['x-ratelimit-remaining-1s'])
+        }
       }
       // Get instrument
       const instrumentData = {};
@@ -424,8 +465,12 @@ function Rest(restSettings = {}) {
       if (instrumentResponse.status >= 400) {
         return handleResponseError(params, instrumentResponse.data);
       }
-      if (instrumentResponse.headers && instrumentResponse.headers['x-ratelimit-remaining-1s']){
-        await request.updateRequestLimit(instrumentResponse.headers['x-ratelimit-remaining-1s'])
+      if (instrumentResponse.headers && instrumentResponse.headers['x-ratelimit-remaining']){
+        console.log('Request headers: ', instrumentResponse.headers)
+        await request.updateRequestLimit(instrumentResponse.headers['x-ratelimit-remaining'])
+        if (instrumentResponse.headers['x-ratelimit-remaining-1s']){
+          await request.updateRequestLimit(instrumentResponse.headers['x-ratelimit-remaining-1s'])
+        }
       }
       // Calculate liquidation
       const markPx = +instrumentResponse.data[0].markPrice;
@@ -448,8 +493,12 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
-        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      if (response.headers && response.headers['x-ratelimit-remaining']){
+        console.log('Request headers: ', response.headers);
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining'])
+        if (response.headers['x-ratelimit-remaining-1s']){
+          await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+        }
       }
       const fundings = {
         current: +response.data[0].fundingRate,
@@ -478,8 +527,12 @@ function Rest(restSettings = {}) {
       if (response.status >= 400) {
         return handleResponseError(null, response.data);
       }
-      if (response.headers && response.headers['x-ratelimit-remaining-1s']){
-        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+      if (response.headers && response.headers['x-ratelimit-remaining']){
+        console.log('Request headers: ', response.headers);
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining'])
+        if (response.headers['x-ratelimit-remaining-1s']){
+          await request.updateRequestLimit(response.headers['x-ratelimit-remaining-1s'])
+        }
       }
       const symbols = response.data.map(v => v.symbol);
       return { data: symbols };

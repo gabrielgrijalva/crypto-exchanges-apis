@@ -34,10 +34,11 @@ function Request(requestSettings) {
     timestamps: [],
     // Functions
     send: (params) => {
+      const requestConsumption = (params && params.requestConsumption) ? params.requestConsumption : 1;
       request.timestamps.unshift(Date.now());
-      request.timestamps.splice(restSettings.REQUESTS_TIMESTAMPS);
-      request.remaining = request.remaining > 0 ? request.remaining - params.requestConsumption : 0;
-      console.log('Request consumption: ', params.requestConsumption)
+      request.timestamps.splice(restSettings.REQUESTS_TIMESTAMPS); 
+      request.remaining = request.remaining > 0 ? request.remaining - requestConsumption : 0;
+      console.log('Request consumption: ', requestConsumption)
       return RestRequest.send(params);
     },
     updateRequestLimit: (params) => {
