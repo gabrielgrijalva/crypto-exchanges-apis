@@ -84,7 +84,6 @@ function getEquityDivisor(asset) {
  */
 async function setRateLimit(res, req){
   if (res.headers && res.headers['x-ratelimit-remaining']){
-    console.log('Request headers: ', res.headers);
     const globalRateLimit = Number(res.headers['x-ratelimit-remaining'])
     await req.updateRequestLimit(globalRateLimit)
     if (res.headers['x-ratelimit-remaining-1s']){
@@ -92,7 +91,6 @@ async function setRateLimit(res, req){
       const lowestLimit = oneSecondRateLimit < globalRateLimit ? oneSecondRateLimit : globalRateLimit;
       console.log('Global Rate Limit', globalRateLimit)
       console.log('1s Rate Limit', oneSecondRateLimit)
-      console.log('Lowest Rate Limit', lowestLimit)
       await req.updateRequestLimit(lowestLimit)
     }
   }
