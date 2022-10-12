@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.8.7] - 2022-10-11
+- Implemented real time exchange requests. API-ready + Phemex, Bitmex.
 ## [2.8.6] - 2022-10-10
 - Modified Phemex update order implementation.
 ## [2.8.5] - 2022-10-08
