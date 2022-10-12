@@ -108,11 +108,12 @@ function getPublicFunction(restSettings) {
    * @this {import('../../../typings/_rest').Request} 
    * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
    */
-  async function public(method, path, data) {
+  async function public(method, path, data, requestConsumption = 1) {
     const dataStringified = qs.stringify(data);
     const requestSendParams = {
       url: `${restSettings.URL}${path}?${dataStringified}`,
       method: method,
+      requestConsumption
     };
     const response = await this.send(requestSendParams);
     return response;
@@ -127,7 +128,7 @@ function getPrivateFunction(restSettings) {
    * @this {import('../../../typings/_rest').Request} 
    * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
    */
-  async function private(method, path, query, data) {
+  async function private(method, path, query, data, requestConsumption = 1) {
     const dataStringified = data ? JSON.stringify(data) : '';
     const queryStrigified = query ? `${qs.stringify(query)}` : '';
     const expiry = Math.round(Date.now() / 1000) + 60;
@@ -143,6 +144,7 @@ function getPrivateFunction(restSettings) {
         'x-phemex-request-expiry': expiry,
         'x-phemex-request-signature': signature,
       },
+      requestConsumption
     };
     const response = await this.send(requestSendParams);
     return response;
@@ -224,11 +226,12 @@ function Rest(restSettings = {}) {
         data.ordType = 'Limit'
         data.timeInForce = 'ImmediateOrCancel'
       }
-      
-      const response = await request.private('PUT', '/orders/create', data, '');
-      // const response = await request.private('POST', '/orders', '', data);
+      const response = await request.private('PUT', '/orders/create', data, '', 1);
       if (response.data.code) {
         return handleResponseError(params, response.data);
+      }
+      if (response && response.headers && response.headers['x-ratelimit-remaining-contract']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-contract'])
       }
       return { data: params };
     },
@@ -251,9 +254,12 @@ function Rest(restSettings = {}) {
       const data = {};
       data.symbol = params.symbol;
       data.clOrdID = params.id;
-      const response = await request.private('DELETE', '/orders/cancel', data, '');
+      const response = await request.private('DELETE', '/orders/cancel', data, '', 1);
       if (response.data.code) {
         return handleResponseError(params, response.data);
+      }
+      if (response && response.headers && response.headers['x-ratelimit-remaining-contract']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-contract'])
       }
       return { data: params };
     },
@@ -276,9 +282,12 @@ function Rest(restSettings = {}) {
       // Get open orders
       const data = {};
       data.symbol = params.symbol;
-      const response = await request.private('DELETE', '/orders/all', data, '');
+      const response = await request.private('DELETE', '/orders/all', data, '', 3);
       if (response.data.code) {
         return handleResponseError(params, response.data);
+      }
+      if (response && response.headers && response.headers['x-ratelimit-remaining-contract']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-contract'])
       }
       return { data: params }
     },
@@ -297,14 +306,17 @@ function Rest(restSettings = {}) {
       data.clOrdID = params.id;
       data.symbol = params.symbol;
 
-      let responseOrderID = await request.private('GET', '/exchange/order', data, '');
-      if (responseOrderID.data.code) {
-        return handleResponseError(params, responseOrderID.data);
+      let response = await request.private('GET', '/exchange/order', data, '', 1);
+      if (response.data.code) {
+        return handleResponseError(params, response.data);
+      }
+      if (response && response.headers && response.headers['x-ratelimit-remaining-contract']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-contract'])
       }
 
       // Retry updateOrder if orderID isn't found on first try but no error is thrown by server
 
-      if (!responseOrderID.data.data || !responseOrderID.data.data.length) { 
+      if (!response.data.data || !response.data.data.length) { 
 
         console.log('Empty response query orderID by clOrdID.')
 
@@ -314,27 +326,30 @@ function Rest(restSettings = {}) {
           retryCount++;
           console.log(`Query orderID by clOrdID Retry (${retryCount}).`)
           await wait(100);
-          responseOrderID = await request.private('GET', '/exchange/order', data, '');
-          if (responseOrderID.data.code) {
-            return handleResponseError(params, responseOrderID.data);
+          response = await request.private('GET', '/exchange/order', data, '', 1);
+          if (response.data.code) {
+            return handleResponseError(params, response.data);
           }
-          if (responseOrderID.data.data && responseOrderID.data.data.length){
+          if (response && response.headers && response.headers['x-ratelimit-remaining-contract']){
+            await request.updateRequestLimit(response.headers['x-ratelimit-remaining-contract'])
+          }
+          if (response.data.data && response.data.data.length){
             break;
           }
         }
 
-        if (!responseOrderID.data.data || !responseOrderID.data.data.length) {
+        if (!response.data.data || !response.data.data.length) {
           console.log('Empty response on retry. No error code.')
           // Send order not found error if orderID isn't found in retry
-          responseOrderID.data.code = 10002;
-          return handleResponseError(params, responseOrderID.data);
+          response.data.code = 10002;
+          return handleResponseError(params, response.data);
         }
 
         console.log('Successful response on retry.')
 
       }
 
-      data.orderID = responseOrderID.data.data[0].orderID;
+      data.orderID = response.data.data[0].orderID;
       if (params.price) {
         data.priceEp = params.price * priceScale;
       }
@@ -342,9 +357,12 @@ function Rest(restSettings = {}) {
         data.orderQty = params.quantity;
       }
 
-      let responseOrderUpdate = await request.private('PUT', '/orders/replace', data, '');
-      if (responseOrderUpdate.data.code) {
-        return handleResponseError(params, responseOrderUpdate.data);
+      response = await request.private('PUT', '/orders/replace', data, '', 1);
+      if (response.data.code) {
+        return handleResponseError(params, response.data);
+      }
+      if (response && response.headers && response.headers['x-ratelimit-remaining-contract']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-contract'])
       }
       return { data: params }
     },
@@ -367,9 +385,12 @@ function Rest(restSettings = {}) {
     getEquity: async (params) => {
       const data = {};
       data.currency = params.asset;
-      const response = await request.private('GET', '/accounts/positions', data, '');
+      const response = await request.private('GET', '/accounts/positions', data, '', 25);
       if (response.data.code) {
         return handleResponseError(params, response.data.data[0] || response.data);
+      }
+      if (response && response.headers && response.headers['x-ratelimit-remaining-contract']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-contract'])
       }
       // Get pnl for all asset positions
       const unrealised_pnl = response.data.data.positions.map(v => 
@@ -390,9 +411,12 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       data.resolution = getCandleResolution(params.interval);
       data.limit = 1000;
-      const response = await request.public('GET', '/exchange/public/md/v2/kline', data);
+      const response = await request.public('GET', '/exchange/public/md/v2/kline', data, 10);
       if (response.data.code) {
         return handleResponseError(params, response.data.data[0] || response.data);
+      }
+      if (response && response.headers && response.headers['x-ratelimit-remaining-contract']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-contract'])
       }
       const candles = response.data.data.rows.reverse().map(v => {
         const candle = {};
@@ -425,9 +449,12 @@ function Rest(restSettings = {}) {
         default:
           data.currency = 'USD';
       }
-      const response = await request.private('GET', '/accounts/positions', data, '');
+      const response = await request.private('GET', '/accounts/positions', data, '', 25);
       if (response.data.code) {
         return handleResponseError(params, response.data.data[0] || response.data);
+      }
+      if (response && response.headers && response.headers['x-ratelimit-remaining-contract']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-contract'])
       }
       const positionData = response.data.data.positions.find(v => v.symbol === params.symbol);
       const qtyS = positionData && positionData.side == 'Sell' ? Math.abs(+positionData.size) : 0;
@@ -474,9 +501,12 @@ function Rest(restSettings = {}) {
         default:
           data.currency = 'USD';
       }
-      const response = await request.private('GET', '/accounts/positions', data, '');
+      const response = await request.private('GET', '/accounts/positions', data, '', 25);
       if (response.data.code) {
         return handleResponseError(params, response.data.data[0] || response.data);
+      }
+      if (response && response.headers && response.headers['x-ratelimit-remaining-contract']){
+        await request.updateRequestLimit(response.headers['x-ratelimit-remaining-contract'])
       }
       const positionData = response.data.data.positions.find(v => v.symbol === params.symbol);
       // Calculate liquidation
