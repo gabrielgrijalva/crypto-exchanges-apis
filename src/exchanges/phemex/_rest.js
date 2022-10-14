@@ -387,7 +387,12 @@ function Rest(restSettings = {}) {
       data.currency = params.asset;
       const response = await request.private('GET', '/accounts/positions', data, '', 25);
       if (response.data.code) {
-        return handleResponseError(params, response.data.data[0] || response.data);
+        if (response.data && response.data.data){
+          return handleResponseError(params, response.data.data[0])
+        }
+        if (response.data){
+          return handleResponseError(params, response.data)
+        }
       }
       if (response && response.headers && response.headers['x-ratelimit-remaining-contract']){
         await request.updateRequestLimit(response.headers['x-ratelimit-remaining-contract'])
