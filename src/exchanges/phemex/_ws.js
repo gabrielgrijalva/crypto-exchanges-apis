@@ -218,7 +218,7 @@ function Ws(wsSettings = {}) {
       if (orderEvent.execStatus === 'New' || orderEvent.execStatus === 'ReAdded') {
         creationOrders.push(createCreationUpdate(orderEvent));
       }
-      if (orderEvent.execStatus === 'Canceled' || orderEvent.execStatus === 'Aborted' || orderEvent.execStatus === 'Expired') {
+      if (orderEvent.execStatus === 'Canceled' || orderEvent.execStatus === 'Aborted' || orderEvent.execStatus === 'Expired' || orderEvent.execStatus === 'ReplaceToCanceled') {
         cancelationOrders.push(createCancelation(orderEvent));
       }
       if (orderEvent.execStatus === 'MakerFill' || orderEvent.execStatus === 'TakerFill') {

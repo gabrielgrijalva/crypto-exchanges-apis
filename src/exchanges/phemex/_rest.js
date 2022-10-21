@@ -364,6 +364,7 @@ function Rest(restSettings = {}) {
       if (response && response.headers && response.headers['x-ratelimit-remaining-contract']){
         await request.updateRequestLimit(response.headers['x-ratelimit-remaining-contract'])
       }
+
       return { data: params }
     },
 
@@ -411,13 +412,48 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       data.resolution = getCandleResolution(params.interval);
       data.limit = 1000;
-      const response = await request.public('GET', '/exchange/public/md/v2/kline', data, 10);
+      let response = await request.public('GET', '/exchange/public/md/v2/kline', data, 10);
       if (response.data.code) {
         return handleResponseError(params, response.data.data[0] || response.data);
       }
       if (response && response.headers && response.headers['x-ratelimit-remaining-contract']){
         await request.updateRequestLimit(response.headers['x-ratelimit-remaining-contract'])
       }
+
+      if (!response.data.data || !response.data.data || !response.data.data.rows) { 
+
+        console.log('Empty response query candles.')
+
+        let retryCount = 0;
+
+        while(retryCount < 15){
+          retryCount++;
+          console.log(`Query query candles Retry (${retryCount}).`)
+          await wait(1000);
+          response = await request.public('GET', '/exchange/public/md/v2/kline', data, 10);
+          if (response.data.code) {
+            return handleResponseError(params, response.data);
+          }
+          if (response && response.headers && response.headers['x-ratelimit-remaining-contract']){
+            await request.updateRequestLimit(response.headers['x-ratelimit-remaining-contract'])
+          }
+          if (response.data.data && response.data.data.length && response.data.data.rows){
+            break;
+          }
+        }
+
+        if (!response.data.data || !response.data.data.length || !response.data.data.rows) {
+          console.log('Empty response on retry. No error code.')
+          // Send order not found error if orderID isn't found in retry
+          response.data.code = 10002;
+          return handleResponseError(params, response.data);
+        }
+
+        console.log('Successful response on retry.')
+
+      }
+
+
       const candles = response.data.data.rows.reverse().map(v => {
         const candle = {};
         candle.timestamp = moment(+v[0]*1000).utc().format('YYYY-MM-DD HH:mm:ss');
