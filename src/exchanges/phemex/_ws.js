@@ -208,17 +208,19 @@ function Ws(wsSettings = {}) {
    */
   const ordersOnMessage = (message) => {
     const messageParse = JSON.parse(message.toString());
+    // if (messageParse && messageParse.type === 'snapshot') { return };
     if (!messageParse.orders) { return };
     if (!messageParse.orders.length) { return };
     const creationOrders = [];
     const executionOrders = [];
     const cancelationOrders = [];
+    messageParse.orders = messageParse.orders.sort((a, b) => parseFloat(a.transactTimeNs) - parseFloat(b.transactTimeNs));
     messageParse.orders.forEach(orderEvent => {
       if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.symbol)) { return };
-      if (orderEvent.execStatus === 'New' || orderEvent.execStatus === 'ReAdded') {
+      if (orderEvent.execStatus === 'New' || orderEvent.execStatus === 'ReAdded' || orderEvent.execStatus === 'Replaced') {
         creationOrders.push(createCreationUpdate(orderEvent));
       }
-      if (orderEvent.execStatus === 'Canceled' || orderEvent.execStatus === 'Aborted' || orderEvent.execStatus === 'Expired' || orderEvent.execStatus === 'ReplaceToCanceled') {
+      if (orderEvent.execStatus === 'Canceled' || orderEvent.execStatus === 'Aborted' || orderEvent.execStatus === 'Expired' || orderEvent.execStatus === 'ReplaceRejected' || orderEvent.execStatus === 'CancelRejected') {
         cancelationOrders.push(createCancelation(orderEvent));
       }
       if (orderEvent.execStatus === 'MakerFill' || orderEvent.execStatus === 'TakerFill') {
