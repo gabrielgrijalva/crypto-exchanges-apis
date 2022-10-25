@@ -28,7 +28,7 @@ function createCreationUpdate(data) {
   const eventData = {};
   eventData.symbol = data.symbol;
   eventData.event = 'creations-updates';
-  eventData.id = data.clOrdID;
+  eventData.id = data.orderID;
   eventData.side = data.side.toLowerCase();
   eventData.price = +data.priceEp / priceScale;
   eventData.quantity = +data.orderQty;
@@ -39,7 +39,7 @@ function createExecution(data) {
   const eventData = {};
   eventData.symbol = data.symbol;
   eventData.event = 'executions';
-  eventData.id = data.clOrdID;
+  eventData.id = data.orderID;
   eventData.side = data.side.toLowerCase();
   eventData.price = +data.execPriceEp / priceScale;
   eventData.quantity = +data.execQty;
@@ -50,7 +50,7 @@ function createCancelation(data) {
   const eventData = {};
   eventData.symbol = data.symbol;
   eventData.event = 'cancelations';
-  eventData.id = data.clOrdID;
+  eventData.id = data.orderID;
   eventData.timestamp = moment(+data.transactTimeNs/1000000).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
   return eventData;
 };
@@ -208,17 +208,19 @@ function Ws(wsSettings = {}) {
    */
   const ordersOnMessage = (message) => {
     const messageParse = JSON.parse(message.toString());
+    // if (messageParse && messageParse.type === 'snapshot') { return };
     if (!messageParse.orders) { return };
     if (!messageParse.orders.length) { return };
     const creationOrders = [];
     const executionOrders = [];
     const cancelationOrders = [];
+    messageParse.orders = messageParse.orders.sort((a, b) => parseFloat(a.transactTimeNs) - parseFloat(b.transactTimeNs));
     messageParse.orders.forEach(orderEvent => {
       if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.symbol)) { return };
-      if (orderEvent.execStatus === 'New' || orderEvent.execStatus === 'ReAdded') {
+      if (orderEvent.execStatus === 'New' || orderEvent.execStatus === 'ReAdded' || orderEvent.execStatus === 'Replaced') {
         creationOrders.push(createCreationUpdate(orderEvent));
       }
-      if (orderEvent.execStatus === 'Canceled' || orderEvent.execStatus === 'Aborted' || orderEvent.execStatus === 'Expired') {
+      if (orderEvent.execStatus === 'Canceled' || orderEvent.execStatus === 'Aborted' || orderEvent.execStatus === 'Expired' || orderEvent.execStatus === 'ReplaceRejected' || orderEvent.execStatus === 'CancelRejected') {
         cancelationOrders.push(createCancelation(orderEvent));
       }
       if (orderEvent.execStatus === 'MakerFill' || orderEvent.execStatus === 'TakerFill') {

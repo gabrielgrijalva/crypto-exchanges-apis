@@ -13,6 +13,7 @@ const exchanges = [
   'kraken',
   'okx',
   'phemex',
+  'huobi-swap',
 ];
 /**
  * @type {import('./typings/index')}
