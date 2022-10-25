@@ -28,7 +28,7 @@ function createCreationUpdate(data) {
   const eventData = {};
   eventData.symbol = data.symbol;
   eventData.event = 'creations-updates';
-  eventData.id = data.clOrdID;
+  eventData.id = data.orderID;
   eventData.side = data.side.toLowerCase();
   eventData.price = +data.priceEp / priceScale;
   eventData.quantity = +data.orderQty;
@@ -39,7 +39,7 @@ function createExecution(data) {
   const eventData = {};
   eventData.symbol = data.symbol;
   eventData.event = 'executions';
-  eventData.id = data.clOrdID;
+  eventData.id = data.orderID;
   eventData.side = data.side.toLowerCase();
   eventData.price = +data.execPriceEp / priceScale;
   eventData.quantity = +data.execQty;
@@ -50,7 +50,7 @@ function createCancelation(data) {
   const eventData = {};
   eventData.symbol = data.symbol;
   eventData.event = 'cancelations';
-  eventData.id = data.clOrdID;
+  eventData.id = data.orderID;
   eventData.timestamp = moment(+data.transactTimeNs/1000000).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
   return eventData;
 };

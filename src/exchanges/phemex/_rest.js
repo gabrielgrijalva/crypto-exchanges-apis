@@ -169,9 +169,9 @@ function Rest(restSettings = {}) {
   // Default rest restSettings values
   restSettings.URL = restSettings.URL || 'https://api.phemex.com';
   restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || false;
-  restSettings.REQUESTS_REFILL_LIMIT = restSettings.REQUESTS_REFILL_LIMIT || 40;
-  restSettings.REQUESTS_REFILL_AMOUNT = restSettings.REQUESTS_REFILL_AMOUNT || 40;
-  restSettings.REQUESTS_REFILL_INTERVAL = restSettings.REQUESTS_REFILL_INTERVAL || 6000;
+  restSettings.REQUESTS_REFILL_LIMIT = restSettings.REQUESTS_REFILL_LIMIT || 500;
+  restSettings.REQUESTS_REFILL_AMOUNT = restSettings.REQUESTS_REFILL_AMOUNT || 500;
+  restSettings.REQUESTS_REFILL_INTERVAL = restSettings.REQUESTS_REFILL_INTERVAL || 60000;
   restSettings.REQUESTS_TIMESTAMPS = restSettings.REQUESTS_TIMESTAMPS || 10;
   // Request creation
   const REST_SETTINGS = restSettings;
@@ -205,7 +205,6 @@ function Rest(restSettings = {}) {
       console.log('Creating order:', params)
       const data = {};
       data.symbol = params.symbol;
-      data.clOrdID = params.id;
       data.side = params.side == 'sell' ? 'Sell' : 'Buy';
       data.orderQty = params.quantity;
       if (params.type == 'limit'){
@@ -232,6 +231,8 @@ function Rest(restSettings = {}) {
       if (response.data.code) {
         return handleResponseError(params, response.data);
       }
+
+      params.id = response.data.data.orderID
       
       return { data: params };
     },
@@ -253,7 +254,7 @@ function Rest(restSettings = {}) {
     cancelOrder: async (params) => {
       const data = {};
       data.symbol = params.symbol;
-      data.clOrdID = params.id;
+      data.orderID = params.id;
       const response = await request.private('DELETE', '/orders/cancel', data, '', 1);
       
       if (response.data.code) {
@@ -298,53 +299,10 @@ function Rest(restSettings = {}) {
      */
     updateOrder: async (params) => {
 
-      // Query orderID by clOrdID
-
       const data ={};
-      data.clOrdID = params.id;
+      data.orderID = params.id;
       data.symbol = params.symbol;
 
-      let response = await request.private('GET', '/exchange/order', data, '', 1);
-      if (response.data.code) {
-        return handleResponseError(params, response.data);
-      }
-      if (response && response.headers && response.headers['x-ratelimit-remaining']){
-        await request.updateRequestLimit(response.headers['x-ratelimit-remaining'])
-      }
-
-      // Retry updateOrder if orderID isn't found on first try but no error is thrown by server
-
-      if (!response.data.data || !response.data.data.length) { 
-
-        console.log('Empty response query orderID by clOrdID.')
-
-        let retryCount = 0;
-
-        while(retryCount < 10){
-          retryCount++;
-          console.log(`Query orderID by clOrdID Retry (${retryCount}).`)
-          await wait(100);
-          response = await request.private('GET', '/exchange/order', data, '', 1);
-          if (response.data.code) {
-            return handleResponseError(params, response.data);
-          }
-          if (response.data.data && response.data.data.length){
-            break;
-          }
-        }
-
-        if (!response.data.data || !response.data.data.length) {
-          console.log('Empty response on retry. No error code.')
-          // Send order not found error if orderID isn't found in retry
-          response.data.code = 10002;
-          return handleResponseError(params, response.data);
-        }
-
-        console.log('Successful response on retry.')
-
-      }
-
-      data.orderID = response.data.data[0].orderID;
       if (params.price) {
         data.priceEp = params.price * priceScale;
       }
@@ -352,7 +310,7 @@ function Rest(restSettings = {}) {
         data.orderQty = params.quantity;
       }
 
-      response = await request.private('PUT', '/orders/replace', data, '', 1);
+      const response = await request.private('PUT', '/orders/replace', data, '', 1);
 
       if (response.data.code) {
         return handleResponseError(params, response.data);
