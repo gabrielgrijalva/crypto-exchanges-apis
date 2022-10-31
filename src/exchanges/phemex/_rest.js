@@ -480,16 +480,7 @@ function Rest(restSettings = {}) {
      */
     getLiquidation: async (params) => {
       const data = {};
-      switch(params.symbol){
-        case 'BTCUSD':
-          data.currency = 'BTC';
-          break
-        case 'ETHUSD':
-          data.currency = 'ETH';
-          break
-        default:
-          data.currency = 'USD';
-      }
+      data.currency = params.asset;
       const response = await request.private('GET', '/accounts/positions', data, '', 25);
       
       if (response.data.code) {
