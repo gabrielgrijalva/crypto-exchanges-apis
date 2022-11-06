@@ -7,6 +7,7 @@ const exchanges = [
   'bitmex',
   'bitstamp',
   'bybit',
+  'bybit-usdt',
   'coinex',
   'deribit',
   'gateio-btc',
