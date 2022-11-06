@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.10.0] - 2022-11-06
+- Implemented bybit-usdt api.
 ## [2.9.0] - 2022-10-31
 - Implemented huobi-swap api.
 ## [2.8.8] - 2022-10-11

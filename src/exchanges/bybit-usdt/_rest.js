@@ -76,6 +76,31 @@ function getCandleResolution(interval) {
   if (interval === 86400000) { return 'D' };
 };
 /**
+ *
+ * @param {string} positionSide
+ * @param {number} markPx
+ * @param {number} availableBalance
+ * @param {number} totalPositionIM
+ * @param {number} totalOrderIM
+ * @param {number} totalPositionMM
+ * @param {number} positionSize
+ * 
+ */
+ function calcLiquidationPrice(positionSide, markPx, availableBalance, totalPositionIM, totalOrderIM, totalPositionMM, positionSize) {
+  // Calculate liquidation
+  // LiqPx (Long) = MP - (AB+IM+OM-MM)/EPS
+  // LiqPx (Short) = MP+(AB+IM+OM-MM)/EPS
+  let liquidationPrice = 0;
+  if (positionSide === 'Buy'){
+    liquidationPrice = (markPx - (availableBalance+totalPositionIM+totalOrderIM-totalPositionMM)/positionSize)
+  }
+  if (positionSide === 'Sell'){
+    liquidationPrice = (markPx + (availableBalance+totalPositionIM+totalOrderIM-totalPositionMM)/positionSize)
+  }
+  liquidationPrice = liquidationPrice < 0 ? 0 : liquidationPrice
+  return liquidationPrice;
+};
+/**
  * 
  * 
  * 
@@ -368,10 +393,10 @@ function Rest(restSettings = {}) {
         return handleResponseError(params, response.data);
       }
       const positionResult = response.data.result.list.find(v => v.symbol === params.symbol);
-      const qtyS = positionResult.side === 'Sell' ? Math.abs(+positionResult.size) : 0;
-      const qtyB = positionResult.side === 'Buy' ? +positionResult.size : 0;
-      const pxS = positionResult.side === 'Sell' ? +positionResult.entryPrice : 0;
-      const pxB = positionResult.side === 'Buy' ? +positionResult.entryPrice : 0;
+      const qtyS = positionResult && positionResult.side === 'Sell' ? Math.abs(+positionResult.size) : 0;
+      const qtyB = positionResult && positionResult.side === 'Buy' ? +positionResult.size : 0;
+      const pxS = positionResult && positionResult.side === 'Sell' ? +positionResult.entryPrice : 0;
+      const pxB = positionResult && positionResult.side === 'Buy' ? +positionResult.entryPrice : 0;
       const position = { qtyS, qtyB, pxS, pxB };
       return { data: position };
     },
@@ -402,6 +427,22 @@ function Rest(restSettings = {}) {
      */
     getLiquidation: async (params) => {
 
+      const markPriceData = {};
+      markPriceData.category = 'linear';
+      markPriceData.symbol = params.symbol;
+      markPriceData.interval = getCandleResolution(60000);
+      markPriceData.limit = 1;
+      markPriceData.end = moment.utc(Date.now()).unix()*1000;
+      markPriceData.start = moment.utc(Date.now()).subtract(1, 'minutes').unix()*1000;
+      const markPriceResponse = await request.public('GET', '/derivatives/v3/public/kline', markPriceData);
+      if (+markPriceResponse.data.retCode || markPriceResponse.status >= 400) {
+        return handleResponseError(params, markPriceResponse.data);
+      }
+
+      let markPx = +markPriceResponse.data.result.list[0][4]
+      console.log('getLiquidation', markPx)
+
+
       // Get account equity
       const equityData = {};
       equityData.coin = params.asset;
@@ -410,9 +451,12 @@ function Rest(restSettings = {}) {
         return handleResponseError(params, equityResponse.data);
       }
 
+      console.log('equityData', equityResponse.data.result.coin[0])
+
       const availableBalance = +equityResponse.data.result.coin[0].availableBalance;
       const totalPositionIM = +equityResponse.data.result.coin[0].totalPositionIM;
-      const totalPositionMM = +equityResponse.data.result.coin[0].totalPositionIM;
+      const totalPositionMM = +equityResponse.data.result.coin[0].totalPositionMM;
+      const totalOrderIM = +equityResponse.data.result.coin[0].totalOrderIM;
 
       // Get position
       const positionData = {};
@@ -423,25 +467,20 @@ function Rest(restSettings = {}) {
         return handleResponseError(params, positionResponse.data);
       }
 
-      const markPx = +positionResponse.data.result.list[0].markPrice;
-      const positionSize = Math.abs(positionResponse.data.result.list[0].size);
-      const positionSide = positionResponse.data.result.list[0].side;
+      let positionSide = '';
+      let positionSize = 0;
 
-      // Calculate liquidation
-      // LiqPx (Long) = MP - (AB+IM-MM)/EPS
-      // LiqPx (Short) = MP+(AB+IM-MM)/EPS
+      if(positionResponse.data.result.list.length){
+        positionSide = positionResponse.data.result.list[0].side;
+        positionSize = Math.abs(positionResponse.data.result.list[0].size);
+      }
 
-      let liquidationPrice = positionSide === 'Buy' ? (
-        (markPx - (availableBalance+totalPositionIM-totalPositionMM)/positionSize)
-      ) : (
-        (markPx + (availableBalance+totalPositionIM-totalPositionMM)/positionSize)
-      );
-
-      liquidationPrice = liquidationPrice < 0 ? 0 : liquidationPrice;
+      const liquidationPrice = positionSize ? calcLiquidationPrice(positionSide, markPx, availableBalance, totalPositionIM, totalOrderIM, totalPositionMM, positionSize) : 0;
 
       const liqPxS = positionSide === 'Sell' ? +liquidationPrice : 0;
       const liqPxB = positionSide === 'Buy' ? +liquidationPrice : 0;
       const liquidation = { markPx, liqPxS, liqPxB, };
+      console.log(liquidation)
       return { data: liquidation };
     },
     /**

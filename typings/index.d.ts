@@ -18,7 +18,7 @@ type exchanges =
 'bitmex' | 
 'bitstamp' | 
 'bybit' | 
-'bybit-usds' |
+'bybit-usdt' |
 'coinex' | 
 'deribit' | 
 'gateio-btc' | 
