@@ -292,7 +292,7 @@ function Rest(restSettings = {}) {
       data.category = 'linear';
       data.symbol = params.symbol;
       const response = await request.private('POST', '/unified/v3/private/order/cancel-all', data);
-      if (+response.data.retCode || response.status >= 400) {
+      if ((+response.data.retCode && response.data.retMsg !== 'Cancel All No Result') || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
       return { data: params };
@@ -316,7 +316,7 @@ function Rest(restSettings = {}) {
         data.qty = params.quantity.toString();
       }
       const response = await request.private('POST', '/unified/v3/private/order/replace', data);
-      if (+response.data.retCode || response.status >= 400) {
+      if ((+response.data.retCode) || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
       return { data: params };
@@ -440,7 +440,6 @@ function Rest(restSettings = {}) {
       }
 
       let markPx = +markPriceResponse.data.result.list[0][4]
-      console.log('getLiquidation', markPx)
 
 
       // Get account equity
@@ -450,8 +449,6 @@ function Rest(restSettings = {}) {
       if (+equityResponse.data.retCode || equityResponse.status >= 400) {
         return handleResponseError(params, equityResponse.data);
       }
-
-      console.log('equityData', equityResponse.data.result.coin[0])
 
       const availableBalance = +equityResponse.data.result.coin[0].availableBalance;
       const totalPositionIM = +equityResponse.data.result.coin[0].totalPositionIM;
@@ -480,7 +477,6 @@ function Rest(restSettings = {}) {
       const liqPxS = positionSide === 'Sell' ? +liquidationPrice : 0;
       const liqPxB = positionSide === 'Buy' ? +liquidationPrice : 0;
       const liquidation = { markPx, liqPxS, liqPxB, };
-      console.log(liquidation)
       return { data: liquidation };
     },
     /**
