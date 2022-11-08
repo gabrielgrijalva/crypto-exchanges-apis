@@ -156,7 +156,8 @@ function Ws(wsSettings = {}) {
    * 
    * 
    */
-  wsSettings.URL = wsSettings.URL || 'wss://fx-ws.gateio.ws/v4/ws/btc';
+  const settle = wsSettings.ASSET.toLowerCase() == 'btc' ? 'btc' : 'usdt';
+  wsSettings.URL = wsSettings.URL || `wss://fx-ws.gateio.ws/v4/ws/${settle}`;
   /** 
    * 
    * 
@@ -176,7 +177,7 @@ function Ws(wsSettings = {}) {
    * 
    * 
    * @type {import('../../../typings/_ws').WebSocket} */
-  const webSocket = WebSocket('gateio-btc', wsSettings);
+  const webSocket = WebSocket('gateio', wsSettings);
   webSocket.addOnMessage(message => {
     const messageParse = JSON.parse(message);
     if (messageParse.channel !== 'futures.ping') { return };

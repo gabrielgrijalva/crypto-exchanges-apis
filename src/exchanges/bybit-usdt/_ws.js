@@ -341,6 +341,7 @@ function Ws(wsSettings = {}) {
     if (!messageParse || !messageParse.topic || !messageParse.topic.includes(`tickers`)) { return };
     if (!messageParse.data.markPrice) { return }
     const liquidationsData = liquidationsWsObject.data.find(v => v.symbol === v.symbol);
+    if(!liquidationsData) { return };
     liquidationsData.markPx = +messageParse.data.markPrice;
   };
   
@@ -350,6 +351,7 @@ function Ws(wsSettings = {}) {
     if (!messageParse.data.result || !messageParse.data.result.length) { return};
     messageParse.data.result.forEach(positionEvent => {
       const liquidationsData = liquidationsWsObject.data.find(v => v.symbol === positionEvent.symbol);
+      if(!liquidationsData) { return };
       liquidationsData.pxS = positionEvent && positionEvent.side === 'Sell' ? +positionEvent.entryPrice : 0;
       liquidationsData.pxB = positionEvent &&  positionEvent.side === 'Buy' ? +positionEvent.entryPrice : 0;
       liquidationsData.qtyS = positionEvent &&  positionEvent.side === 'Sell' ? Math.abs(+positionEvent.size) : 0;
@@ -385,7 +387,7 @@ function Ws(wsSettings = {}) {
       }
       const markPriceSubParams = {
        op: 'subscribe',
-       args: ['tickers.BTCUSDT']
+       args: [`tickers.${params.symbol}`]
       }
       const positionParams = {
         op: 'subscribe',
