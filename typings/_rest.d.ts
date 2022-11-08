@@ -19,6 +19,7 @@ declare namespace RestN {
    */
   type restSettings = {
     URL?: string;
+    ASSET?: string;
     API_KEY?: string;
     API_SECRET?: string;
     API_PASSPHRASE?: string;

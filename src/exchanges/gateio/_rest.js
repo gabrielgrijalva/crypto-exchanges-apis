@@ -133,7 +133,8 @@ function getPrivateFunction(restSettings) {
  * @param {import('../../../typings/_rest').restSettings} restSettings
  */
 function Rest(restSettings = {}) {
-  const settle = 'btc';
+
+  const settle = restSettings.ASSET.toLowerCase() == 'btc' ? 'btc' : 'usdt';
   // Default rest restSettings values
   restSettings.URL = restSettings.URL || 'https://api.gateio.ws';
   restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || false;
