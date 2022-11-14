@@ -1,3 +1,4 @@
+const fs = require('fs');
 const moment = require('moment');
 const Events = require('events');
 const Rest = require('./_rest');
@@ -205,8 +206,14 @@ function Ws(wsSettings = {}) {
   const ordersOnMessage = (message) => {
     const messageParse = JSON.parse(message);
     if (messageParse.e !== 'ORDER_TRADE_UPDATE') { return };
+    console.log('ordersOnMessage messageParse', messageParse)
     const orderEvent = messageParse.o;
     if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.s)) { return };
+    if (orderEvent.o === 'LIQUIDATION') {
+      console.log('Received Liquidation Event')
+      fs.writeFileSync(wsSettings.LIQUIDATION_STATUS_FILE, 'close-liquidation');
+      return;
+    }
     if (orderEvent.x === 'NEW') {
       ordersWsObject.events.emit('creations-updates', [createCreationUpdate(messageParse)]);
     }
