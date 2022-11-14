@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.11.1] - 2022-11-14
+- Bug fixes and improvements.
 ## [2.11.0] - 2022-11-07
 - Modified gateio api to support usdt and btc. Bybit-usdt api bug fixes.
 ## [2.10.0] - 2022-11-06
