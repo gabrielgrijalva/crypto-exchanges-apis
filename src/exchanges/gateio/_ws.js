@@ -156,7 +156,7 @@ function Ws(wsSettings = {}) {
    * 
    * 
    */
-  const settle = wsSettings.ASSET.toLowerCase() == 'btc' ? 'btc' : 'usdt';
+  const settle = wsSettings.ASSET ? wsSettings.ASSET.toLowerCase() : 'usdt';
   wsSettings.URL = wsSettings.URL || `wss://fx-ws.gateio.ws/v4/ws/${settle}`;
   /** 
    * 
@@ -166,6 +166,7 @@ function Ws(wsSettings = {}) {
    * 
    * @type {import('../../../typings/_rest').Rest} */
   const rest = Rest({
+    ASSET: wsSettings.ASSET,
     API_KEY: wsSettings.API_KEY,
     API_SECRET: wsSettings.API_SECRET,
     API_PASSPHRASE: wsSettings.API_PASSPHRASE,

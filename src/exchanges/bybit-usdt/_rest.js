@@ -354,18 +354,21 @@ function Rest(restSettings = {}) {
      * 
      */
     getCandles: async (params) => {
+      const timestamp = moment.utc().startOf('minute').unix() * 1000;
       const data = {};
       data.category = 'linear';
       data.symbol = params.symbol;
       data.interval = getCandleResolution(params.interval);
-      data.limit = 200;
-      data.end = moment.utc(params.start).unix()*1000;
-      data.start = moment.utc(params.start).subtract(data.limit, 'minutes').unix()*1000;
+      data.start = moment.utc(params.start).unix() * 1000;
+      data.end = moment.utc(params.start).add(200 * params.interval * 1000, 'milliseconds').unix() * 1000;
+      data.end = data.end > timestamp ? timestamp : data.end;
+      const difference = (data.end - data.start) / params.interval;
+      data.limit = difference > 200 ? 200: difference;
       const response = await request.public('GET', '/derivatives/v3/public/kline', data);
       if (+response.data.retCode || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      const candles = response.data.result.list.map(v => {
+      const candles = response.data.result.list.reverse().map(v => {
         const candle = {};
         candle.timestamp = moment.unix(v[0]/1000).utc().format('YYYY-MM-DD HH:mm:ss');
         candle.open = +v[1];
@@ -439,6 +442,11 @@ function Rest(restSettings = {}) {
         return handleResponseError(params, markPriceResponse.data);
       }
 
+      if (!+markPriceResponse.data ||
+        !+markPriceResponse.data.result ||
+        !+markPriceResponse.data.result.list ||
+        !+markPriceResponse.data.result[0]) { return };
+        
       let markPx = +markPriceResponse.data.result.list[0][4]
 
 

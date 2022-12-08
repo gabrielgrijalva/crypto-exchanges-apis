@@ -21,7 +21,7 @@ const Request = require('../../_shared-classes/request');
 function handleResponseError(params, responseData) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
-  if (responseData.code || responseData.sCode) {
+  if (responseData & (responseData.code || responseData.sCode)) {
     const errorCode = responseData.code || responseData.sCode;
     if (errorCode === '50011') {
       type = 'api-rate-limit';

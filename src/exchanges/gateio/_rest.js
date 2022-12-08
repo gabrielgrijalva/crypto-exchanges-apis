@@ -134,8 +134,8 @@ function getPrivateFunction(restSettings) {
  */
 function Rest(restSettings = {}) {
 
-  const settle = restSettings.ASSET.toLowerCase() == 'btc' ? 'btc' : 'usdt';
-  // Default rest restSettings values
+  const settle = restSettings.ASSET ? restSettings.ASSET.toLowerCase() : 'usdt';
+  
   restSettings.URL = restSettings.URL || 'https://api.gateio.ws';
   restSettings.REQUESTS_REFILL = restSettings.REQUESTS_REFILL || false;
   restSettings.REQUESTS_REFILL_LIMIT = restSettings.REQUESTS_REFILL_LIMIT || 200;
@@ -284,9 +284,12 @@ function Rest(restSettings = {}) {
      * 
      */
     getCandles: async (params) => {
+      const timestamp = moment.utc().startOf('minute').unix();
       const data = {};
       data.contract = params.symbol;
       data.from = moment.utc(params.start).unix();
+      data.to = moment.utc(params.start).add(1000 * params.interval, 'milliseconds').unix();
+      data.to = data.to < timestamp ? data.to : timestamp;
       data.interval = getCandleResolution(params.interval);
       const response = await request.public('GET', `/api/v4/futures/${settle}/candlesticks`, data);
       if (response.status >= 400) {
