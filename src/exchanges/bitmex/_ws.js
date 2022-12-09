@@ -232,6 +232,7 @@ function Ws(wsSettings = {}) {
       const positionData = positionsWsObject.data.find(v => v.symbol === positionEvent.symbol);
       if (!positionData) { return };
       if (isNaN(+positionEvent.currentQty)) { return };
+      if (positionEvent.lastPrice === null && positionEvent.markPrice === null) return;
       positionData.pxS = +positionEvent.currentQty < 0 ? (+positionEvent.avgEntryPrice ? +positionEvent.avgEntryPrice : positionData.pxS) : 0;
       positionData.pxB = +positionEvent.currentQty > 0 ? (+positionEvent.avgEntryPrice ? +positionEvent.avgEntryPrice : positionData.pxB) : 0;
       positionData.qtyS = +positionEvent.currentQty < 0 ? Math.abs(+positionEvent.currentQty) : 0;

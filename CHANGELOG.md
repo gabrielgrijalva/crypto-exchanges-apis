@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.11.0] - 2022-12-09
+- Corrected error in bitmex ws positions.
 ## [2.10.0] - 2022-11-06
 - Implemented bybit-usdt api.
 ## [2.9.0] - 2022-10-31
