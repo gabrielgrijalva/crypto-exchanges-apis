@@ -441,11 +441,6 @@ function Rest(restSettings = {}) {
       if (+markPriceResponse.data.retCode || markPriceResponse.status >= 400) {
         return handleResponseError(params, markPriceResponse.data);
       }
-
-      if (!+markPriceResponse.data ||
-        !+markPriceResponse.data.result ||
-        !+markPriceResponse.data.result.list ||
-        !+markPriceResponse.data.result[0]) { return };
         
       let markPx = +markPriceResponse.data.result.list[0][4]
 

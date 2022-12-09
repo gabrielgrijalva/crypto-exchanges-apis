@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.11.4] - 2022-12-09
+- Corrected error in bybit rest get liquidation.
 ## [2.11.3] - 2022-12-09
 - Corrected error in bitmex ws positions.
 ## [2.11.2] - 2022-12-08
