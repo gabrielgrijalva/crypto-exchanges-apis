@@ -30,7 +30,7 @@ function createCreationUpdate(data) {
   eventData.event = 'creations-updates';
   eventData.id = data.orderID;
   eventData.side = data.side.toLowerCase();
-  eventData.price = +data.priceEp / priceScale;
+  eventData.price = +data.exectPriceEp ? +data.exectPriceEp / priceScale : 0;
   eventData.quantity = +data.orderQty;
   eventData.timestamp = moment(+data.transactTimeNs/1000000).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
   return eventData;

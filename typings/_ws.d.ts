@@ -20,6 +20,7 @@ declare namespace WsN {
    */
   type wsSettings = {
     URL?: string;
+    ASSET?: string;
     API_KEY?: string;
     API_SECRET?: string;
     API_USER_ID?: string;
@@ -27,6 +28,7 @@ declare namespace WsN {
     WS_SEND_PING_WAIT?: number;
     WS_ON_MESSAGE_LOGS?: boolean;
     WS_RECEIVE_PONG_WAIT?: number;
+    LIQUIDATION_STATUS_FILE?: string;
   }
   /**
    * 

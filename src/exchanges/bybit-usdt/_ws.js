@@ -1,7 +1,6 @@
+const fs = require('fs');
 const crypto = require('crypto');
 const moment = require('moment');
-const qs = require('qs');
-// const zlib = require('zlib');
 const Events = require('events');
 const Rest = require('./_rest');
 const WebSocket = require('../../_shared-classes/websocket');
@@ -31,14 +30,15 @@ function createCreationUpdate(data) {
   return eventData;
 };
 function createExecution(data) {
+  console.log('Execution data', data)
   const eventData = {};
   eventData.symbol = data.symbol;
   eventData.event = 'executions';
   eventData.id = data.orderLinkId ? data.orderLinkId : data.orderId;
   eventData.side = data.side.toLowerCase();
-  eventData.price = +data.price;
-  eventData.quantity = +data.qty;
-  eventData.timestamp = moment(+data.updatedTime).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+  eventData.price = +data.execPrice;
+  eventData.quantity = +data.execQty;
+  eventData.timestamp = moment(+data.execTime).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
   return eventData;
 };
 function createCancelation(data) {
@@ -253,7 +253,6 @@ function Ws(wsSettings = {}) {
     if (messageParse.topic !== 'user.order.unifiedAccount') { return };
     if (!messageParse.data.result || !messageParse.data.result.length) { return};
     const creationOrders = [];
-    const executionOrders = [];
     const cancelationOrders = [];
     messageParse.data.result.forEach(orderEvent => {
       if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.symbol)) { return };
@@ -263,26 +262,51 @@ function Ws(wsSettings = {}) {
       if (orderEvent.orderStatus === 'Cancelled' || orderEvent.orderStatus === 'Rejected') {
         cancelationOrders.push(createCancelation(orderEvent));
       }
-      if (orderEvent.orderStatus === 'PartiallyFilled' || orderEvent.orderStatus === 'Filled') {
-        executionOrders.push(createExecution(orderEvent));
-      }
     })
     if (creationOrders.length) { ordersWsObject.events.emit('creations-updates', creationOrders) };
-    if (executionOrders.length) { ordersWsObject.events.emit('executions', executionOrders) };
     if (cancelationOrders.length) { ordersWsObject.events.emit('cancelations', cancelationOrders) };
+  };
+  /** 
+   * 
+   * 
+   * Executions
+   * 
+   * 
+   */
+   const executionsOnMessage = (message) => {
+    const messageParse = JSON.parse(message);
+    if (messageParse.topic !== 'user.execution.unifiedAccount') { return };
+    if (!messageParse.data.result || !messageParse.data.result.length) { return};
+    const executionOrders = [];
+    messageParse.data.result.forEach(orderEvent => {
+      if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.symbol)) { return };
+      if (orderEvent.execType == 'BUSTTRADE'){
+        console.log('Received Liquidation Event')
+        fs.writeFileSync(wsSettings.LIQUIDATION_STATUS_FILE, 'close-liquidation');
+        return;
+      }
+      executionOrders.push(createExecution(orderEvent));
+    })
+    if (executionOrders.length) { ordersWsObject.events.emit('executions', executionOrders) };
   };
   /** @type {import('../../../typings/_ws').ordersWsObject} */
   const ordersWsObject = {
     subscribe: async (params) => {
       if (!webSocketPrivate.findOnMessage(ordersOnMessage)) { webSocketPrivate.addOnMessage(ordersOnMessage) };
+      if (!webSocketPrivate.findOnMessage(executionsOnMessage)) { webSocketPrivate.addOnMessage(executionsOnMessage) };
       if (!ordersWsObject.subscriptions.find(v => JSON.stringify(v) === JSON.stringify(params))) {
         ordersWsObject.subscriptions.push(Object.assign({}, params));
       }
-      const subParams = {
+      const orderSubParams = {
         op: 'subscribe',
         args: ["user.order.unifiedAccount"]
       }
-      await confirmSubscription(subParams, params.symbol, 'orders', webSocketPrivate);
+      const executionSubParams = {
+        op: 'subscribe',
+        args: ["user.execution.unifiedAccount"]
+      }
+      await confirmSubscription(orderSubParams, params.symbol, 'orders', webSocketPrivate);
+      await confirmSubscription(executionSubParams, params.symbol, 'executions', webSocketPrivate);
     },
     data: null,
     events: new Events.EventEmitter(),
@@ -301,6 +325,7 @@ function Ws(wsSettings = {}) {
     if (!messageParse.data.result || !messageParse.data.result.length) { return};
     messageParse.data.result.forEach(positionEvent => {
       const positionData = positionsWsObject.data.find(v => v.symbol === positionEvent.symbol);
+      if(!positionData){ return };
       positionData.pxS = positionEvent.side === 'Sell' ? +positionEvent.entryPrice : 0;
       positionData.pxB = positionEvent.side === 'Buy' ? +positionEvent.entryPrice : 0;
       positionData.qtyS = positionEvent.side === 'Sell' ? Math.abs(+positionEvent.size) : 0;
@@ -341,6 +366,7 @@ function Ws(wsSettings = {}) {
     if (!messageParse || !messageParse.topic || !messageParse.topic.includes(`tickers`)) { return };
     if (!messageParse.data.markPrice) { return }
     const liquidationsData = liquidationsWsObject.data.find(v => v.symbol === v.symbol);
+    if(!liquidationsData) { return };
     liquidationsData.markPx = +messageParse.data.markPrice;
   };
   
@@ -350,6 +376,7 @@ function Ws(wsSettings = {}) {
     if (!messageParse.data.result || !messageParse.data.result.length) { return};
     messageParse.data.result.forEach(positionEvent => {
       const liquidationsData = liquidationsWsObject.data.find(v => v.symbol === positionEvent.symbol);
+      if(!liquidationsData) { return };
       liquidationsData.pxS = positionEvent && positionEvent.side === 'Sell' ? +positionEvent.entryPrice : 0;
       liquidationsData.pxB = positionEvent &&  positionEvent.side === 'Buy' ? +positionEvent.entryPrice : 0;
       liquidationsData.qtyS = positionEvent &&  positionEvent.side === 'Sell' ? Math.abs(+positionEvent.size) : 0;
@@ -385,7 +412,7 @@ function Ws(wsSettings = {}) {
       }
       const markPriceSubParams = {
        op: 'subscribe',
-       args: ['tickers.BTCUSDT']
+       args: [`tickers.${params.symbol}`]
       }
       const positionParams = {
         op: 'subscribe',

@@ -347,10 +347,13 @@ function Rest(restSettings = {}) {
      * 
      */
     getCandles: async (params) => {
+      const timestamp = moment.utc().startOf('minute').unix();
       const data = {};
       data.contract_code = params.symbol;
       data.period = getCandleResolution(params.interval);
-      data.size = 100;
+      data.from = moment.utc(params.start).unix();
+      data.to = moment.utc(params.start).add(1500 * params.interval, 'milliseconds').unix();
+      data.to = data.to < timestamp ? data.to : timestamp;
       const response = await request.public('GET', '/swap-ex/market/history/kline', data, 10);
       if (response && response.data && response.data.err_code) {
         return handleResponseError(params, response.data);

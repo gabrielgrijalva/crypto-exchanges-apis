@@ -1,8 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [2.11.0] - 2022-12-09
+## [2.11.3] - 2022-12-09
 - Corrected error in bitmex ws positions.
+## [2.11.2] - 2022-12-08
+- Bug fixes and improvements.
+## [2.11.1] - 2022-11-14
+- Bug fixes and improvements.
+## [2.11.0] - 2022-11-07
+- Modified gateio api to support usdt and btc. Bybit-usdt api bug fixes.
 ## [2.10.0] - 2022-11-06
 - Implemented bybit-usdt api.
 ## [2.9.0] - 2022-10-31

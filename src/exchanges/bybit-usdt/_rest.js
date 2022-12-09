@@ -292,7 +292,7 @@ function Rest(restSettings = {}) {
       data.category = 'linear';
       data.symbol = params.symbol;
       const response = await request.private('POST', '/unified/v3/private/order/cancel-all', data);
-      if (+response.data.retCode || response.status >= 400) {
+      if ((+response.data.retCode && response.data.retMsg !== 'Cancel All No Result') || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
       return { data: params };
@@ -316,7 +316,7 @@ function Rest(restSettings = {}) {
         data.qty = params.quantity.toString();
       }
       const response = await request.private('POST', '/unified/v3/private/order/replace', data);
-      if (+response.data.retCode || response.status >= 400) {
+      if ((+response.data.retCode) || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
       return { data: params };
@@ -354,18 +354,21 @@ function Rest(restSettings = {}) {
      * 
      */
     getCandles: async (params) => {
+      const timestamp = moment.utc().startOf('minute').unix() * 1000;
       const data = {};
       data.category = 'linear';
       data.symbol = params.symbol;
       data.interval = getCandleResolution(params.interval);
-      data.limit = 200;
-      data.end = moment.utc(params.start).unix()*1000;
-      data.start = moment.utc(params.start).subtract(data.limit, 'minutes').unix()*1000;
+      data.start = moment.utc(params.start).unix() * 1000;
+      data.end = moment.utc(params.start).add(200 * params.interval * 1000, 'milliseconds').unix() * 1000;
+      data.end = data.end > timestamp ? timestamp : data.end;
+      const difference = (data.end - data.start) / params.interval;
+      data.limit = difference > 200 ? 200: difference;
       const response = await request.public('GET', '/derivatives/v3/public/kline', data);
       if (+response.data.retCode || response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      const candles = response.data.result.list.map(v => {
+      const candles = response.data.result.list.reverse().map(v => {
         const candle = {};
         candle.timestamp = moment.unix(v[0]/1000).utc().format('YYYY-MM-DD HH:mm:ss');
         candle.open = +v[1];
@@ -439,8 +442,12 @@ function Rest(restSettings = {}) {
         return handleResponseError(params, markPriceResponse.data);
       }
 
+      if (!+markPriceResponse.data ||
+        !+markPriceResponse.data.result ||
+        !+markPriceResponse.data.result.list ||
+        !+markPriceResponse.data.result[0]) { return };
+        
       let markPx = +markPriceResponse.data.result.list[0][4]
-      console.log('getLiquidation', markPx)
 
 
       // Get account equity
@@ -450,8 +457,6 @@ function Rest(restSettings = {}) {
       if (+equityResponse.data.retCode || equityResponse.status >= 400) {
         return handleResponseError(params, equityResponse.data);
       }
-
-      console.log('equityData', equityResponse.data.result.coin[0])
 
       const availableBalance = +equityResponse.data.result.coin[0].availableBalance;
       const totalPositionIM = +equityResponse.data.result.coin[0].totalPositionIM;
@@ -480,7 +485,6 @@ function Rest(restSettings = {}) {
       const liqPxS = positionSide === 'Sell' ? +liquidationPrice : 0;
       const liqPxB = positionSide === 'Buy' ? +liquidationPrice : 0;
       const liquidation = { markPx, liqPxS, liqPxB, };
-      console.log(liquidation)
       return { data: liquidation };
     },
     /**

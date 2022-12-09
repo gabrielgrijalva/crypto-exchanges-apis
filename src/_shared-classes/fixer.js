@@ -274,6 +274,7 @@ function Fixer(fixerSettings) {
               creating = null;
               clearTimeout(creatingTimeout);
             }
+            if (!order.id) { return };
             if (message.id === order.id) {
               orderQtyF = round.normal(orderQtyF + message.quantity, fixerSettings.QUANTITY_PRECISION);
               if (order.direction === 'open') {

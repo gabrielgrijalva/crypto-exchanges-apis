@@ -10,7 +10,7 @@ const exchanges = [
   'bybit-usdt',
   'coinex',
   'deribit',
-  'gateio-btc',
+  'gateio',
   'kraken',
   'okx',
   'phemex',
