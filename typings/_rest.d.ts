@@ -144,7 +144,8 @@ declare namespace RestN {
   };
   type getFundingRatesResponseData = {
     current: number;
-    estimated: number;
+    estimated?: number;
+    nextFundingTime?: string;
   };
   type getMarkPricesOptionResponseData = {
     markPriceOption: number;

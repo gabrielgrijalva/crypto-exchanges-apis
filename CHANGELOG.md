@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.11.5] - 2022-12-09
+- Added nextFundingRate in fundingRate object for bybit-usdt, gateio, okx and binance-usds.
 ## [2.11.4] - 2022-12-09
 - Corrected error in bybit rest get liquidation.
 ## [2.11.3] - 2022-12-09
