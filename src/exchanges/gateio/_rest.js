@@ -386,7 +386,7 @@ function Rest(restSettings = {}) {
         return handleResponseError(params, response.data);
       }
       const current = +response.data.funding_rate;
-      const nextFundingTime = moment.unix(+response.data.funding_next_apply).utc().format('YYYY-MM-DD hh:mm:ss');
+      const nextFundingTime = moment.unix(+response.data.funding_next_apply).utc().format('YYYY-MM-DD HH:mm:ss');
       const fundings = { current, nextFundingTime };
       return { data: fundings };
     },

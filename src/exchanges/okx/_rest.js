@@ -513,7 +513,7 @@ function Rest(restSettings = {}) {
       const fundingRate = response.data.data.find(v => v.instId === params.symbol);
       const current = fundingRate ? +fundingRate.fundingRate : 0;
       const estimated = fundingRate ? +fundingRate.nextFundingRate : 0;
-      const nextFundingTime = fundingRate ? moment.unix(+fundingRate.fundingTime/1000).utc().format('YYYY-MM-DD hh:mm:ss') : undefined;
+      const nextFundingTime = fundingRate ? moment.unix(+fundingRate.fundingTime/1000).utc().format('YYYY-MM-DD HH:mm:ss') : undefined;
       const fundings = { current, estimated, nextFundingTime };
       return { data: fundings };
     },

@@ -467,7 +467,7 @@ function Rest(restSettings = {}) {
       }
       const responseData = response.data;
       const current = responseData ? +responseData.lastFundingRate : 0;
-      const nextFundingTime = responseData ? moment.unix(+responseData.nextFundingTime/1000).utc().format('YYYY-MM-DD hh:mm:ss') : undefined;
+      const nextFundingTime = responseData ? moment.unix(+responseData.nextFundingTime/1000).utc().format('YYYY-MM-DD HH:mm:ss') : undefined;
       const fundings = { current, nextFundingTime};
       return { data: fundings };
     },
