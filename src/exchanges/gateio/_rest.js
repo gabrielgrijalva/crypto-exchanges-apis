@@ -381,14 +381,13 @@ function Rest(restSettings = {}) {
      */
     getFundingRates: async (params) => {
       const data = {};
-      data.contract = params.symbol;
-      const response = await request.public('GET', `/api/v4/futures/${settle}/tickers`, data);
+      const response = await request.public('GET', `/api/v4/futures/${settle}/contracts/${params.symbol}`, data);
       if (response.status >= 400) {
         return handleResponseError(params, response.data);
       }
-      const current = +response.data[0].funding_rate;
-      const estimated = +response.data[0].funding_rate_indicative;
-      const fundings = { current, estimated, };
+      const current = +response.data.funding_rate;
+      const nextFundingTime = moment.unix(+response.data.funding_next_apply).utc().format('YYYY-MM-DD hh:mm:ss');
+      const fundings = { current, nextFundingTime };
       return { data: fundings };
     },
     /**

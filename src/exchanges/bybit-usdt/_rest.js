@@ -498,8 +498,8 @@ function Rest(restSettings = {}) {
         return handleResponseError(params, response.data);
       }
       const current = +response.data.result.list[0].fundingRate;
-      const estimated = +response.data.result.list[0].fundingRate;
-      const fundings = { current, estimated};
+      const nextFundingTime = moment.unix(+response.data.result.list[0].nextFundingTime/1000).utc().format('YYYY-MM-DD hh:mm:ss');
+      const fundings = { current, nextFundingTime};
       return { data: fundings };
     },
     /**
