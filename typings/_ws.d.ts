@@ -134,6 +134,8 @@ declare namespace WsN {
     markPx: number;
     liqPxS: number;
     liqPxB: number;
+    initialMargin?: number;
+    marginRate?: number;
   }
   type liquidationsWsObject = { subscribe(params: liquidationsParams): Promise<void>; data: liquidationsData[]; events: null; subscriptions: liquidationsParams[] };
   /**

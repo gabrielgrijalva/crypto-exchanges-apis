@@ -331,7 +331,6 @@ function Rest(restSettings = {}) {
      */
     getEquity: async (params) => {
       const data = {};
-      // data.contract_code = params.asset;
       const response = await request.private('POST', '/swap-api/v1/swap_account_info', data, 1);
       if (response && response.data && response.data.err_code) {
         return handleResponseError(params, response.data);
