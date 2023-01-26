@@ -1,8 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.12.0] - 2022-12-22
+- Implemented bitget api.
 ## [2.11.6] - 2022-12-22
-- nextFundingRate hour bug fix
+- nextFundingRate hour bug fix.
 ## [2.11.5] - 2022-12-21
 - Added nextFundingRate in fundingRate object for bybit-usdt, gateio, okx and binance-usds.
 ## [2.11.4] - 2022-12-09

@@ -21,7 +21,7 @@ function createCreationUpdate(data) {
   const eventData = {};
   eventData.symbol = data.instId;
   eventData.event = 'creations-updates';
-  eventData.id = data.clOrdId;
+  eventData.id = data.ordId;
   eventData.side = data.side;
   eventData.price = +data.px;
   eventData.quantity = +data.sz;
@@ -32,7 +32,7 @@ function createExecution(data) {
   const eventData = {};
   eventData.symbol = data.instId;
   eventData.event = 'executions';
-  eventData.id = data.clOrdId;
+  eventData.id = data.ordId;
   eventData.side = data.side;
   eventData.price = +data.fillPx;
   eventData.quantity = +data.fillSz;
@@ -43,7 +43,7 @@ function createCancelation(data) {
   const eventData = {};
   eventData.symbol = data.instId;
   eventData.event = 'cancelations';
-  eventData.id = data.clOrdId;
+  eventData.id = data.ordId;
   eventData.timestamp = moment(+data.uTime).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
   return eventData;
 };
@@ -229,7 +229,10 @@ function Ws(wsSettings = {}) {
       console.log(Date.now(), 'pong')
     }
   })
-  if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocket.addOnMessage((message) => console.log(JSON.parse(message))) };
+  if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocket.addOnMessage((message) => {
+    if (message == 'pong') { return };
+    console.log(JSON.parse(message))
+  }) };
   /** 
    * 
    * 
