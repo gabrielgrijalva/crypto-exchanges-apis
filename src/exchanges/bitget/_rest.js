@@ -392,10 +392,10 @@ function Rest(restSettings = {}) {
       data.endTime = moment.utc(params.start).add(params.interval * 100, 'milliseconds').valueOf();
       data.endTime = data.endTime >= Date.now() ? Date.now() : data.endTime;
       const response = await request.public('GET', '/api/mix/v1/market/candles', data);
-      if (response.data.code) {
+      if (response.data.code && response.data.code !== '00000') {
         return handleResponseError(params, response.data);
       }
-      const candles = response.data.reverse().map(v => {
+      const candles = response.data.map(v => {
         const candle = {};
         candle.timestamp = moment(+v[0]).utc().format('YYYY-MM-DD HH:mm:ss');
         candle.open = +v[1];

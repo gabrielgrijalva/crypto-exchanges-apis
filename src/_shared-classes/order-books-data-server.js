@@ -19,8 +19,9 @@ function OrderBooksDataServer(orderBooksWs) {
         wss.on('connection', function connection(ws) {
           console.log(`wss connection: ${moment.utc().format('YYYY-MM-DD HH:mm:ss')}`);
         });
-        wss.on('error', function error() {
+        wss.on('error', function error(err) {
           console.log(`wss error: ${moment.utc().format('YYYY-MM-DD HH:mm:ss')}`);
+          console.log(`wss error: ${err}`)
           throw new Error('Websocket server connection error...');
         });
         wss.on('close', function close() {
