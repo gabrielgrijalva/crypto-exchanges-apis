@@ -26,7 +26,8 @@ type exchanges =
 'okx' | 
 'phemex' | 
 'huobi-swap' | 
-'bitget';
+'bitget' | 
+'kucoin';
 interface CryptoExchangeApi {
   FIXER(fixerSettings: FixerN.fixerSettings): FixerN.Fixer;
   POPULATOR(populatorSettings: PopulatorN.populatorSettings): PopulatorN.Populator;

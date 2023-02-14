@@ -16,6 +16,7 @@ const exchanges = [
   'phemex',
   'huobi-swap',
   'bitget',
+  'kucoin'
 ];
 /**
  * @type {import('./typings/index')}
