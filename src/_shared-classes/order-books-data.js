@@ -108,9 +108,12 @@ function OrderBooksData(orderBooksSettings = {}) {
   const asks = [];
   /** @type {import('../../typings/_ws').orderBooksOrder[]} */
   const bids = [];
+  /** @type {any} */
+  let priceOverlapsInverval = null;
   /**
    * 
    * 
+   *
    * 
    * @type {import('../../typings/_ws').orderBooksData}
    * 
@@ -136,13 +139,33 @@ function OrderBooksData(orderBooksSettings = {}) {
   };
   let lastSnapshotAsks = '';
   let lastSnapshotBids = '';
-  setInterval(() => {
+  let lastOverlapBid = 0;
+  let lastOverlapAsk = 0;
+  let overlapPriceCounter = 0;
+  function priceOverlapsCheck(){
     if (!orderBooksData.asks[0] || !orderBooksData.bids[0]) { return };
     if (orderBooksData.asks[0].price <= orderBooksData.bids[0].price) {
+      if (!overlapPriceCounter) { 
+        console.log(Date.now(), 'Orderbook Price Overlap')
+        lastOverlapAsk = orderBooksData.asks[0].price
+        lastOverlapBid = orderBooksData.bids[0].price
+        overlapPriceCounter++ ; return
+      };
+      console.log('Bid/Ask Overlap:', orderBooksData.asks[0].price, orderBooksData.bids[0].price)
       throw { error: { type: 'order-book-price-overlaps', params: null, exchange: null } };
+    } else {
+      if (lastOverlapBid === orderBooksData.bids[0].price || lastOverlapAsk === orderBooksData.asks[0].price ){
+        throw { error: { type: 'order-book-price-overlaps', params: null, exchange: null } };
+      }
+      if (overlapPriceCounter) {
+        console.log(Date.now(), 'Clearing Price Overlap');
+        lastOverlapBid = 0;
+        lastOverlapAsk = 0;
+        overlapPriceCounter = 0 ;
+      } 
     }
-  }, orderBooksSettings.PRICE_OVERLAPS_CHECK_INTERVAL);
-  setInterval(() => {
+  };
+  function orderBookFrozenCheck(){
     const currentSnapshotAsks = JSON.stringify(orderBooksData.asks.slice(0, 10));
     const currentSnapshotBids = JSON.stringify(orderBooksData.bids.slice(0, 10));
     if (lastSnapshotAsks === currentSnapshotAsks && lastSnapshotBids === currentSnapshotBids) {
@@ -150,7 +173,16 @@ function OrderBooksData(orderBooksSettings = {}) {
     }
     lastSnapshotAsks = currentSnapshotAsks;
     lastSnapshotBids = currentSnapshotBids;
+  };
+  setInterval(() => {
+    orderBookFrozenCheck();
   }, orderBooksSettings.FROZEN_CHECK_INTERVAL);
+
+  setInterval(() => {
+    priceOverlapsCheck();
+  }, orderBooksSettings.PRICE_OVERLAPS_CHECK_INTERVAL);
+
   return orderBooksData;
+
 };
 module.exports = OrderBooksData;

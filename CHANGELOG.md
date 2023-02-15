@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.13.0] - 2023-02-15
+- Implemented kucoin api.
 ## [2.12.0] - 2022-12-22
 - Implemented bitget api.
 ## [2.11.6] - 2022-12-22
