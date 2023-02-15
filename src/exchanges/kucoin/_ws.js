@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const moment = require('moment');
 const Events = require('events');
 const Rest = require('./_rest');
@@ -6,6 +5,7 @@ const WebSocket = require('../../_shared-classes/websocket');
 const OrderBookData = require('../../_shared-classes/order-books-data');
 const OrderBooksDataClient = require('../../_shared-classes/order-books-data-client');
 const OrderBooksDataServer = require('../../_shared-classes/order-books-data-server');
+const { randomUUID } = require('crypto');
 /**
  * 
  * 
@@ -19,105 +19,75 @@ const OrderBooksDataServer = require('../../_shared-classes/order-books-data-ser
  */
 function createCreationUpdate(data) {
   const eventData = {};
-  eventData.symbol = data.instId;
+  eventData.symbol = data.symbol;
   eventData.event = 'creations-updates';
-  eventData.id = data.clOrdId;
+  eventData.id = data.orderId;
   eventData.side = data.side;
-  eventData.price = +data.px;
-  eventData.quantity = +data.sz;
-  eventData.timestamp = moment(+data.uTime).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+  eventData.price = +data.price;
+  eventData.quantity = +data.size;
+  eventData.timestamp = moment(+data.ts/1000000).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
   return eventData;
 };
 function createExecution(data) {
   const eventData = {};
-  eventData.symbol = data.instId;
+  eventData.symbol = data.symbol;
   eventData.event = 'executions';
-  eventData.id = data.clOrdId;
+  eventData.id = data.orderId;
   eventData.side = data.side;
-  eventData.price = +data.fillPx;
-  eventData.quantity = +data.fillSz;
-  eventData.timestamp = moment(+data.fillTime).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+  eventData.price = +data.matchPrice;
+  eventData.quantity = +data.matchSize;
+  eventData.timestamp = moment(+data.orderTime/1000000).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
   return eventData;
 };
 function createCancelation(data) {
   const eventData = {};
-  eventData.symbol = data.instId;
+  eventData.symbol = data.symbol;
   eventData.event = 'cancelations';
-  eventData.id = data.clOrdId;
-  eventData.timestamp = moment(+data.uTime).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+  eventData.id = data.orderId;
+  eventData.timestamp = moment(+data.ts/1000000).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
   return eventData;
-};
-/** 
- * @param {string} apiKey
- * @param {string} apiSecret
- * @param {string} apiPassphrase
- */
-function getSignedRequest(apiKey, apiSecret, apiPassphrase) {
-  if (!apiKey || !apiSecret || !apiPassphrase) { return };
-  const path = '/users/self/verify';
-  const method = 'GET';
-  const timestamp = Date.now() / 1000;
-  const digest = `${timestamp}${method}${path}`;
-  const sign = crypto.createHmac('sha256', apiSecret).update(digest).digest('base64');
-  const passphrase = apiPassphrase;
-  return { op: 'login', args: [{ apiKey, passphrase, timestamp, sign }] };
 };
 /**
  * 
- * @param {'public' | 'private'} type
+ * @param {import('../../../typings/_rest').Rest} rest
  * @param {import('../../../typings/_ws').WebSocket} webSocket 
- * @param {import('../../../typings/_ws').wsSettings} wsSettings
  */
-function connectWebSocket(type, webSocket, wsSettings) {
-  return new Promise((resolve) => {
-    const url = wsSettings.URL;
-    const apiKey = wsSettings.API_KEY;
-    const apiSecret = wsSettings.API_SECRET;
-    const apiPassphrase = wsSettings.API_PASSPHRASE;
+function connectWebSocket(type, rest, webSocket) {
+  return new Promise(async (resolve) => {
+    const connectionToken = (await rest._getConnectionToken(type))
+    const url = connectionToken.data.instanceServers[0].endpoint;
+    const token = connectionToken.data.token;
     const connectTimeout = setTimeout(() => { throw new Error('Could not connect websocket.') }, 60000);
-    webSocket.connect(`${url}/${type}`);
-    function connnectOnOpenFunction() {
-      if (type === 'private') {
-        const signedRequest = getSignedRequest(apiKey, apiSecret, apiPassphrase);
-        webSocket.send(JSON.stringify(signedRequest));
-      } else {
-        resolve();
-        clearTimeout(connectTimeout);
-        webSocket.removeOnOpen(connnectOnOpenFunction);
-        webSocket.removeOnMessage(connectOnMessageFunction);
-      }
-    };
-    function connectOnMessageFunction(message) {
-      const messageParse = JSON.parse(message.toString());
-      if (messageParse.event === 'login' && messageParse.code === '0') {
-        resolve();
-        clearTimeout(connectTimeout);
-        webSocket.removeOnOpen(connnectOnOpenFunction);
-        webSocket.removeOnMessage(connectOnMessageFunction);
-      }
-    };
-    webSocket.addOnOpen(connnectOnOpenFunction, false);
-    webSocket.addOnMessage(connectOnMessageFunction, false);
+    webSocket.connect(`${url}?token=${token}&[connectId=${randomUUID}]`);
+    function connectOnOpenFunction() {
+      resolve(); 
+      clearTimeout(connectTimeout);
+      webSocket.removeOnOpen(connectOnOpenFunction);
+    }
+    webSocket.addOnOpen(connectOnOpenFunction, false);
   });
 };
 /**
  * 
- * @param {string} symbol
- * @param {string} channel
+ * @param {string} topic
+ * @param {boolean} privateChannel
  * @param {import('../../../typings/_ws').WebSocket} webSocket 
  */
-function confirmSubscription(symbol, channel, webSocket) {
+function confirmSubscription(topic, privateChannel, webSocket) {
   return new Promise((resolve) => {
-    const instType = symbol.includes('SWAP') ? 'SWAP' : 'FUTURES';
-    const subscribeTimeout = setTimeout(() => { throw new Error(`Could not subscribe:${symbol}|${channel}`) }, 60000);
+    const seconds = Math.floor(Date.now() / 1000).toString();
+    const microseconds = Math.floor(process.hrtime()[1] / 1000).toString();
+    const micLeadingZeros = '0'.repeat(6 - microseconds.length);
+    const subscribeId = +`${seconds}${micLeadingZeros}${microseconds}`;
+    const subscribeTimeout = setTimeout(() => { throw new Error(`Could not subscribe:${topic}`) }, 60000);
     function confirmOnCloseFunction() {
       clearTimeout(subscribeTimeout);
       webSocket.removeOnClose(confirmOnCloseFunction);
       webSocket.removeOnMessage(confirmOnMessageFunction);
     }
     function confirmOnMessageFunction(message) {
-      const messageParse = JSON.parse(message.toString());
-      if (messageParse.event === 'subscribe' && messageParse.arg.channel === channel) {
+      const messageParse = JSON.parse(message);
+      if (+messageParse.id == subscribeId && messageParse.type === 'ack') {
         resolve();
         clearTimeout(subscribeTimeout);
         webSocket.removeOnClose(confirmOnCloseFunction);
@@ -126,10 +96,54 @@ function confirmSubscription(symbol, channel, webSocket) {
     }
     webSocket.addOnClose(confirmOnCloseFunction, false);
     webSocket.addOnMessage(confirmOnMessageFunction, false);
-    webSocket.send(JSON.stringify({ op: 'subscribe', args: [{ channel: channel, instType: instType, instId: symbol, }] }));
+    webSocket.send(JSON.stringify({ id: subscribeId, type: 'subscribe', topic, privateChannel, response: true }));
   });
 };
 /**
+ * @param {import('../../../typings/_rest').Rest} rest
+ * @param {import('../../../typings/_ws').orderBooksData} orderBooksData
+ */
+async function getOrderBookSnapshot(rest, orderBooksData) {
+  const symbol = orderBooksData.symbol;
+  orderBooksData.otherData.synchronizing = true;
+  await new Promise(res => setTimeout(res, 1)); // delay request 2 seconds
+  orderBooksData.otherData.snapshot = (await rest._getOrderBook({ symbol })).data;
+  console.log('=> orderBook Snapshot LastUpdateId:', orderBooksData.otherData.snapshot.lastUpdateId)
+  orderBooksData.otherData.synchronizing = false;
+};
+/**
+ * 
+ * @param {Object} snapshot 
+ * @param {import('../../../typings/_ws').orderBooksData} orderBookData
+ */
+function synchronizeOrderBookSnapshot(snapshot, orderBookData) {
+  orderBookData.insertSnapshotAsks(snapshot.asks);
+  orderBookData.insertSnapshotBids(snapshot.bids);
+};
+/**
+ * 
+ */
+let orderBookCache = [];
+/**
+ * 
+ * @param {Object} snapshot 
+ * @param {import('../../../typings/_ws').orderBooksData} orderBookData
+ */
+function synchronizeOrderBookSnapshotWithCache(snapshot, orderBookData) {
+  for(let i = 0; i < orderBookCache.length; i++){
+    if(orderBookCache[i][3] >= snapshot.lastUpdateId){
+      if(orderBookCache[i][1] === 'buy'){
+        orderBookData.updateOrderByPriceBid({ id: +orderBookCache[i][0], price: +orderBookCache[i][0], quantity: +orderBookCache[i][2] });
+      } else if (orderBookCache[i][1] === 'sell'){
+        orderBookData.updateOrderByPriceAsk({ id: +orderBookCache[i][0], price: +orderBookCache[i][0], quantity: +orderBookCache[i][2] });
+      }
+      orderBookData.otherData.snapshot.lastUpdateId = orderBookCache[i][3]
+    }
+  }
+  orderBookCache = [];
+}
+/**
+ * 
  * 
  * 
  * 
@@ -144,14 +158,6 @@ function confirmSubscription(symbol, channel, webSocket) {
  * @param {import('../../../typings/_ws').wsSettings} wsSettings
  */
 function Ws(wsSettings = {}) {
-  /**
-   * 
-   * 
-   * DEFAULT WS SETTINGS VALUES
-   * 
-   * 
-   */
-  wsSettings.URL = wsSettings.URL || 'wss://wsaws.okx.com:8443/ws/v5';
   /** 
    * 
    * 
@@ -167,28 +173,13 @@ function Ws(wsSettings = {}) {
   /** 
    * 
    * 
-   * WEBSOCKET PUBLIC
+   * PRIVATE WEBSOCKET
    * 
    * 
    * @type {import('../../../typings/_ws').WebSocket} */
-  const webSocketPublic = WebSocket('okx:public', wsSettings);
-  webSocketPublic.addOnClose(async () => {
-    await connectWebSocket('public', webSocketPublic, wsSettings);
-    for (const params of liquidationsWsObject.subscriptions) await liquidationsWsObject.subscribe(params);
-    for (const params of tradesWsObject.subscriptions) await tradesWsObject.subscribe(params);
-    for (const params of orderBooksWsObject.subscriptions) await orderBooksWsObject.subscribe(params);
-  });
-  if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocketPublic.addOnMessage((message) => console.log(JSON.parse(message))) };
-  /** 
-   * 
-   * 
-   * WEBSOCKET PRIVATE
-   * 
-   * 
-   * @type {import('../../../typings/_ws').WebSocket} */
-  const webSocketPrivate = WebSocket('okx:private', wsSettings);
+  const webSocketPrivate = WebSocket('kucoin:private', wsSettings);
   webSocketPrivate.addOnClose(async () => {
-    await connectWebSocket('private', webSocketPrivate, wsSettings)
+    await connectWebSocket('private', rest, webSocketPrivate);
     for (const params of ordersWsObject.subscriptions) await ordersWsObject.subscribe(params);
     for (const params of positionsWsObject.subscriptions) await positionsWsObject.subscribe(params);
     for (const params of liquidationsWsObject.subscriptions) await liquidationsWsObject.subscribe(params);
@@ -197,16 +188,30 @@ function Ws(wsSettings = {}) {
   /**
    * 
    * 
+   * PUBLIC WEBSOCKET
+   * 
+   * 
+   * @type {import('../../../typings/_ws').WebSocket} */
+  const webSocketPublic = WebSocket('kucoin:public', wsSettings);
+  webSocketPublic.addOnClose(async () => {
+    await connectWebSocket('public', rest, webSocketPublic);
+    for (const params of tradesWsObject.subscriptions) await tradesWsObject.subscribe(params);
+    for (const params of orderBooksWsObject.subscriptions) await orderBooksWsObject.subscribe(params);
+  });
+  if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocketPublic.addOnMessage((message) => console.log(JSON.parse(message))) };
+  /**
+   * 
+   * 
    * CONNECT WEBSOCKETS
    * 
    * 
    **/
   async function connectWebSockets() {
-    await connectWebSocket('public', webSocketPublic, wsSettings);
-    if (wsSettings.API_KEY && wsSettings.API_SECRET && wsSettings.API_PASSPHRASE) {
-      await connectWebSocket('private', webSocketPrivate, wsSettings);
+    if (wsSettings.API_KEY && wsSettings.API_SECRET) {
+      await connectWebSocket('private', rest, webSocketPrivate);
     }
-  };
+    await connectWebSocket('public', rest, webSocketPublic);
+  }
   /** 
    * 
    * 
@@ -215,26 +220,19 @@ function Ws(wsSettings = {}) {
    * 
    */
   const ordersOnMessage = (message) => {
-    const messageParse = JSON.parse(message.toString());
-    if (!messageParse.arg || messageParse.arg.channel !== 'orders' || !messageParse.data) { return };
-    const creationOrders = [];
-    const executionOrders = [];
-    const cancelationOrders = [];
-    messageParse.data.forEach(orderEvent => {
-      if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.instId)) { return };
-      if (orderEvent.state === 'live' || orderEvent.amendResult === '0') {
-        creationOrders.push(createCreationUpdate(orderEvent));
-      }
-      if (orderEvent.state === 'canceled' || orderEvent.amendResult === '-1') {
-        cancelationOrders.push(createCancelation(orderEvent));
-      }
-      if (orderEvent.fillPx || orderEvent.fillTime || +orderEvent.fillSz) {
-        executionOrders.push(createExecution(orderEvent));
-      }
-    });
-    if (creationOrders.length) { ordersWsObject.events.emit('creations-updates', creationOrders) };
-    if (executionOrders.length) { ordersWsObject.events.emit('executions', executionOrders) };
-    if (cancelationOrders.length) { ordersWsObject.events.emit('cancelations', cancelationOrders) };
+    const messageParse = JSON.parse(message);
+    if (messageParse.topic !== '/contractMarket/tradeOrders') { return };
+    const orderEvent = messageParse.data;
+    if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.symbol)) { return };
+    if (orderEvent.type === 'open' || orderEvent.type === 'update') {
+      ordersWsObject.events.emit('creations-updates', [createCreationUpdate(orderEvent)]);
+    }
+    if (orderEvent.type === 'match') {
+      ordersWsObject.events.emit('executions', [createExecution(orderEvent)]);
+    }
+    if (orderEvent.type === 'canceled') {
+      ordersWsObject.events.emit('cancelations', [createCancelation(orderEvent)]);
+    }
   };
   /** @type {import('../../../typings/_ws').ordersWsObject} */
   const ordersWsObject = {
@@ -243,7 +241,7 @@ function Ws(wsSettings = {}) {
       if (!ordersWsObject.subscriptions.find(v => JSON.stringify(v) === JSON.stringify(params))) {
         ordersWsObject.subscriptions.push(Object.assign({}, params));
       }
-      await confirmSubscription(params.symbol, 'orders', webSocketPrivate);
+      await confirmSubscription(`/contractMarket/tradeOrders`, true, webSocketPrivate);
     },
     data: null,
     events: new Events.EventEmitter(),
@@ -257,16 +255,16 @@ function Ws(wsSettings = {}) {
    * 
    */
   const positionsOnMessage = (message) => {
-    const messageParse = JSON.parse(message.toString());
-    if (!messageParse.arg || messageParse.arg.channel !== 'positions' || !messageParse.data) { return };
-    messageParse.data.forEach(positionEvent => {
-      const positionData = positionsWsObject.data.find(v => v.symbol === positionEvent.instId);
-      if (!positionData) { return };
-      positionData.pxS = positionEvent && +positionEvent.pos < 0 ? +positionEvent.avgPx : 0;
-      positionData.pxB = positionEvent && +positionEvent.pos > 0 ? +positionEvent.avgPx : 0;
-      positionData.qtyS = positionEvent && +positionEvent.pos < 0 ? Math.abs(+positionEvent.pos) : 0;
-      positionData.qtyB = positionEvent && +positionEvent.pos > 0 ? Math.abs(+positionEvent.pos) : 0;
-    });
+    const messageParse = JSON.parse(message);
+    if (!messageParse.topic || !messageParse.topic.includes('/contract/position')) { return };
+    if (messageParse.data.changeReason !== 'positionChange') { return }
+    const positionData = positionsWsObject.data.find(v => v.symbol === messageParse.data.symbol);
+    if (!positionData) { return };
+    const positionEvent = messageParse.data
+    positionData.pxS = +positionEvent.currentQty < 0 ? +positionEvent.avgEntryPrice : 0;
+    positionData.pxB = +positionEvent.currentQty > 0 ? +positionEvent.avgEntryPrice : 0;
+    positionData.qtyS = +positionEvent.currentQty < 0 ? Math.abs(+positionEvent.currentQty) : 0;
+    positionData.qtyB = +positionEvent.currentQty > 0 ? Math.abs(+positionEvent.currentQty) : 0;
     positionsWsObject.events.emit('update', positionsWsObject.data);
   };
   /** @type {import('../../../typings/_ws').positionsWsObject} */
@@ -280,7 +278,7 @@ function Ws(wsSettings = {}) {
       } else {
         Object.assign(positionsWsObject.data.find(v => v.symbol === params.symbol), positionData);
       }
-      await confirmSubscription(params.symbol, 'positions', webSocketPrivate);
+      await confirmSubscription(`/contract/position:${params.symbol}`, true, webSocketPrivate);
     },
     data: [],
     events: new Events.EventEmitter(),
@@ -293,34 +291,29 @@ function Ws(wsSettings = {}) {
    * 
    * 
    */
-  const liquidationsOnMessageMarkPrice = (message) => {
-    const messageParse = JSON.parse(message.toString());
-    if (!messageParse.arg || messageParse.arg.channel !== 'mark-price' || !messageParse.data) { return };
-    messageParse.data.forEach(markPriceEvent => {
-      const liquidationsData = liquidationsWsObject.data.find(v => v.symbol === markPriceEvent.instId);
-      if (!liquidationsData) { return };
-      liquidationsData.markPx = +markPriceEvent.markPx;
-    });
-  };
-  const liquidationsOnMessagePosition = (message) => {
-    const messageParse = JSON.parse(message.toString());
-    if (!messageParse.arg || messageParse.arg.channel !== 'positions' || !messageParse.data) { return };
-    messageParse.data.forEach(positionEvent => {
-      const liquidationData = liquidationsWsObject.data.find(v => v.symbol === positionEvent.instId);
-      if (!liquidationData) { return };
-      liquidationData.pxS = positionEvent && +positionEvent.pos < 0 ? +positionEvent.avgPx : 0;
-      liquidationData.pxB = positionEvent && +positionEvent.pos > 0 ? +positionEvent.avgPx : 0;
-      liquidationData.qtyS = positionEvent && +positionEvent.pos < 0 ? Math.abs(+positionEvent.pos) : 0;
-      liquidationData.qtyB = positionEvent && +positionEvent.pos > 0 ? Math.abs(+positionEvent.pos) : 0;
-      liquidationData.liqPxS = positionEvent && +positionEvent.pos < 0 ? +positionEvent.liqPx : 0;
-      liquidationData.liqPxB = positionEvent && +positionEvent.pos > 0 ? +positionEvent.liqPx : 0;
-    });
+  const liquidationsOnMessage = (message) => {
+    const messageParse = JSON.parse(message);
+    if (!messageParse.topic || !messageParse.topic.includes('/contract/position')) { return };
+    const liquidationData = liquidationsWsObject.data.find(v => v.symbol === messageParse.data.symbol);
+    if (!liquidationData) { return };
+    const positionEvent = messageParse.data;
+    if (messageParse.data.changeReason == 'positionChange') { 
+      liquidationData.pxS = positionEvent && +positionEvent.currentQty < 0 ? +positionEvent.avgEntryPrice : 0;
+      liquidationData.pxB = positionEvent && +positionEvent.currentQty > 0 ? +positionEvent.avgEntryPrice : 0;
+      liquidationData.qtyS = positionEvent && +positionEvent.currentQty < 0 ? Math.abs(+positionEvent.currentQty) : 0;
+      liquidationData.qtyB = positionEvent && +positionEvent.currentQty > 0 ? Math.abs(+positionEvent.currentQty) : 0;
+      liquidationData.liqPxS = positionEvent && +positionEvent.currentQty < 0 ? +positionEvent.liquidationPrice : 0;
+      liquidationData.liqPxB = positionEvent && +positionEvent.currentQty > 0 ? +positionEvent.liquidationPrice : 0;
+      liquidationData.markPx = positionEvent ? +positionEvent.markPrice : 0;
+     }
+     if (messageParse.data.changeReason == 'markPriceChange') {
+      liquidationData.markPx = positionEvent ? +positionEvent.markPrice : 0;
+     }
   };
   /** @type {import('../../../typings/_ws').liquidationsWsObject} */
   const liquidationsWsObject = {
     subscribe: async (params) => {
-      if (!webSocketPublic.findOnMessage(liquidationsOnMessageMarkPrice)) { webSocketPublic.addOnMessage(liquidationsOnMessageMarkPrice) };
-      if (!webSocketPrivate.findOnMessage(liquidationsOnMessagePosition)) { webSocketPrivate.addOnMessage(liquidationsOnMessagePosition) };
+      if (!webSocketPrivate.findOnMessage(liquidationsOnMessage)) { webSocketPrivate.addOnMessage(liquidationsOnMessage) };
       const positionData = (await rest.getPosition(params)).data;
       const liquidationData = (await rest.getLiquidation(params)).data;
       if (!liquidationsWsObject.subscriptions.find(v => JSON.stringify(v) === JSON.stringify(params))) {
@@ -329,8 +322,7 @@ function Ws(wsSettings = {}) {
       } else {
         Object.assign(liquidationsWsObject.data.find(v => v.symbol === params.symbol), positionData, liquidationData);
       }
-      await confirmSubscription(params.symbol, 'mark-price', webSocketPublic);
-      await confirmSubscription(params.symbol, 'positions', webSocketPrivate);
+      await confirmSubscription(`/contract/position:${params.symbol}`, true, webSocketPrivate);
     },
     data: [],
     events: null,
@@ -344,19 +336,16 @@ function Ws(wsSettings = {}) {
    * 
    */
   const tradesOnMessage = (message) => {
-    const messageParse = JSON.parse(message.toString());
-    if (!messageParse.arg || messageParse.arg.channel !== 'trades' || !messageParse.data) { return };
-    const trades = [];
-    messageParse.data.forEach(tradeEvent => {
-      const tradeData = tradesWsObject.data.find(v => v.symbol === tradeEvent.instId);
-      if (!tradeData) { return };
-      tradeData.side = tradeEvent.side;
-      tradeData.price = +tradeEvent.px;
-      tradeData.quantity = +tradeEvent.sz;
-      tradeData.timestamp = moment(+tradeEvent.ts).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
-      trades.push(Object.assign({}, tradeData));
-    });
-    if (trades.length) { tradesWsObject.events.emit('trades', trades) };
+    const messageParse = JSON.parse(message);
+    if (!messageParse.topic || !messageParse.topic.includes('/contractMarket/execution') || !messageParse.subject || messageParse.subject !== 'match') { return };
+    const tradeEvent = messageParse.data;
+    const tradeData = tradesWsObject.data.find(v => v.symbol === tradeEvent.symbol);
+    if (!tradeData) { return };
+    tradeData.side = tradeEvent.side;
+    tradeData.price = +tradeEvent.price;
+    tradeData.quantity = +tradeEvent.size;
+    tradeData.timestamp = moment(+tradeEvent.ts/1000000).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+    tradesWsObject.events.emit('trades', [Object.assign({}, tradeData)]);
   };
   /** @type {import('../../../typings/_ws').tradesWsObject} */
   const tradesWsObject = {
@@ -369,7 +358,7 @@ function Ws(wsSettings = {}) {
       } else {
         Object.assign(tradesWsObject.data.find(v => v.symbol === params.symbol), { price: lastPriceData });
       }
-      await confirmSubscription(params.symbol, 'trades', webSocketPublic);
+      await confirmSubscription(`/contractMarket/execution:${params.symbol}`, false, webSocketPublic);
     },
     data: [],
     events: new Events.EventEmitter(),
@@ -383,19 +372,45 @@ function Ws(wsSettings = {}) {
    * 
    */
   const orderBooksOnMessage = (message) => {
-    const messageParse = JSON.parse(message.toString());
-    if (!messageParse.arg || messageParse.arg.channel !== 'books') { return };
-    if (messageParse.action !== 'snapshot' && messageParse.action !== 'update') { return };
-    const orderBookData = orderBooksWsObject.data.find(v => v.symbol === messageParse.arg.instId);
+    const messageParse = JSON.parse(message);
+    if (!messageParse.topic || !messageParse.topic.includes('/contractMarket/level2') || !messageParse.subject || messageParse.subject !== 'level2' ) { return };
+    if (!messageParse.data.change) { return }
+    const orderBookEvent = messageParse.data.change.split(',');
+    orderBookEvent.push(messageParse.data.sequence);
+    const orderBookData = orderBooksWsObject.data.find(v => v.symbol === messageParse.topic.split(":")[1]);
     if (!orderBookData) { return };
-    const orderBookEvent = messageParse.data[0];
-    if ((Date.now() - +orderBookEvent.ts) > 5000) { return webSocketPublic.close(); }
-    orderBookEvent.asks.forEach(ask => {
-      orderBookData.updateOrderByPriceAsk({ id: +ask[0], price: +ask[0], quantity: +ask[1] });
-    });
-    orderBookEvent.bids.forEach(bid => {
-      orderBookData.updateOrderByPriceBid({ id: +bid[0], price: +bid[0], quantity: +bid[1] });
-    });
+    if (!orderBookData.otherData.synchronized) {
+      orderBookCache.push(orderBookEvent)
+      if (!orderBookData.otherData.synchronizing) {
+        if (!orderBookData.otherData.snapshot) {
+          getOrderBookSnapshot(rest, orderBookData);
+        } else {
+          const snapshot = orderBookData.otherData.snapshot;
+          const result = orderBookCache.find(a => a[3] === snapshot.lastUpdateId);
+          if (result){ synchronizeOrderBookSnapshotWithCache(snapshot, orderBookData) };
+          if (snapshot.lastUpdateId < orderBookEvent[3]) {
+            console.log('ob not syncd')
+            orderBookData.otherData.snapshot = null;
+            orderBookData.otherData.synchronized = false;
+            orderBookData.otherData.synchronizing = false;
+          }
+          if (snapshot.lastUpdateId >= orderBookEvent[3] && snapshot.lastUpdateId <= orderBookEvent[3]) {
+            console.log('ob syncd')
+            orderBookData.otherData.snapshot = null;
+            orderBookData.otherData.synchronized = true;
+            orderBookData.otherData.synchronizing = false;
+            synchronizeOrderBookSnapshot(snapshot, orderBookData);
+          }
+        }
+      }
+    }
+    if (!orderBookData.otherData.synchronized) { return };
+    if ((Date.now() - +messageParse.data.timestamp) > 5000) { return webSocketPublic.close() };
+    if(orderBookEvent[1] === 'buy'){
+      orderBookData.updateOrderByPriceBid({ id: +orderBookEvent[0], price: +orderBookEvent[0], quantity: +orderBookEvent[2] });
+    } else if (orderBookEvent[1] === 'sell'){
+      orderBookData.updateOrderByPriceAsk({ id: +orderBookEvent[0], price: +orderBookEvent[0], quantity: +orderBookEvent[2] });
+    }
   };
   /** @type {import('../../../typings/_ws').orderBooksWsObject} */
   const orderBooksWsObject = {
@@ -412,7 +427,10 @@ function Ws(wsSettings = {}) {
       const orderBookData = orderBooksWsObject.data.find(v => v.symbol === params.symbol);
       orderBookData.asks.length = 0;
       orderBookData.bids.length = 0;
-      await confirmSubscription(params.symbol, 'books', webSocketPublic);
+      orderBookData.otherData.snapshot = null;
+      orderBookData.otherData.synchronized = false;
+      orderBookData.otherData.synchronizing = false;
+      await confirmSubscription(`/contractMarket/level2:${params.symbol}`, false, webSocketPublic);
     },
     data: [],
     events: null,

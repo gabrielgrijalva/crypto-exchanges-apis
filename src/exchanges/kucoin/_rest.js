@@ -449,6 +449,23 @@ function Rest(restSettings = {}) {
       const lastUpdateId = +response.data.data.sequence;
       return { data: { asks, bids, lastUpdateId } };
     },
+    /**
+     * 
+     * 
+     * GET CONNECTION TOKEN
+     * 
+     * 
+     */
+    _getConnectionToken: async (params) => {
+      const url = params.type === 'public' ? '/api/v1/bullet-public' : '/api/v1/bullet-private'
+      const response = await request.private('POST', url, null, null);
+      if (response.data.code !== '200000') {
+        return handleResponseError(response.data);
+      }
+      const instanceServers = response.data.data.instanceServers
+      const token = response.data.data.token
+      return { data: { instanceServers, token} };
+    }
   };
   return rest;
 };

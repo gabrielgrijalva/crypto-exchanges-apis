@@ -106,8 +106,11 @@ declare namespace RestN {
   type _getOrderBookParams = {
     symbol: string;
   }
+  type _getConnectionTokenParams = {
+    type: string;
+  }
   type params = createOrderParams | createOrdersParams | cancelOrderParams | cancelOrdersParams | cancelOrdersAllParams | updateOrderParams | updateOrdersParams | getEquityParams
-    | getCandlesParams | getPositionParams | getLastPriceParams | getLiquidationParams | getFundingRatesParams | getMarkPricesOptionParams | _getOrderBookParams | null;
+    | getCandlesParams | getPositionParams | getLastPriceParams | getLiquidationParams | getFundingRatesParams | getMarkPricesOptionParams | _getOrderBookParams | _getConnectionTokenParams | null;
   /**
    * 
    * 
@@ -155,6 +158,7 @@ declare namespace RestN {
   type _getListenKeyResponseData = string;
   type _orderBookOrder = { id: number, price: number, quantity: number };
   type _getOrderBookResponseData = { asks: _orderBookOrder[], bids: _orderBookOrder[], lastUpdateId: number, };
+  type _getConnectionTokenData = { instanceServers: any[], token: string }
   /**
    * 
    * 
@@ -260,6 +264,7 @@ declare namespace RestN {
      */
     _getListenKey?(): Promise<RestResponse<_getListenKeyResponseData>> // binance-coin
     _getOrderBook?(params: _getOrderBookParams): Promise<RestResponse<_getOrderBookResponseData>> // binance-coin
+    _getConnectionToken?(params: _getConnectionTokenParams): Promise<RestResponse<_getConnectionTokenData>> // kucoin
   }
 }
 export = RestN;
