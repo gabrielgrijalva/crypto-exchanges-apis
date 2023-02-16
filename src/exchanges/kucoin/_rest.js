@@ -1,4 +1,5 @@
 const qs = require('qs');
+const uuid = require('uuid').v4;
 const crypto = require('crypto');
 const moment = require('moment');
 const Request = require('../../_shared-classes/request');
@@ -88,11 +89,12 @@ function getPublicFunction(restSettings) {
    * @this {import('../../../typings/_rest').Request} 
    * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
    */
-  async function public(method, path, data) {
+  async function public(method, path, data, requestConsumption = 1) {
     const dataStringified = qs.stringify(data);
     const requestSendParams = {
       url: `${restSettings.URL}${path}?${dataStringified}`,
-      method: method,
+      method,
+      requestConsumption
     };
     const response = await this.send(requestSendParams);
     return response;
@@ -107,7 +109,7 @@ function getPrivateFunction(restSettings) {
    * @this {import('../../../typings/_rest').Request} 
    * @returns {Promise<import('../../../typings/_rest').requestSendReturn>}
    */
-  async function private(method, path, data, query) {
+  async function private(method, path, data, query, requestConsumption = 1) {
     const timestamp = Date.now();
     const dataStringified = data ? JSON.stringify(data) : '';
     const queryStrigified = query ? `?${qs.stringify(query)}` : '';
@@ -126,6 +128,7 @@ function getPrivateFunction(restSettings) {
         'KC-API-KEY-VERSION': "2",
         'KC-API-PASSPHRASE': passphrase,
       },
+      requestConsumption
     };
     const response = await this.send(requestSendParams);
     return response;
@@ -184,7 +187,7 @@ function Rest(restSettings = {}) {
      */
     createOrder: async (params) => {
       const data = {};
-      data.clientOid = params.id;
+      data.clientOid = uuid().replace(/-/g, '');
       data.side = params.side;
       data.symbol = params.symbol;
       data.size = `${params.quantity}`;
@@ -253,7 +256,7 @@ function Rest(restSettings = {}) {
     cancelOrdersAll: async (params) => {
       const data = {};
       data.symbol = params.symbol;
-      const response = await request.private('DELETE', '/api/v1/orders', null, data);
+      const response = await request.private('DELETE', '/api/v1/orders', null, data, 4);
       if (response.data.code !== '200000') {
         return handleResponseError(params, response.data);
       }
@@ -334,7 +337,7 @@ function Rest(restSettings = {}) {
     getPosition: async (params) => {
       const data = {};
       data.symbol = params.symbol;
-      const response = await request.private('GET', '/api/v1/position', null, data);
+      const response = await request.private('GET', '/api/v1/position', null, data, 4);
       if (response.data.code !== '200000') {
         return handleResponseError(params, response.data);
       }
@@ -393,7 +396,7 @@ function Rest(restSettings = {}) {
      */
     getFundingRates: async (params) => {
       const data = {};
-      const response = await request.public('GET', `/api/v1/funding-rate/${params.symbol}/current`, data);
+      const response = await request.public('GET', `/api/v1/funding-rate/${params.symbol}/current`, data, 4);
       if (response.data.code !== '200000') {
         return handleResponseError(params, response.data);
       }

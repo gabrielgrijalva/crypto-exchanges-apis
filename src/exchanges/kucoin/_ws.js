@@ -297,7 +297,8 @@ function Ws(wsSettings = {}) {
     const liquidationData = liquidationsWsObject.data.find(v => v.symbol === messageParse.data.symbol);
     if (!liquidationData) { return };
     const positionEvent = messageParse.data;
-    if (messageParse.data.changeReason == 'positionChange') { 
+    console.log('liquidations change', positionEvent)
+    if (messageParse.data.changeReason == 'positionChange' || messageParse.data.changeReason == 'marginChange') { 
       liquidationData.pxS = positionEvent && +positionEvent.currentQty < 0 ? +positionEvent.avgEntryPrice : 0;
       liquidationData.pxB = positionEvent && +positionEvent.currentQty > 0 ? +positionEvent.avgEntryPrice : 0;
       liquidationData.qtyS = positionEvent && +positionEvent.currentQty < 0 ? Math.abs(+positionEvent.currentQty) : 0;
