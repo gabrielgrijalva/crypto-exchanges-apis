@@ -1,22 +1,5 @@
 const RestRequest = require('@gabrielgrijalva/rest-request');
 const round = require('../_utils/round');
-/**
- * @param {import('../../typings/_rest').Request} request 
- * @param {import('../../typings/_rest').restSettings} restSettings
- */
-function createRefillSetInterval(request, restSettings) {
-  const timestamp = Date.now();
-  const timeoutMilliseconds = round.up(timestamp / restSettings.REQUESTS_REFILL_INTERVAL, 0)
-    * restSettings.REQUESTS_REFILL_INTERVAL - timestamp;
-  const intervalRefillFunction = () => {
-    request.remaining = (request.remaining + restSettings.REQUESTS_REFILL_AMOUNT) < restSettings.REQUESTS_REFILL_LIMIT
-      ? request.remaining + restSettings.REQUESTS_REFILL_AMOUNT : restSettings.REQUESTS_REFILL_LIMIT;
-  };
-  setTimeout(() => {
-    intervalRefillFunction();
-    setInterval(intervalRefillFunction, restSettings.REQUESTS_REFILL_INTERVAL);
-  }, timeoutMilliseconds);
-};
 /** 
  * @param {import('../../typings/_rest').requestSettings} requestSettings
  */
@@ -35,9 +18,8 @@ function Request(requestSettings) {
     // Functions
     send: (params) => {
       const requestConsumption = (params && params.requestConsumption) ? params.requestConsumption : 1;
-      request.timestamps.unshift(Date.now());
-      request.timestamps.splice(restSettings.REQUESTS_TIMESTAMPS); 
-      request.remaining = request.remaining > 0 ? request.remaining - requestConsumption : 0;
+      request.timestamps.push([Date.now() + restSettings.REQUESTS_REFILL_INTERVAL, requestConsumption]);
+      request.remaining = request.remaining - requestConsumption;
       console.log('Request consumption: ', requestConsumption)
       return RestRequest.send(params);
     },
@@ -50,7 +32,17 @@ function Request(requestSettings) {
     private: private,
   };
   console.log('Initial requests: ', request.remaining)
-  if (restSettings.REQUESTS_REFILL) { createRefillSetInterval(request, restSettings) };
+  const requestRefillCheck = setInterval(() => {
+    let i = request.timestamps.length
+    while (i--) {
+      if (Date.now() >= request.timestamps[i][0]) { 
+        request.remaining = request.remaining + request.timestamps[i][1];
+        request.remaining = request.remaining > restSettings.REQUESTS_REFILL_LIMIT ? restSettings.REQUESTS_REFILL_LIMIT : request.remaining;
+        request.timestamps.splice(i, 1);
+      } 
+    }
+  }, 1000);
+  requestRefillCheck;
   return request;
 };
 module.exports = Request;

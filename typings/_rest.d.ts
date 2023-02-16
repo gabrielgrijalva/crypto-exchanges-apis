@@ -210,7 +210,7 @@ declare namespace RestN {
   }
   interface Request {
     remaining: number;
-    timestamps: number[];
+    timestamps: any[];
     send(params: requestSendParams): Promise<requestSendReturn>;
     updateRequestLimit(params: number);
     key(method: string, path: string, data: any): Promise<requestSendReturn>;
