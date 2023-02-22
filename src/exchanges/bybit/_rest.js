@@ -1,3 +1,4 @@
+const Flatted = require('flatted');
 const qs = require('qs');
 const crypto = require('crypto');
 const moment = require('moment');

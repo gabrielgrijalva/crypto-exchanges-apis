@@ -1,5 +1,4 @@
 const RestRequest = require('@gabrielgrijalva/rest-request');
-const round = require('../_utils/round');
 /** 
  * @param {import('../../typings/_rest').requestSettings} requestSettings
  */

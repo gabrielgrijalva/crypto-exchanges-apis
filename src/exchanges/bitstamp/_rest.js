@@ -1,3 +1,4 @@
+const Flatted = require('flatted');
 const qs = require('qs');
 const moment = require('moment');
 const Request = require('../../_shared-classes/request');

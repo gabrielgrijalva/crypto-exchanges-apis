@@ -1,3 +1,4 @@
+const Flatted = require('flatted');
 const qs = require('qs');
 const uuid = require('uuid').v4;
 const crypto = require('crypto');

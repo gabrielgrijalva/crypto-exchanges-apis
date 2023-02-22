@@ -1,3 +1,4 @@
+const Flatted = require('flatted');
 const qs = require('qs');
 const utf8 = require('utf8');
 const crypto = require('crypto');

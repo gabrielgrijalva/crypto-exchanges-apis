@@ -1,6 +1,6 @@
 {
   "name": "@gabrielgrijalva/crypto-exchanges-apis",
-  "version": "2.13.1",
+  "version": "2.13.2",
   "description": "Crypto Exchanges APIs libraries",
   "main": "./index.js",
   "typings": "./typings/index.d.ts",
@@ -13,6 +13,7 @@
     "@gabrielgrijalva/rest-request": "^1.0.2",
     "@types/ws": "^8.2.0",
     "cron": "^1.8.2",
+    "flatted": "^3.2.7",
     "moment": "^2.29.1",
     "mysql": "^2.18.1",
     "qs": "^6.10.1",

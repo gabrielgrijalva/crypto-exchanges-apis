@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.13.2] - 2023-02-21
+- Implemented Flatted to handle circular JSON strings.
 ## [2.13.1] - 2023-02-21
 - Bug fixes. Minor changes in error handling.
 ## [2.13.0] - 2023-02-15
