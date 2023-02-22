@@ -23,7 +23,7 @@ function createCreationUpdate(data) {
   const eventData = {};
   eventData.symbol = data.contract_code;
   eventData.event = 'creations-updates';
-  eventData.id = data.client_order_id ? data.client_order_id : data.order_id;
+  eventData.id = (data.client_order_id).toString();
   eventData.side = data.direction;
   eventData.price = +data.price;
   eventData.quantity = +data.volume;
@@ -34,9 +34,9 @@ function createExecution(data) {
   const eventData = {};
   eventData.symbol = data.contract_code;
   eventData.event = 'executions';
-  eventData.id = data.client_order_id ? data.client_order_id : data.order_id;
+  eventData.id = (data.client_order_id).toString();
   eventData.side = data.direction;
-  eventData.price = +data.trade_avg_price;
+  eventData.price = +data.trade_price;
   eventData.quantity = +data.trade_volume;
   eventData.timestamp = moment(+data.created_at).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
   return eventData;
@@ -45,7 +45,7 @@ function createCancelation(data) {
   const eventData = {};
   eventData.symbol = data.contract_code;
   eventData.event = 'cancelations';
-  eventData.id = data.client_order_id ? data.client_order_id : data.order_id;
+  eventData.id = (data.client_order_id).toString();
   eventData.timestamp = moment(+data.canceled_at).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
   return eventData;
 };
@@ -296,7 +296,13 @@ function Ws(wsSettings = {}) {
       cancelationOrders.push(createCancelation(orderEvent));
     }
     if (orderEvent.status === 4 || orderEvent.status === 6) {
-      executionOrders.push(createExecution(orderEvent));
+      for(let i = 0; i < orderEvent.trade.length; i++){
+        let trade = orderEvent.trade[i]
+        trade.contract_code = orderEvent.contract_code;
+        trade.client_order_id = orderEvent.client_order_id;
+        trade.direction = orderEvent.direction;
+        executionOrders.push(createExecution(trade));
+      }
     }
     if (creationOrders.length) { ordersWsObject.events.emit('creations-updates', creationOrders) };
     if (executionOrders.length) { ordersWsObject.events.emit('executions', executionOrders) };
@@ -329,17 +335,24 @@ function Ws(wsSettings = {}) {
   const positionsOnMessage = (message) => {
     const messageParse = JSON.parse(zlib.unzipSync(message).toString());
     if (messageParse.op !== 'notify' || !messageParse.topic.includes('positions')) { return };
-    messageParse.data.forEach(positionEvent => {
-      const positionData = positionsWsObject.data.find(v => v.symbol === positionEvent.contract_code);
-      if(positionEvent.direction === 'buy'){
-        positionData.pxB = +positionEvent.cost_open;
-        positionData.qtyB = Math.abs(+positionEvent.volume);
-      }
-      if(positionEvent.direction === 'sell'){
-        positionData.pxS = +positionEvent.cost_open;
-        positionData.qtyS = Math.abs(+positionEvent.volume);
-      }
-    });
+    const positionData = positionsWsObject.data.find(v => v.symbol === messageParse.data[0].contract_code);
+    if (positionData) {
+      const shortPosition = messageParse.data.find(v => v.direction == 'sell');
+      const longPosition = messageParse.data.find(v => v.direction == 'buy');
+      if (shortPosition && longPosition) { 
+        positionData.qtyS = Math.abs(+shortPosition.volume);
+        positionData.pxS = +shortPosition.cost_open;
+        positionData.qtyB = Math.abs(+longPosition.volume);
+        positionData.pxB = +longPosition.cost_open;
+      } else if ( shortPosition ) {
+        positionData.qtyS = Math.abs(+shortPosition.volume);
+        positionData.pxS = +shortPosition.cost_open;
+      } else if ( longPosition ) { 
+        positionData.qtyB = Math.abs(+longPosition.volume);
+        positionData.pxB = +longPosition.cost_open;
+       }
+    }
+    
     positionsWsObject.events.emit('update', positionsWsObject.data);
   };
   /** @type {import('../../../typings/_ws').positionsWsObject} */
@@ -379,25 +392,36 @@ function Ws(wsSettings = {}) {
   const liquidationsOnMessagePosition = (message) => {
     const messageParse = JSON.parse(zlib.unzipSync(message).toString());
     if (messageParse.op !== 'notify' || !messageParse.topic.includes('positions')) { return };
-    messageParse.data.forEach(positionEvent => {
-      const liquidationData = liquidationsWsObject.data.find(v => v.symbol === positionEvent.contract_code);
-      if(positionEvent.direction === 'buy'){
-        liquidationData.pxB = +positionEvent.cost_open;
-        liquidationData.qtyB = Math.abs(+positionEvent.volume);
+    const liquidationData = liquidationsWsObject.data.find(v => v.symbol === messageParse.data[0].contract_code);
+    if (liquidationData){
+      const shortPosition = messageParse.data.find(v => v.direction == 'sell');
+      const longPosition = messageParse.data.find(v => v.direction == 'buy');
+      if (shortPosition && longPosition) { 
+        liquidationData.qtyS = Math.abs(+shortPosition.volume);
+        liquidationData.pxS = +shortPosition.cost_open;
+        liquidationData.qtyB = Math.abs(+longPosition.volume);
+        liquidationData.pxB = +longPosition.cost_open;
+      } else if ( shortPosition ) {
+        liquidationData.qtyS = Math.abs(+shortPosition.volume);
+        liquidationData.pxS = +shortPosition.cost_open;
+      } else if ( longPosition ) { 
+        liquidationData.qtyB = Math.abs(+longPosition.volume);
+        liquidationData.pxB = +longPosition.cost_open;
       }
-      if(positionEvent.direction === 'sell'){
-        liquidationData.pxS = +positionEvent.cost_open;
-        liquidationData.qtyS = Math.abs(+positionEvent.volume);
-      }
-    });
+    }
   };
   const liquidationsOnMessageLiquidationPrice = (message) => {
     const messageParse = JSON.parse(zlib.unzipSync(message).toString());
     if (messageParse.op !== 'notify' || !messageParse.topic.includes('accounts')) { return };
     messageParse.data.forEach(positionEvent => {
       const liquidationData = liquidationsWsObject.data.find(v => v.symbol === positionEvent.contract_code);
-      liquidationData.liqPxB = +positionEvent.liquidation_price;
-      liquidationData.liqPxS = +positionEvent.liquidation_price;
+      if (liquidationData.qtyB && liquidationData.qtyS){
+        liquidationData.liqPxB = liquidationData.markPx < +positionEvent.liquidation_price ? 0 : positionEvent.liquidation_price;
+        liquidationData.liqPxS = liquidationData.markPx > +positionEvent.liquidation_price ? 0 : positionEvent.liquidation_price;
+      } else {
+        liquidationData.liqPxB = liquidationData.qtyB ? +positionEvent.liquidation_price : 0;
+        liquidationData.liqPxS = liquidationData.qtyS ? +positionEvent.liquidation_price : 0;
+      }
     });
   };
   /** @type {import('../../../typings/_ws').liquidationsWsObject} */

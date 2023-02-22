@@ -86,6 +86,7 @@ function handleResponseError(params, responseData) {
       type: type,
       params: params,
       exchange: responseData,
+      other: JSON.stringify(responseData)
     }
   }
 };
@@ -228,8 +229,8 @@ function Rest(restSettings = {}) {
      */
     createOrder: async (params) => {
       const data = {};
-      data.contract_code = params.symbol;
       data.client_order_id = params.id;
+      data.contract_code = params.symbol;
       data.direction = params.side;
       data.offset = params.direction;
       data.volume = params.quantity;
@@ -275,7 +276,7 @@ function Rest(restSettings = {}) {
       data.contract_code = params.symbol;
       data.client_order_id = params.id;
       const response = await request.private('POST', '/swap-api/v1/swap_cancel', data, 1);
-      if (response && response.data && response.data.err_code) {
+      if (response && response.data && (response.data.err_code || response.data.data.errors.length)) {
         return handleResponseError(params, response.data);
       }
       return { data: params };
@@ -357,7 +358,7 @@ function Rest(restSettings = {}) {
       if (response && response.data && response.data.err_code) {
         return handleResponseError(params, response.data);
       }
-      const candles = response.data.data.reverse().map(v => {
+      const candles = response.data.data.map(v => {
         const candle = {};
         candle.timestamp = moment(+v.id*1000).utc().format('YYYY-MM-DD HH:mm:ss');
         candle.open = +v.open;
@@ -389,11 +390,11 @@ function Rest(restSettings = {}) {
       let pxS = 0;
       let pxB = 0;
       positionData.forEach(positionEvent => {
-        if(positionEvent.direction === 'buy'){
+        if(positionEvent.direction == 'buy'){
           pxB = +positionEvent.cost_open;
           qtyB = Math.abs(+positionEvent.volume);
         }
-        if(positionEvent.direction === 'sell'){
+        if(positionEvent.direction == 'sell'){
           pxS = +positionEvent.cost_open;
           qtyS = Math.abs(+positionEvent.volume);
         }
@@ -443,10 +444,24 @@ function Rest(restSettings = {}) {
       if (responseMarkPrice && responseMarkPrice.data && responseMarkPrice.data.err_code) {
         return handleResponseError(params, responseMarkPrice.data);
       }
-      // Calculate liquidation
+
+      const liqPx = +positionData.liquidation_price;
       const markPx = responseMarkPrice.data.data[0].close;
-      const liqPxS = positionData && positionData.positions.length && positionData.positions[0].direction === 'sell' ? +positionData.liquidation_price : 0;
-      const liqPxB = positionData && positionData.positions.length && positionData.positions[0].direction === 'buy' ? +positionData.liquidation_price : 0;
+      let liqPxS = 0;
+      let liqPxB = 0;
+
+      const shortPosition = positionData.positions.find(v => v.direction == 'sell' && v.volume);
+      const longPosition = positionData.positions.find(v => v.direction == 'buy' && v.volume);
+
+      if (longPosition && shortPosition){
+        liqPxB = markPx < liqPx ? 0 : liqPx;
+        liqPxS = markPx > liqPx ? 0 : liqPx;
+      } else {
+        liqPxB = longPosition ? liqPx : 0;
+        liqPxS = shortPosition ? liqPx : 0;
+      }
+
+      // Calculate liquidation
       const liquidation = { markPx, liqPxS, liqPxB, };
       return { data: liquidation };
     },

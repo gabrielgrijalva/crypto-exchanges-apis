@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.13.1] - 2023-02-21
+- Bug fixes. Minor changes in error handling.
 ## [2.13.0] - 2023-02-15
 - Implemented kucoin api. Modified rate limit impelmentation.
 ## [2.12.0] - 2022-12-22

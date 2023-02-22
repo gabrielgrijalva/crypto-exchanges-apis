@@ -40,8 +40,8 @@ function handleResponseError(params, responseData) {
   return {
     error: {
       type: type,
-      params: params,
-      exchange: responseData,
+      params: JSON.stringify(params),
+      exchange: JSON.stringify(responseData),
     }
   }
 };

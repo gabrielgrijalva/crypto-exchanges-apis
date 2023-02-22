@@ -48,8 +48,8 @@ function handleResponseError(params, responseData) {
   return {
     error: {
       type: type,
-      params: params,
-      exchange: responseData,
+      params: JSON.stringify(params),
+      exchange: JSON.stringify(responseData),
     }
   }
 };
@@ -336,7 +336,6 @@ function Rest(restSettings = {}) {
       const data = {};
       data.productType = getProductTypeFromSymbol(params.symbol);
       data.marginCoin = getAssetFromSymbol(params.symbol);
-      console.log(data);
       const response = await request.private('POST', '/api/mix/v1/order/cancel-all-orders', data);
       if (response.data.code !== '00000') {
         return handleResponseError(params, response.data);
@@ -505,7 +504,6 @@ function Rest(restSettings = {}) {
       const liqPxS = positionResponseData && positionResponseData.holdSide == 'short' ? +liquidationPrice : 0;
       const liqPxB = positionResponseData && positionResponseData.holdSide == 'long' ? +liquidationPrice : 0;
       const liquidation = { markPx, liqPxS, liqPxB };
-      console.log('liquidation', liquidation)
       return { data: liquidation };
     },
     /**

@@ -182,6 +182,7 @@ declare namespace RestN {
     type: restErrorResponseDataType;
     params: T;
     exchange: any;
+    other?: any;
   }
   /**
    * 
