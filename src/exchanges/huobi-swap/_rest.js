@@ -19,15 +19,20 @@ const wait = require('../../_utils/wait');
 /**
  * @param {import('../../../typings/_rest').params} params
  * @param {Object | string} responseData 
+ * @param {string} callingFunction
  * @returns {{ error: import('../../../typings/_rest').RestErrorResponseData<any> }}
  */
-function handleResponseError(params, responseData) {
+function handleResponseError(params, responseData, callingFunction) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
+  console.log('handleResponseError debug', params, responseData)
   if (responseData.err_code) {
     const errorCode = (responseData.err_code).toString();
     switch (errorCode)
     {
+      case '1032':
+        type = 'api-rate-limit'
+        break;
       case '1000':
       case '1001':
       case '1002':
@@ -84,10 +89,10 @@ function handleResponseError(params, responseData) {
   }
   return {
     error: {
+      callingFunction,
       type: type,
-      params: params,
-      exchange: responseData,
-      other: JSON.stringify(responseData)
+      params: Flatted.stringify(params),
+      exchange: Flatted.stringify(responseData),
     }
   }
 };
@@ -253,7 +258,7 @@ function Rest(restSettings = {}) {
       }
       const response = await request.private('POST', '/swap-api/v1/swap_order', data, 1);
       if (response && response.data && response.data.err_code) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'createOrder');
       }
       return { data: params };
     },
@@ -278,7 +283,12 @@ function Rest(restSettings = {}) {
       data.client_order_id = params.id;
       const response = await request.private('POST', '/swap-api/v1/swap_cancel', data, 1);
       if (response && response.data && (response.data.err_code || response.data.data.errors.length)) {
-        return handleResponseError(params, response.data);
+        if (response.data.data && response.data.data.errors && response.data.data.errors.length){
+          response.data.data.errors.forEach(err => {
+            return handleResponseError(params, err, 'cancelOrder 1');
+          })
+        }
+        return handleResponseError(params, response.data, 'cancelOrder 2');
       }
       return { data: params };
     },
@@ -303,7 +313,7 @@ function Rest(restSettings = {}) {
       data.contract_code = params.symbol;
       const response = await request.private('POST', '/swap-api/v1/swap_cancelall', data, 1);
       if (response && response.data && response.data.err_code) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrdersAll');
       }
       return { data: params }
     },
@@ -335,7 +345,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.private('POST', '/swap-api/v1/swap_account_info', data, 1);
       if (response && response.data && response.data.err_code) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getEquity');
       }
       const equity = response.data.data.filter(v => v.symbol === params.asset)[0]['margin_balance'];
       return { data: equity };
@@ -357,7 +367,7 @@ function Rest(restSettings = {}) {
       data.to = data.to < timestamp ? data.to : timestamp;
       const response = await request.public('GET', '/swap-ex/market/history/kline', data, 10);
       if (response && response.data && response.data.err_code) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getCandles');
       }
       const candles = response.data.data.map(v => {
         const candle = {};
@@ -383,7 +393,7 @@ function Rest(restSettings = {}) {
       data.contract_code = data.symbol;
       const response = await request.private('POST', '/swap-api/v1/swap_position_info', data, 1);
       if (response && response.data && response.data.err_code) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getPosition');
       }
       const positionData = response.data.data.filter(v => v.contract_code === params.symbol);
       let qtyS = 0;
@@ -415,10 +425,10 @@ function Rest(restSettings = {}) {
       data.contract_code = params.symbol;
       const response = await request.public('GET', '/swap-ex/market/trade', data);
       if (response && response.data && response.data.err_code) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getLastPrice 1');
       }
       if (!response || !response.data || !response.data.tick || !response.data.tick.data.length ) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getLastPrice 2');
       }
       const price = response.data.tick.data[0].price;
       return { data: price };
@@ -435,7 +445,7 @@ function Rest(restSettings = {}) {
       data.contract_code = params.symbol;
       const responsePosition = await request.private('POST', '/swap-api/v1/swap_account_position_info', data, 1);
       if (responsePosition && responsePosition.data && responsePosition.data.err_code) {
-        return handleResponseError(params, responsePosition.data);
+        return handleResponseError(params, responsePosition.data, 'getLiquidation 1');
       }
       const positionData = responsePosition.data.data.filter(v => v.contract_code === params.symbol)[0];
 
@@ -443,7 +453,7 @@ function Rest(restSettings = {}) {
       data.period = '1min';
       const responseMarkPrice = await request.public('GET', '/index/market/history/swap_mark_price_kline', data);
       if (responseMarkPrice && responseMarkPrice.data && responseMarkPrice.data.err_code) {
-        return handleResponseError(params, responseMarkPrice.data);
+        return handleResponseError(params, responseMarkPrice.data, 'getLiquidation 2');
       }
 
       const liqPx = +positionData.liquidation_price;
@@ -478,7 +488,7 @@ function Rest(restSettings = {}) {
       data.contract_code = params.symbol;
       const response = await request.public('GET', '/swap-api/v1/swap_funding_rate', data);
       if (response && response.data && response.data.err_code) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getFundingRates');
       }
       const current = +response.data.data.funding_rate;
       const estimated = +response.data.data.estimated_rate;
@@ -504,7 +514,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.public('GET', '/swap-api/v1/swap_contract_info', data);
       if (response && response.data && response.data.err_code) {
-        return handleResponseError(response.data);
+        return handleResponseError(null, response.data, 'getInstrumentsSymbols');
       }
       const symbols = response.data.data;
       return { data: symbols };
@@ -522,7 +532,7 @@ function Rest(restSettings = {}) {
       data.type = 'step0'
       const response = await request.public('GET', '/swap-ex/market/depth', data);
       if (response && response.data && response.data.err_code) {
-        return handleResponseError(response.data);
+        return handleResponseError(null, response.data, '');
       }
 
       const orderbook = response.data.tick;

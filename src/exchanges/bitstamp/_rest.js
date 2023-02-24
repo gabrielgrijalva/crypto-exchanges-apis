@@ -16,9 +16,10 @@ const Request = require('../../_shared-classes/request');
 /**
  * @param {import('../../../typings/_rest').params} params
  * @param {Object | string} responseData 
+ * @param {string} callingFunction
  * @returns {{ error: import('../../../typings/_rest').RestErrorResponseData<any> }}
  */
-function handleResponseError(params, responseData) {
+function handleResponseError(params, responseData, callingFunction) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
   if (responseData.code === 'ETIMEDOUT' || responseData.code === 'ESOCKETTIMEDOUT') {
@@ -26,9 +27,10 @@ function handleResponseError(params, responseData) {
   }
   return {
     error: {
+      callingFunction,
       type: type,
-      params: JSON.stringify(params),
-      exchange: JSON.stringify(responseData),
+      params: Flatted.stringify(params),
+      exchange: Flatted.stringify(responseData),
     }
   }
 };
@@ -200,7 +202,7 @@ function Rest(restSettings = {}) {
       data.limit = 1000;
       const response = await request.public('GET', `/api/v2/ohlc/${params.symbol}/`, data);
       if (+response.data.code) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getCandles');
       }
       const candles = response.data.data.ohlc.map(v => {
         const candle = {};

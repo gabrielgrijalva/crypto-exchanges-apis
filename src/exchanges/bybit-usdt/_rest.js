@@ -17,9 +17,10 @@ const Request = require('../../_shared-classes/request');
 /**
  * @param {import('../../../typings/_rest').params} params
  * @param {Object | string} responseData 
+ * @param {string} callingFunction
  * @returns {{ error: import('../../../typings/_rest').RestErrorResponseData<any> }}
  */
- function handleResponseError(params, responseData) {
+ function handleResponseError(params, responseData, callingFunction) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
   if (responseData.retCode) {
@@ -53,9 +54,10 @@ const Request = require('../../_shared-classes/request');
   }
   return {
     error: {
+      callingFunction,
       type: type,
-      params: JSON.stringify(params),
-      exchange: JSON.stringify(responseData),
+      params: Flatted.stringify(params),
+      exchange: Flatted.stringify(responseData),
     }
   }
 };
@@ -243,7 +245,7 @@ function Rest(restSettings = {}) {
       }
       const response = await request.private('POST', '/unified/v3/private/order/create', data);
       if (+response.data.retCode || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'createOrder');
       }
       return { data: params };
     },
@@ -269,7 +271,7 @@ function Rest(restSettings = {}) {
       data.orderLinkId = params.id;
       const response = await request.private('POST', '/unified/v3/private/order/cancel', data);
       if (+response.data.retCode || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrder');
       }
       return { data: params };
     },
@@ -294,7 +296,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.private('POST', '/unified/v3/private/order/cancel-all', data);
       if ((+response.data.retCode && response.data.retMsg !== 'Cancel All No Result') || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrdersAll');
       }
       return { data: params };
     },
@@ -318,7 +320,7 @@ function Rest(restSettings = {}) {
       }
       const response = await request.private('POST', '/unified/v3/private/order/replace', data);
       if ((+response.data.retCode) || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'updateOrder');
       }
       return { data: params };
     },
@@ -342,7 +344,7 @@ function Rest(restSettings = {}) {
       data.coin = params.asset;
       const response = await request.private('GET', '/unified/v3/private/account/wallet/balance', data);
       if (+response.data.retCode || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getEquity');
       }
       const equity = Math.abs(response.data.result.coin[0].equity);
       return { data: equity };
@@ -367,7 +369,7 @@ function Rest(restSettings = {}) {
       data.limit = difference > 200 ? 200: difference;
       const response = await request.public('GET', '/derivatives/v3/public/kline', data);
       if (+response.data.retCode || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getCandles');
       }
       const candles = response.data.result.list.reverse().map(v => {
         const candle = {};
@@ -394,7 +396,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.private('GET', '/unified/v3/private/position/list', data);
       if (+response.data.retCode || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getPosition');
       }
       const positionResult = response.data.result.list.find(v => v.symbol === params.symbol);
       const qtyS = positionResult && positionResult.side === 'Sell' ? Math.abs(+positionResult.size) : 0;
@@ -417,7 +419,7 @@ function Rest(restSettings = {}) {
       data.category = 'linear';
       const response = await request.public('GET', '/derivatives/v3/public/tickers', data);
       if (+response.data.retCode || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getLastPrice');
       }
       const price = +response.data.result.list[0].lastPrice;
       return { data: price };
@@ -440,7 +442,7 @@ function Rest(restSettings = {}) {
       markPriceData.start = moment.utc(Date.now()).subtract(1, 'minutes').unix()*1000;
       const markPriceResponse = await request.public('GET', '/derivatives/v3/public/kline', markPriceData);
       if (+markPriceResponse.data.retCode || markPriceResponse.status >= 400) {
-        return handleResponseError(params, markPriceResponse.data);
+        return handleResponseError(params, markPriceResponse.data, 'getLiquidation 1');
       }
         
       let markPx = +markPriceResponse.data.result.list[0][4]
@@ -451,7 +453,7 @@ function Rest(restSettings = {}) {
       equityData.coin = params.asset;
       const equityResponse = await request.private('GET', '/unified/v3/private/account/wallet/balance', equityData);
       if (+equityResponse.data.retCode || equityResponse.status >= 400) {
-        return handleResponseError(params, equityResponse.data);
+        return handleResponseError(params, equityResponse.data, 'getLiquidation 2');
       }
 
       const availableBalance = +equityResponse.data.result.coin[0].availableBalance;
@@ -465,7 +467,7 @@ function Rest(restSettings = {}) {
       positionData.symbol = params.symbol;
       const positionResponse = await request.private('GET', '/unified/v3/private/position/list', positionData);
       if (+positionResponse.data.retCode || positionResponse.status >= 400) {
-        return handleResponseError(params, positionResponse.data);
+        return handleResponseError(params, positionResponse.data, 'getLiquidation 3');
       }
 
       let positionSide = '';
@@ -496,7 +498,7 @@ function Rest(restSettings = {}) {
       data.category = 'linear';
       const response = await request.public('GET', '/derivatives/v3/public/tickers', data);
       if (+response.data.retCode || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getFundingRates');
       }
       const current = +response.data.result.list[0].fundingRate;
       const nextFundingTime = moment.unix(+response.data.result.list[0].nextFundingTime/1000).utc().format('YYYY-MM-DD HH:mm:ss');
@@ -523,7 +525,7 @@ function Rest(restSettings = {}) {
       data.category = 'linear';
       const response = await request.public('GET', '/derivatives/v3/public/instruments-info', data);
       if (+response.data.retCode || response.status >= 400) {
-        return handleResponseError(null, response.data);
+        return handleResponseError(null, response.data, 'getInstrumentsSymbols');
       }
       const symbols = response.data.result.list.map(v => v.symbol);
       return { data: symbols };

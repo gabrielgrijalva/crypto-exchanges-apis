@@ -25,9 +25,10 @@ const valueScale = 100000000;
 /**
  * @param {import('../../../typings/_rest').params} params
  * @param {Object | string} responseData 
+ * @param {string} callingFunction
  * @returns {{ error: import('../../../typings/_rest').RestErrorResponseData<any> }}
  */
-function handleResponseError(params, responseData) {
+function handleResponseError(params, responseData, callingFunction) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
   if (responseData.code) {
@@ -70,9 +71,10 @@ function handleResponseError(params, responseData) {
   }
   return {
     error: {
+      callingFunction,
       type: type,
-      params: JSON.stringify(params),
-      exchange: JSON.stringify(responseData),
+      params: Flatted.stringify(params),
+      exchange: Flatted.stringify(responseData),
     }
   }
 };
@@ -231,10 +233,10 @@ function Rest(restSettings = {}) {
       
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){
-          return handleResponseError(params, response.data.data[0])
+          return handleResponseError(params, response.data.data[0], 'createOrder 1')
         }
         if (response.data){
-          return handleResponseError(params, response.data)
+          return handleResponseError(params, response.data, 'createOrder 2')
         }
       }
 
@@ -265,10 +267,10 @@ function Rest(restSettings = {}) {
       
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){
-          return handleResponseError(params, response.data.data[0])
+          return handleResponseError(params, response.data.data[0], 'cancelOrder 1')
         }
         if (response.data){
-          return handleResponseError(params, response.data)
+          return handleResponseError(params, response.data, 'cancelOrder 2')
         }
       }
       
@@ -297,10 +299,10 @@ function Rest(restSettings = {}) {
       
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){
-          return handleResponseError(params, response.data.data[0])
+          return handleResponseError(params, response.data.data[0], 'cancelOrdersAll 1')
         }
         if (response.data){
-          return handleResponseError(params, response.data)
+          return handleResponseError(params, response.data, 'cancelOrdersAll 2')
         }
       }
       
@@ -330,10 +332,10 @@ function Rest(restSettings = {}) {
 
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){
-          return handleResponseError(params, response.data.data[0])
+          return handleResponseError(params, response.data.data[0], 'updateOrder 1')
         }
         if (response.data){
-          return handleResponseError(params, response.data)
+          return handleResponseError(params, response.data, 'updateOrder 2')
         }
       }
       
@@ -363,10 +365,10 @@ function Rest(restSettings = {}) {
       
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){
-          return handleResponseError(params, response.data.data[0])
+          return handleResponseError(params, response.data.data[0], 'getEquity 1')
         }
         if (response.data){
-          return handleResponseError(params, response.data)
+          return handleResponseError(params, response.data, 'getEquity 2')
         }
       }
 
@@ -393,10 +395,10 @@ function Rest(restSettings = {}) {
       
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){
-          return handleResponseError(params, response.data.data[0])
+          return handleResponseError(params, response.data.data[0], 'getCandles 1')
         }
         if (response.data){
-          return handleResponseError(params, response.data)
+          return handleResponseError(params, response.data, 'getCandles 2')
         }
       }
 
@@ -414,10 +416,10 @@ function Rest(restSettings = {}) {
           
           if (response.data.code) {
             if (response.data && response.data.data && response.data.data[0]){
-              return handleResponseError(params, response.data.data[0])
+              return handleResponseError(params, response.data.data[0], 'getCandles 3')
             }
             if (response.data){
-              return handleResponseError(params, response.data)
+              return handleResponseError(params, response.data, 'getCandles 4')
             }
           }
           
@@ -431,10 +433,10 @@ function Rest(restSettings = {}) {
           // Send order not found error if orderID isn't found in retry
           response.data.code = 10002;
           if (response.data && response.data.data && response.data.data[0]){
-            return handleResponseError(params, response.data.data[0])
+            return handleResponseError(params, response.data.data[0], 'getCandles 5')
           }
           if (response.data){
-            return handleResponseError(params, response.data)
+            return handleResponseError(params, response.data, 'getCandles 6')
           }
         }
 
@@ -478,10 +480,10 @@ function Rest(restSettings = {}) {
       
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){
-          return handleResponseError(params, response.data.data[0])
+          return handleResponseError(params, response.data.data[0], 'getPosition 1')
         }
         if (response.data){
-          return handleResponseError(params, response.data)
+          return handleResponseError(params, response.data, 'getPosition 2')
         }
       }
 
@@ -509,10 +511,10 @@ function Rest(restSettings = {}) {
 
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){
-          return handleResponseError(params, response.data.data[0])
+          return handleResponseError(params, response.data.data[0], 'getLastPrice 1')
         }
         if (response.data){
-          return handleResponseError(params, response.data)
+          return handleResponseError(params, response.data, 'getLastPrice 2')
         }
       }
       const ticker = response.data.result;
@@ -533,10 +535,10 @@ function Rest(restSettings = {}) {
       
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){
-          return handleResponseError(params, response.data.data[0])
+          return handleResponseError(params, response.data.data[0], 'getLiquidation 1')
         }
         if (response.data){
-          return handleResponseError(params, response.data)
+          return handleResponseError(params, response.data, 'getLiquidation 2')
         }
       }
       
@@ -562,10 +564,10 @@ function Rest(restSettings = {}) {
       
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){
-          return handleResponseError(params, response.data.data[0])
+          return handleResponseError(params, response.data.data[0], 'getFundingRates 1')
         }
         if (response.data){
-          return handleResponseError(params, response.data)
+          return handleResponseError(params, response.data, 'getFundingRates 2')
         }
       }
       const ticker = response.data.result;
@@ -595,10 +597,10 @@ function Rest(restSettings = {}) {
       
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){
-          return handleResponseError(response.data.data[0])
+          return handleResponseError(null, response.data.data[0], 'getInstrumentsSymbols 1')
         }
         if (response.data){
-          return handleResponseError(response.data)
+          return handleResponseError(null, response.data, 'getInstrumentsSymbols 2')
         }
       }
       const symbols = response.data.data.products;
@@ -618,10 +620,10 @@ function Rest(restSettings = {}) {
       
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){
-          return handleResponseError(params, response.data.data[0])
+          return handleResponseError(params, response.data.data[0], '_getOrderBook 1')
         }
         if (response.data){
-          return handleResponseError(params, response.data)
+          return handleResponseError(params, response.data, '_getOrderBook 2')
         }
       }
 

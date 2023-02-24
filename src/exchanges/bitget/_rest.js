@@ -17,9 +17,10 @@ const Request = require('../../_shared-classes/request');
 /**
  * @param {import('../../../typings/_rest').params} params
  * @param {Object | string} responseData 
+ * @param {string} callingFunction
  * @returns {{ error: import('../../../typings/_rest').RestErrorResponseData<any> }}
  */
-function handleResponseError(params, responseData) {
+function handleResponseError(params, responseData, callingFunction) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
   if (responseData.code) {
@@ -48,9 +49,10 @@ function handleResponseError(params, responseData) {
   }
   return {
     error: {
+      callingFunction,
       type: type,
-      params: JSON.stringify(params),
-      exchange: JSON.stringify(responseData),
+      params: Flatted.stringify(params),
+      exchange: Flatted.stringify(responseData),
     }
   }
 };
@@ -286,7 +288,7 @@ function Rest(restSettings = {}) {
       }
       const response = await request.private('POST', '/api/mix/v1/order/placeOrder', data);
       if (response.data.code !== '00000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'createOrder');
       }
       params.id = response.data.data.orderId
       return { data: params };
@@ -313,7 +315,7 @@ function Rest(restSettings = {}) {
       data.orderId = params.id;
       const response = await request.private('POST', '/api/mix/v1/order/cancel-order', data);
       if (response.data.code !== '00000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'createOrders');
       }
       return { data: params };
     },
@@ -339,7 +341,7 @@ function Rest(restSettings = {}) {
       data.marginCoin = getAssetFromSymbol(params.symbol);
       const response = await request.private('POST', '/api/mix/v1/order/cancel-all-orders', data);
       if (response.data.code !== '00000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrdersAll');
       }
       return { data: params };
     },
@@ -371,7 +373,7 @@ function Rest(restSettings = {}) {
       data.productType = getProductTypeFromAsset(params.asset)
       const response = await request.private('GET', '/api/mix/v1/account/accounts', null, data);
       if (response.data.code && response.data.code !== '00000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getEquity');
       }
       const asset = response.data.data.find(v => v.marginCoin === params.asset);
       const equity = asset ? +asset.equity : 0;
@@ -393,7 +395,7 @@ function Rest(restSettings = {}) {
       data.endTime = data.endTime >= Date.now() ? Date.now() : data.endTime;
       const response = await request.public('GET', '/api/mix/v1/market/candles', data);
       if (response.data.code && response.data.code !== '00000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getCandles');
       }
       const candles = response.data.map(v => {
         const candle = {};
@@ -420,7 +422,7 @@ function Rest(restSettings = {}) {
       data.marginCoin = getAssetFromSymbol(params.symbol);
       const response = await request.private('GET', '/api/mix/v1/position/singlePosition', null, data);
       if (response.data.code && response.data.code !== '00000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getPosition');
       }
       const positionDataLong = response.data.data.find(v => v.holdSide === 'long');
       const positionDataShort = response.data.data.find(v => v.holdSide === 'short');
@@ -443,7 +445,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.public('GET', '/api/mix/v1/market/ticker', data);
       if (response.data.code && response.data.code  !== '00000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getLastPrice');
       }
       const price = +response.data.data.last;
       return { data: price };
@@ -461,7 +463,7 @@ function Rest(restSettings = {}) {
       markData.symbol = params.symbol;
       const markResponse = await request.public('GET', '/api/mix/v1/market/mark-price', markData);
       if (markResponse.data.code && markResponse.data.code  !== '00000') {
-        return handleResponseError(params, markResponse.data);
+        return handleResponseError(params, markResponse.data, 'getLiquidation 1');
       }
       // Get position
       const positionData = {};
@@ -469,7 +471,7 @@ function Rest(restSettings = {}) {
       positionData.marginCoin = getAssetFromSymbol(params.symbol);
       const positionResponse = await request.private('GET', '/api/mix/v1/position/singlePosition', null, positionData);
       if (positionResponse.data.code && positionResponse.data.code  !== '00000') {
-        return handleResponseError(params, positionResponse.data);
+        return handleResponseError(params, positionResponse.data, 'getLiquidation 2');
       }
       // Get equity
       const equityData = {};
@@ -477,7 +479,7 @@ function Rest(restSettings = {}) {
       equityData.marginCoin = getAssetFromSymbol(params.symbol);
       const equityResponse = await request.private('GET', '/api/mix/v1/account/account', null, equityData);
       if (equityResponse.data.code && equityResponse.data.code  !== '00000') {
-        return handleResponseError(params, equityResponse.data);
+        return handleResponseError(params, equityResponse.data, 'getLiquidation 3');
       }
       
       // Calculate liquidation
@@ -519,7 +521,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.public('GET', '/api/mix/v1/market/current-fundRate', data);
       if (response.data.code && response.data.code  !== '00000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getFundingRates');
       }
       const current = response.data.data ? +response.data.data.fundingRate : 0;
       const fundings = { current };
@@ -547,9 +549,9 @@ function Rest(restSettings = {}) {
       const responseUsdtPerp = await request.public('GET', '/api/mix/v1/market/contracts', usdtPerp);
       const responseUsdcPerp = await request.public('GET', '/api/mix/v1/market/contracts', usdcPerp);
       const responseUniversalMarginPerp = await request.public('GET', '/api/mix/v1/market/contracts', universalMarginPerp);
-      if (responseUsdtPerp.data.code && responseUsdtPerp.data.code  !== '00000') { return handleResponseError(null, responseUsdtPerp.data) };
-      if (responseUsdcPerp.data.code && responseUsdcPerp.data.code  !== '00000') { return handleResponseError(null, responseUsdcPerp.data) };
-      if (responseUniversalMarginPerp.data.code && responseUniversalMarginPerp.data.code  !== '00000') { return handleResponseError(null, responseUniversalMarginPerp.data) };
+      if (responseUsdtPerp.data.code && responseUsdtPerp.data.code  !== '00000') { return handleResponseError(null, responseUsdtPerp.data, 'getInstrumentSymbols 1') };
+      if (responseUsdcPerp.data.code && responseUsdcPerp.data.code  !== '00000') { return handleResponseError(null, responseUsdcPerp.data, 'getInstrumentSymbols 2') };
+      if (responseUniversalMarginPerp.data.code && responseUniversalMarginPerp.data.code  !== '00000') { return handleResponseError(null, responseUniversalMarginPerp.data, 'getInstrumentSymbols 3') };
       const symbols = [].concat(responseUsdtPerp.data.data).concat(responseUsdcPerp.data.data).concat(responseUniversalMarginPerp.data.data).map(v => v.symbol);
       return { data: symbols };
     },
@@ -566,7 +568,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.public('GET', '/api/mix/v1/market/depth', data);
       if (response.data.code && response.data.code  !== '00000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, '_getOrderBook');
       }
       const asks = response.data.data.asks.map(ask => {
         return { id: +ask[0], price: +ask[0], quantity: +ask[1] };

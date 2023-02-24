@@ -17,9 +17,10 @@ const Request = require('../../_shared-classes/request');
 /**
  * @param {import('../../../typings/_rest').params} params
  * @param {Object | string} responseData 
+ * @param {string} callingFunction
  * @returns {{ error: import('../../../typings/_rest').RestErrorResponseData<any> }}
  */
-function handleResponseError(params, responseData) {
+function handleResponseError(params, responseData, callingFunction) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
   if (+responseData.code !== 0) {
@@ -42,6 +43,7 @@ function handleResponseError(params, responseData) {
   }
   return {
     error: {
+      callingFunction,
       type: type,
       params: Flatted.stringify(params),
       exchange: Flatted.stringify(responseData),
@@ -198,7 +200,7 @@ function Rest(restSettings = {}) {
       }
       const response = await request.private('POST', `/order/put_${requestPath}`, data);
       if (+response.data.code !== 0 || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'createOrder');
       }
       params.id = response.data.data.order_id.toString();
       return { data: params };
@@ -225,7 +227,7 @@ function Rest(restSettings = {}) {
       data.timestamp = Date.now();
       const response = await request.private('POST', '/order/cancel', data);
       if (+response.data.code !== 0 || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrder');
       }
       return { data: params };
     },
@@ -243,7 +245,7 @@ function Rest(restSettings = {}) {
       data.timestamp = Date.now();
       const response = await request.private('POST', '/order/cancel_batch', data);
       if (+response.data.code !== 0 || response.status >= 400) {
-        return params.map(v => handleResponseError(v, response.data));
+        return params.map(v => handleResponseError(v, response.data, 'cancelOrders'));
       }
       return params.map(v => { return { data: v } });
     },
@@ -260,7 +262,7 @@ function Rest(restSettings = {}) {
       data.timestamp = Date.now();
       const response = await request.private('POST', '/order/cancel_all', data);
       if (+response.data.code !== 0 || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrdersAll');
       }
       return { data: params };
     },
@@ -292,7 +294,7 @@ function Rest(restSettings = {}) {
       data.timestamp = Date.now();
       const response = await request.private('GET', '/asset/query', data);
       if (+response.data.code !== 0 || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getEquity');
       }
       const asset = response.data.data[params.asset];
       const equity = (+asset.balance_total) + (+asset.margin) + (+asset.profit_unreal);
@@ -312,7 +314,7 @@ function Rest(restSettings = {}) {
       data.market = params.symbol;
       const response = await request.public('GET', '/market/kline', data);
       if (+response.data.code !== 0 || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getCandles');
       }
       const candles = response.data.data.map(v => {
         const candle = {};
@@ -339,7 +341,7 @@ function Rest(restSettings = {}) {
       data.timestamp = Date.now();
       const response = await request.private('GET', '/position/pending', data);
       if (+response.data.code !== 0 || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getPosition');
       }
       const positionResult = response.data.data.find(v => v.market === params.symbol);
       const qtyS = positionResult && positionResult.side === 1 ? +positionResult.amount : 0;
@@ -361,7 +363,7 @@ function Rest(restSettings = {}) {
       data.market = params.symbol;
       const response = await request.public('GET', '/market/deals', data);
       if (+response.data.code !== 0 || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getLastPrice');
       }
       const price = +response.data.data[0].price;
       return { data: price };
@@ -379,7 +381,7 @@ function Rest(restSettings = {}) {
       tickerData.market = params.symbol;
       const tickerResponse = await request.public('GET', '/market/ticker', tickerData);
       if (tickerResponse.data.code !== 0 || tickerResponse.status >= 400) {
-        return handleResponseError(params, tickerResponse.data);
+        return handleResponseError(params, tickerResponse.data, 'getLiquidation 1');
       }
       // Get position
       const positionData = {};
@@ -387,7 +389,7 @@ function Rest(restSettings = {}) {
       positionData.timestamp = Date.now();
       const positionResponse = await request.private('GET', '/position/pending', positionData);
       if (positionResponse.data.code !== 0 || positionResponse.status >= 400) {
-        return handleResponseError(params, positionResponse.data);
+        return handleResponseError(params, positionResponse.data, 'getLiquidation 2');
       }
       // Calculate liquidation
       const positionResult = positionResponse.data.data.find(v => v.market === params.symbol);
@@ -409,7 +411,7 @@ function Rest(restSettings = {}) {
       data.market = params.symbol;
       const response = await request.public('GET', '/market/ticker', data);
       if (+response.data.code !== 0 || response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getFundingRates');
       }
       const current = +response.data.data.ticker.funding_rate_next;
       const estimated = +response.data.data.ticker.funding_rate_predict;
@@ -435,7 +437,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.public('GET', '/market/list', data);
       if (+response.data.code !== 0 || response.status >= 400) {
-        return handleResponseError(null, response.data);
+        return handleResponseError(null, response.data, 'getInstrumentsSymbols');
       }
       const symbols = response.data.data.map(v => v.name);
       return { data: symbols };

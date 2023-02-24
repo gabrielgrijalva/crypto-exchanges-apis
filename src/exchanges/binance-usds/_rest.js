@@ -17,9 +17,10 @@ const Request = require('../../_shared-classes/request');
 /**
  * @param {import('../../../typings/_rest').params | null} params
  * @param {Object | string} responseData 
+ * @param {string} callingFunction
  * @returns {{ error: import('../../../typings/_rest').RestErrorResponseData<any> }}
  */
-function handleResponseError(params, responseData) {
+function handleResponseError(params, responseData, callingFunction) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
   if (+responseData.code !== 0) {
@@ -38,9 +39,10 @@ function handleResponseError(params, responseData) {
   }
   return {
     error: {
+      callingFunction,
       type: type,
-      params: JSON.stringify(params),
-      exchange: JSON.stringify(responseData),
+      params: Flatted.stringify(params),
+      exchange: Flatted.stringify(responseData),
     }
   }
 };
@@ -214,7 +216,7 @@ function Rest(restSettings = {}) {
       }
       const response = await request.private('POST', '/fapi/v1/order', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'createOrder');
       }
       return { data: params };
     },
@@ -255,11 +257,11 @@ function Rest(restSettings = {}) {
       }, '')}]`;
       const response = await request.private('POST', '/fapi/v1/batchOrders', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'createOrders 1');
       }
       return response.data.map((v, i) => {
         if (v.code && v.code < 0) {
-          return handleResponseError(params[i], v);
+          return handleResponseError(params[i], v, 'createOrders 2');
         }
         return { data: params[i] };
       });
@@ -277,7 +279,7 @@ function Rest(restSettings = {}) {
       data.origClientOrderId = params.id;
       const response = await request.private('DELETE', '/fapi/v1/order', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrder');
       }
       return { data: params };
     },
@@ -294,11 +296,11 @@ function Rest(restSettings = {}) {
       data.origClientOrderIdList = `[${params.reduce((a, v) => `${!a ? '' : `${a},`}"${v.id}"`, '')}]`;
       const response = await request.private('DELETE', '/fapi/v1/batchOrders', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrders 1');
       }
       return response.data.map((v, i) => {
         if (v.code && v.code < 0) {
-          return handleResponseError(params[i], v);
+          return handleResponseError(params[i], v, 'cancelOrders 2');
         }
         return { data: params[i] };
       });
@@ -315,7 +317,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.private('DELETE', '/fapi/v1/allOpenOrders', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrdersAll');
       }
       return { data: params };
     },
@@ -346,7 +348,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.private('GET', '/fapi/v1/account', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getEquity');
       }
       const equity = +response.data.assets.find(v => v.asset === params.asset).marginBalance;
       return { data: equity };
@@ -371,7 +373,7 @@ function Rest(restSettings = {}) {
       data.limit = 1500;
       const response = await request.public('GET', '/fapi/v1/klines', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getCandles');
       }
       const candles = response.data.map(v => {
         const candle = {};
@@ -396,7 +398,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.private('GET', '/fapi/v1/positionRisk', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getPosition');
       }
       const positionData = response.data.find(v => v.symbol === params.symbol);
       const qtyS = positionData && +positionData.positionAmt < 0 ? Math.abs(+positionData.positionAmt) : 0;
@@ -418,7 +420,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.public('GET', '/fapi/v1/trades', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getLastPrice');
       }
       const price = +response.data[response.data.length - 1].price;
       return { data: price };
@@ -436,13 +438,13 @@ function Rest(restSettings = {}) {
       premiumIndexData.symbol = params.symbol;
       const premiumIndexResponse = await request.public('GET', '/fapi/v1/premiumIndex', premiumIndexData);
       if (premiumIndexResponse.status >= 400) {
-        return handleResponseError(params, premiumIndexResponse.data);
+        return handleResponseError(params, premiumIndexResponse.data, 'getLiquidation 1');
       }
       // Get position
       const positionData = {};
       const positionResponse = await request.private('GET', '/fapi/v1/positionRisk', positionData);
       if (positionResponse.status >= 400) {
-        return handleResponseError(params, positionResponse.data);
+        return handleResponseError(params, positionResponse.data, 'getLiquidation 2');
       }
       // Calculate liquidation
       const position = positionResponse.data.find(v => v.symbol === params.symbol);
@@ -464,7 +466,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.public('GET', '/fapi/v1/premiumIndex', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getFundingRates');
       }
       const responseData = response.data;
       const current = responseData ? +responseData.lastFundingRate : 0;
@@ -491,7 +493,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.public('GET', '/fapi/v1/exchangeInfo', data);
       if (response.status >= 400) {
-        return handleResponseError(null, response.data);
+        return handleResponseError(null, response.data, 'getInstrumentSymbols');
       }
       const symbols = response.data.symbols.map(v => v.symbol);
       return { data: symbols };
@@ -507,7 +509,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.private('POST', '/fapi/v1/listenKey', data);
       if (response.status >= 400) {
-        return handleResponseError(null, response.data);
+        return handleResponseError(null, response.data, '_getListenKey');
       }
       const listenKey = response.data.listenKey;
       return { data: listenKey };
@@ -524,7 +526,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.public('GET', '/fapi/v1/depth', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, '_getListenKey');
       }
       const lastUpdateId = response.data.lastUpdateId;
       const asks = response.data.asks.map(v => {

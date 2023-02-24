@@ -30,7 +30,7 @@ function createCreationUpdate(data) {
   eventData.event = 'creations-updates';
   eventData.id = data.orderID;
   eventData.side = data.side.toLowerCase();
-  eventData.price = +data.exectPriceEp ? +data.exectPriceEp / priceScale : 0;
+  eventData.price = +data.priceEp ? +data.priceEp / priceScale : 0;
   eventData.quantity = +data.orderQty;
   eventData.timestamp = moment(+data.transactTimeNs/1000000).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
   return eventData;
@@ -208,7 +208,7 @@ function Ws(wsSettings = {}) {
    */
   const ordersOnMessage = (message) => {
     const messageParse = JSON.parse(message.toString());
-    // if (messageParse && messageParse.type === 'snapshot') { return };
+    if (messageParse && messageParse.type === 'snapshot') { return };
     if (!messageParse.orders) { return };
     if (!messageParse.orders.length) { return };
     const creationOrders = [];

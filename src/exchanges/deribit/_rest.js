@@ -18,9 +18,10 @@ const Request = require('../../_shared-classes/request');
 /**
  * @param {import('../../../typings/_rest').params} params
  * @param {Object | string} responseData 
+ * @param {string} callingFunction
  * @returns {{ error: import('../../../typings/_rest').RestErrorResponseData<any> }}
  */
-function handleResponseError(params, responseData) {
+function handleResponseError(params, responseData, callingFunction) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
   if (responseData.error) {
@@ -44,9 +45,10 @@ function handleResponseError(params, responseData) {
   }
   return {
     error: {
+      callingFunction,
       type: type,
-      params: JSON.stringify(params),
-      exchange: JSON.stringify(responseData),
+      params: Flatted.stringify(params),
+      exchange: Flatted.stringify(responseData),
     }
   }
 };
@@ -188,7 +190,7 @@ function Rest(restSettings = {}) {
       }
       const response = await request.private('GET', `/api/v2/private/${params.side}`, data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'createOrder');
       }
       return { data: params };
     },
@@ -212,7 +214,7 @@ function Rest(restSettings = {}) {
       data.label = params.id;
       const response = await request.private('GET', '/api/v2/private/cancel_by_label', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrder');
       }
       return { data: params };
     },
@@ -236,7 +238,7 @@ function Rest(restSettings = {}) {
       data.instrument_name = params.symbol;
       const response = await request.private('GET', '/api/v2/private/cancel_all_by_instrument', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrdersAll');
       }
       return { data: params };
     },
@@ -259,7 +261,7 @@ function Rest(restSettings = {}) {
       }
       const response = await request.private('GET', '/api/v2/private/edit_by_label', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'updateOrder');
       }
       return { data: params };
     },
@@ -284,7 +286,7 @@ function Rest(restSettings = {}) {
       data.currency = params.asset;
       const response = await request.private('GET', '/api/v2/private/get_account_summary', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getEquity');
       }
       const equity = +response.data.result.equity;
       return { data: equity };
@@ -304,7 +306,7 @@ function Rest(restSettings = {}) {
       data.resolution = getCandleResolution(params.interval);
       const response = await request.public('GET', '/api/v2/public/get_tradingview_chart_data', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getCandles');
       }
       const candlesResult = response.data.result;
       const candles = candlesResult.ticks.map((v, i) => {
@@ -331,7 +333,7 @@ function Rest(restSettings = {}) {
       data.instrument_name = params.symbol;
       const response = await request.private('GET', '/api/v2/private/get_position', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getPosition');
       }
       const positionResult = response.data.result;
       const qtyS = positionResult.direction === 'sell' ? Math.abs(+positionResult.size) : 0;
@@ -353,7 +355,7 @@ function Rest(restSettings = {}) {
       data.instrument_name = params.symbol;
       const response = await request.public('GET', '/api/v2/public/ticker', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getLastPrice');
       }
       const price = +response.data.result.last_price;
       return { data: price };
@@ -370,7 +372,7 @@ function Rest(restSettings = {}) {
       data.instrument_name = params.symbol;
       const response = await request.private('GET', '/api/v2/private/get_position', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getLiquidation');
       }
       const positionResult = response.data.result;
       const markPx = +positionResult.mark_price;
@@ -391,7 +393,7 @@ function Rest(restSettings = {}) {
       data.instrument_name = params.symbol;
       const response = await request.public('GET', '/api/v2/public/ticker', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getFundingRates');
       }
       const current = +response.data.result.current_funding;
       const estimated = +response.data.result.current_funding;
@@ -410,7 +412,7 @@ function Rest(restSettings = {}) {
       data.instrument_name = params.symbol;
       const response = await request.public('GET', '/api/v2/public/ticker', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getMarkPricesOption');
       }
       const markPriceOption = +response.data.result.mark_price;
       const markPriceUnderlying = +response.data.result.underlying_price;
@@ -430,9 +432,9 @@ function Rest(restSettings = {}) {
       const responseBtc = await request.public('GET', '/api/v2/public/get_instruments', dataBtc);
       const responseEth = await request.public('GET', '/api/v2/public/get_instruments', dataEth);
       const responseUsdc = await request.public('GET', '/api/v2/public/get_instruments', dataUsdc);
-      if (responseBtc.status >= 400) { return handleResponseError(null, responseBtc.data) };
-      if (responseEth.status >= 400) { return handleResponseError(null, responseEth.data) };
-      if (responseUsdc.status >= 400) { return handleResponseError(null, responseUsdc.data) };
+      if (responseBtc.status >= 400) { return handleResponseError(null, responseBtc.data, 'getInstrumentsSymbols 1') };
+      if (responseEth.status >= 400) { return handleResponseError(null, responseEth.data, 'getInstrumentsSymbols 2') };
+      if (responseUsdc.status >= 400) { return handleResponseError(null, responseUsdc.data, 'getInstrumentsSymbols 3') };
       const symbols = [].concat(responseBtc.data.result).concat(responseEth.data.result).concat(responseUsdc.data.result).map(v => v.instrument_name);
       return { data: symbols };
     },

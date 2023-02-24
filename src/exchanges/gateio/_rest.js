@@ -17,9 +17,10 @@ const Request = require('../../_shared-classes/request');
 /**
  * @param {import('../../../typings/_rest').params} params
  * @param {Object | string} responseData 
+ * @param {string} callingFunction
  * @returns {{ error: import('../../../typings/_rest').RestErrorResponseData<any> }}
  */
-function handleResponseError(params, responseData) {
+function handleResponseError(params, responseData, callingFunction) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
   if (responseData.label) {
@@ -40,9 +41,10 @@ function handleResponseError(params, responseData) {
   }
   return {
     error: {
+      callingFunction,
       type: type,
-      params: JSON.stringify(params),
-      exchange: JSON.stringify(responseData),
+      params: Flatted.stringify(params),
+      exchange: Flatted.stringify(responseData),
     }
   }
 };
@@ -194,7 +196,7 @@ function Rest(restSettings = {}) {
       }
       const response = await request.private('POST', `/api/v4/futures/${settle}/orders`, data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data , 'createOrder');
       }
       return { data: params };
     },
@@ -217,7 +219,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.private('DELETE', `/api/v4/futures/${settle}/orders/${params.id}`, data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrder');
       }
       return { data: params };
     },
@@ -241,7 +243,7 @@ function Rest(restSettings = {}) {
       data.contract = params.symbol;
       const response = await request.private('DELETE', `/api/v4/futures/${settle}/orders`, data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrdersAll');
       }
       return { data: params };
     },
@@ -272,7 +274,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.private('GET', `/api/v4/futures/${settle}/accounts`, data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getEquity');
       }
       const equity = response.data.currency === params.asset ? (+response.data.total + +response.data.unrealised_pnl) : 0;
       return { data: equity };
@@ -294,7 +296,7 @@ function Rest(restSettings = {}) {
       data.interval = getCandleResolution(params.interval);
       const response = await request.public('GET', `/api/v4/futures/${settle}/candlesticks`, data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getCandles');
       }
       const candles = response.data.map(v => {
         const candle = {};
@@ -319,7 +321,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.private('GET', `/api/v4/futures/${settle}/positions/${params.symbol}`, data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getPosition');
       }
       const qtyS = +response.data.size < 0 ? Math.abs(+response.data.size) : 0;
       const qtyB = +response.data.size > 0 ? Math.abs(+response.data.size) : 0;
@@ -340,7 +342,7 @@ function Rest(restSettings = {}) {
       data.contract = params.symbol;
       const response = await request.public('GET', `/api/v4/futures/${settle}/tickers`, data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getLastPrice');
       }
       const price = +response.data[0].last;
       return { data: price };
@@ -358,13 +360,13 @@ function Rest(restSettings = {}) {
       tickersData.contract = params.symbol;
       const tickersResponse = await request.public('GET', `/api/v4/futures/${settle}/tickers`, tickersData);
       if (tickersResponse.status >= 400) {
-        return handleResponseError(params, tickersResponse.data);
+        return handleResponseError(params, tickersResponse.data, 'getLiquidation 1');
       }
       // Get position
       const positionData = {};
       const positionResponse = await request.private('GET', `/api/v4/futures/${settle}/positions/${params.symbol}`, positionData);
       if (positionResponse.status >= 400) {
-        return handleResponseError(params, positionResponse.data);
+        return handleResponseError(params, positionResponse.data, 'getLiquidation 2');
       }
       // Calculate liquidation
       const markPx = +tickersResponse.data[0].mark_price;
@@ -384,7 +386,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.public('GET', `/api/v4/futures/${settle}/contracts/${params.symbol}`, data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getFundingRates');
       }
       const current = +response.data.funding_rate;
       const nextFundingTime = moment.unix(+response.data.funding_next_apply).utc().format('YYYY-MM-DD HH:mm:ss');
@@ -410,7 +412,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.public('GET', `/api/v4/futures/${settle}/contracts`, data);
       if (response.status >= 400) {
-        return handleResponseError(null, response.data);
+        return handleResponseError(null, response.data, 'getInstrumentsSymbols');
       }
       const symbols = response.data.map(v => v.name);
       return { data: symbols };
@@ -430,7 +432,7 @@ function Rest(restSettings = {}) {
       data.with_id = true;
       const response = await request.public('GET', `/api/v4/futures/${settle}/order_book`, data);
       if (response.status >= 400) {
-        return handleResponseError(null, response.data);
+        return handleResponseError(null, response.data, '_getOrderBook');
       }
       const lastUpdateId = response.data.id;
       const asks = response.data.asks.map(ask => { return { id: +ask.p, price: +ask.p, quantity: +ask.s } });

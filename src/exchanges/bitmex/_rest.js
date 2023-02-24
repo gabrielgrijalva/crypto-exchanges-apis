@@ -18,9 +18,10 @@ const Request = require('../../_shared-classes/request');
 /**
  * @param {import('../../../typings/_rest').params} params
  * @param {Object | string} responseData 
+ * @param {string} callingFunction
  * @returns {{ error: import('../../../typings/_rest').RestErrorResponseData<any> }}
  */
-function handleResponseError(params, responseData) {
+function handleResponseError(params, responseData, callingFunction) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
   if (responseData.error) {
@@ -53,9 +54,10 @@ function handleResponseError(params, responseData) {
   }
   return {
     error: {
+      callingFunction,
       type: type,
-      params: JSON.stringify(params),
-      exchange: JSON.stringify(responseData),
+      params: Flatted.stringify(params),
+      exchange: Flatted.stringify(responseData),
     }
   }
 };
@@ -211,7 +213,7 @@ function Rest(restSettings = {}) {
       }
       const response = await request.private('POST', '/api/v1/order', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'createOrder');
       }
       setRateLimit(response, request);
       return { data: params };
@@ -236,7 +238,7 @@ function Rest(restSettings = {}) {
       data.clOrdID = [params.id];
       const response = await request.private('DELETE', '/api/v1/order', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrder');
       }
       setRateLimit(response, request);
       return { data: params };
@@ -253,12 +255,12 @@ function Rest(restSettings = {}) {
       data.clOrdID = params.map(v => v.id);
       const response = await request.private('DELETE', '/api/v1/order', data);
       if (response.status >= 400) {
-        return params.map(v => handleResponseError(v, response.data));
+        return params.map(v => handleResponseError(v, response.data, 'cancelOrders 1'));
       }
       setRateLimit(response, request);
       return response.data.map((v, i) => {
         if (v.error) {
-          return handleResponseError(params[i], v);
+          return handleResponseError(params[i], v, 'cancelOrders 2');
         }
         return { data: params[i] };
       });
@@ -275,7 +277,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.private('DELETE', '/api/v1/order/all', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrdersAll');
       }
       setRateLimit(response, request);
       return { data: params };
@@ -298,7 +300,7 @@ function Rest(restSettings = {}) {
       }
       const response = await request.private('PUT', '/api/v1/order', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'updateOrder');
       }
       setRateLimit(response, request);
       return { data: params };
@@ -323,7 +325,7 @@ function Rest(restSettings = {}) {
       data.currency = params.asset;
       const response = await request.private('GET', '/api/v1/user/margin', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getEquity');
       }
       setRateLimit(response, request);
       const divisor = getEquityDivisor(params.asset);
@@ -345,7 +347,7 @@ function Rest(restSettings = {}) {
       data.resolution = getCandleResolution(params.interval);
       const response = await request.private('GET', '/api/udf/history', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getCandles');
       }
       setRateLimit(response, request);
       const candles = response.data.t.map((v, i, a) => {
@@ -372,7 +374,7 @@ function Rest(restSettings = {}) {
       data.filter = { symbol: params.symbol };
       const response = await request.private('GET', '/api/v1/position', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getPosition');
       }
       setRateLimit(response, request);
       const qtyS = Math.abs(response.data[0] && +response.data[0].currentQty < 0 ? +response.data[0].currentQty : 0);
@@ -395,7 +397,7 @@ function Rest(restSettings = {}) {
       data.reverse = true;
       const response = await request.private('GET', '/api/v1/trade', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getLastPrice');
       }
       setRateLimit(response, request);
       const price = +response.data[0].price;
@@ -414,7 +416,7 @@ function Rest(restSettings = {}) {
       positionData.filter = { symbol: params.symbol };
       const positionResponse = await request.private('GET', '/api/v1/position', positionData);
       if (positionResponse.status >= 400) {
-        return handleResponseError(params, positionResponse.data);
+        return handleResponseError(params, positionResponse.data, 'getLiquidation 1');
       }
       setRateLimit(positionResponse, request);
       // Get instrument
@@ -422,7 +424,7 @@ function Rest(restSettings = {}) {
       instrumentData.symbol = params.symbol;
       const instrumentResponse = await request.private('GET', '/api/v1/instrument', instrumentData);
       if (instrumentResponse.status >= 400) {
-        return handleResponseError(params, instrumentResponse.data);
+        return handleResponseError(params, instrumentResponse.data, 'getLiquidation 2');
       }
       setRateLimit(instrumentResponse, request);
       // Calculate liquidation
@@ -444,7 +446,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.private('GET', '/api/v1/instrument', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getFundingRates');
       }
       setRateLimit(response, request);
       const fundings = {
@@ -472,7 +474,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.private('GET', '/api/v1/instrument', data);
       if (response.status >= 400) {
-        return handleResponseError(null, response.data);
+        return handleResponseError(null, response.data, 'getInstrumentsSymbols');
       }
       setRateLimit(response, request);
       const symbols = response.data.map(v => v.symbol);

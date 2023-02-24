@@ -18,9 +18,10 @@ const Request = require('../../_shared-classes/request');
 /**
  * @param {import('../../../typings/_rest').params} params
  * @param {Object | string} responseData 
+ * @param {string} callingFunction
  * @returns {{ error: import('../../../typings/_rest').RestErrorResponseData<any> }}
  */
-function handleResponseError(params, responseData) {
+function handleResponseError(params, responseData, callingFunction) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
   if (responseData.code) {
@@ -49,9 +50,10 @@ function handleResponseError(params, responseData) {
   }
   return {
     error: {
+      callingFunction,
       type: type,
-      params: JSON.stringify(params),
-      exchange: JSON.stringify(responseData),
+      params: Flatted.stringify(params),
+      exchange: Flatted.stringify(responseData),
     }
   }
 };
@@ -212,7 +214,7 @@ function Rest(restSettings = {}) {
       }
       const response = await request.private('POST', '/api/v1/orders', data);
       if (response.data.code !== '200000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'createOrder');
       }
       params.id = response.data.data.orderId
       return { data: params };
@@ -235,7 +237,7 @@ function Rest(restSettings = {}) {
     cancelOrder: async (params) => {
       const response = await request.private('DELETE', `/api/v1/orders/${params.id}`, null, null);
       if (response.data.code !== '200000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrder');
       }
       return { data: params };
     },
@@ -259,7 +261,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.private('DELETE', '/api/v1/orders', null, data, 4);
       if (response.data.code !== '200000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrdersAll');
       }
       return { data: params };
     },
@@ -291,7 +293,7 @@ function Rest(restSettings = {}) {
       data.currency = params.asset;
       const response = await request.private('GET', '/api/v1/account-overview', null, data);
       if (response.data.code !== '200000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getEquity');
       }
       const asset = response.data.data;
       const equity = asset ? +asset.accountEquity : 0;
@@ -314,7 +316,7 @@ function Rest(restSettings = {}) {
       data.end = data.end < timestamp ? data.end : timestamp;
       const response = await request.public('GET', '/api/v1/kline/query', data);
       if (response.data.code !== '200000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getCandles');
       }
       const candles = response.data.data.map(v => {
         const candle = {};
@@ -340,7 +342,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.private('GET', '/api/v1/position', null, data, 4);
       if (response.data.code !== '200000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getPosition');
       }
       const positionData = response.data.data;
       const qtyS = positionData && +positionData.currentQty < 0 ? Math.abs(+positionData.currentQty) : 0;
@@ -362,7 +364,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.public('GET', '/api/v1/ticker', data);
       if (response.data.code !== '200000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getLastPrice');
       }
       const price = +response.data.data.price;
       return { data: price };
@@ -379,7 +381,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.private('GET', '/api/v1/position', null, data);
       if (response.data.code !== '200000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getLiquidation');
       }
       const positionData = response.data.data;
       const markPx = +positionData.markPrice;
@@ -399,7 +401,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.public('GET', `/api/v1/funding-rate/${params.symbol}/current`, data, 4);
       if (response.data.code !== '200000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getFundingRates');
       }
       const current = response.data.data.value;
       const estimated = response.data.data.predictedValue;
@@ -425,7 +427,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.public('GET', '/api/v1/contracts/active', data);
       if (response.data.code !== '200000') {
-        return handleResponseError(response.data);
+        return handleResponseError(null, response.data, 'getInstrumentsSymbols');
       }
       const symbols = response.data.data.map(v => v.symbol);
       return { data: symbols };
@@ -442,7 +444,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       const response = await request.public('GET', '/api/v1/level2/snapshot', data);
       if (response.data.code !== '200000') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, '_getOrderBook');
       }
       const asks = response.data.data.asks.map(ask => {
         return { id: +ask[0], price: +ask[0], quantity: +ask[1] };
@@ -464,7 +466,7 @@ function Rest(restSettings = {}) {
       const url = params.type === 'public' ? '/api/v1/bullet-public' : '/api/v1/bullet-private'
       const response = await request.private('POST', url, null, null);
       if (response.data.code !== '200000') {
-        return handleResponseError(response.data);
+        return handleResponseError(null, response.data, '_getConnectionToken');
       }
       const instanceServers = response.data.data.instanceServers
       const token = response.data.data.token

@@ -18,9 +18,10 @@ const Request = require('../../_shared-classes/request');
 /**
  * @param {import('../../../typings/_rest').params} params
  * @param {Object | string} responseData 
+ * @param {string} callingFunction
  * @returns {{ error: import('../../../typings/_rest').RestErrorResponseData<any> }}
  */
-function handleResponseError(params, responseData) {
+function handleResponseError(params, responseData, callingFunction) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
   if (responseData.error) {
@@ -52,9 +53,10 @@ function handleResponseError(params, responseData) {
   }
   return {
     error: {
+      callingFunction,
       type: type,
-      params: JSON.stringify(params),
-      exchange: JSON.stringify(responseData),
+      params: Flatted.stringify(params),
+      exchange: Flatted.stringify(responseData),
     }
   }
 };
@@ -206,7 +208,7 @@ function Rest(restSettings = {}) {
         || response.data.error
         || !response.data.sendStatus
         || response.data.sendStatus.status !== 'placed') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'createOrder');
       }
       return { data: params };
     },
@@ -249,11 +251,11 @@ function Rest(restSettings = {}) {
       if (response.status >= 400
         || response.data.error
         || !response.data.batchStatus) {
-        return params.map(v => handleResponseError(v, response.data));
+        return params.map(v => handleResponseError(v, response.data, 'createOrders 1'));
       }
       return response.data.batchStatus.map((v, i) => {
         if (v.status !== 'placed') {
-          return handleResponseError(params[i], v);
+          return handleResponseError(params[i], v, 'createOrders 2');
         }
         return { data: params[i] };
       });
@@ -273,7 +275,7 @@ function Rest(restSettings = {}) {
         || response.data.error
         || !response.data.cancelStatus
         || response.data.cancelStatus.status !== 'cancelled') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrder');
       }
       return { data: params };
     },
@@ -298,11 +300,11 @@ function Rest(restSettings = {}) {
       if (response.status >= 400
         || response.data.error
         || !response.data.batchStatus) {
-        return params.map(v => handleResponseError(v, response.data));
+        return params.map(v => handleResponseError(v, response.data, 'cancelOrders 1'));
       }
       return response.data.batchStatus.map((v, i) => {
         if (v.status !== 'cancelled') {
-          return handleResponseError(params[i], v);
+          return handleResponseError(params[i], v, 'cancelOrders 2');
         }
         return { data: params[i] };
       });
@@ -322,7 +324,7 @@ function Rest(restSettings = {}) {
         || response.data.error
         || !response.data.cancelStatus
         || response.data.cancelStatus.status !== 'cancelled') {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'cancelOrdersAll');
       }
       return { data: params };
     },
@@ -353,7 +355,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.private('GET', '/api/v3/accounts', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getEquity');
       }
       const equity = response.data.accounts[params.asset].auxiliary.pv;
       return { data: equity };
@@ -375,7 +377,7 @@ function Rest(restSettings = {}) {
       data.to = data.to < timestamp ? data.to : timestamp;
       const response = await request.public('GET', `https://futures.kraken.com/api/charts/v1/trade/${symbol}/${interval}`, data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getCandles');
       }
       const candles = response.data.candles.map(v => {
         const candle = {};
@@ -400,7 +402,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.private('GET', '/api/v3/openpositions', data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getPosition');
       }
       const positionResult = Array.isArray(response.data.openPositions)
         ? response.data.openPositions.find(v => params.symbol.toLowerCase() === v.symbol.toLowerCase()) : null;
@@ -422,7 +424,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.public('GET', `${restSettings.URL}/api/v3/tickers`, data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, '');
       }
       const price = +response.data.tickers.find(v => params.symbol.toLowerCase() === v.symbol.toLowerCase()).last;
       return { data: price };
@@ -439,19 +441,19 @@ function Rest(restSettings = {}) {
       const tickersData = {};
       const tickersResponse = await request.public('GET', `${restSettings.URL}/api/v3/tickers`, tickersData);
       if (tickersResponse.status >= 400) {
-        return handleResponseError(params, tickersResponse.data);
+        return handleResponseError(params, tickersResponse.data, 'getLiquidation 1');
       }
       // Get accounts
       const accountsData = {};
       const accountsResponse = await request.private('GET', '/api/v3/accounts', accountsData);
       if (accountsResponse.status >= 400) {
-        return handleResponseError(params, accountsResponse.data);
+        return handleResponseError(params, accountsResponse.data, 'getLiquidation 2');
       }
       // Get positions
       const positionsData = {};
       const positionsResponse = await request.private('GET', '/api/v3/openpositions', positionsData);
       if (positionsResponse.status >= 400) {
-        return handleResponseError(params, positionsResponse.data);
+        return handleResponseError(params, positionsResponse.data, 'getLiquidation 3');
       }
       // Calculate liquidation
       const ticker = tickersResponse.data.tickers.find(v => params.symbol.toLowerCase() === v.symbol.toLowerCase());
@@ -475,7 +477,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.public('GET', `${restSettings.URL}/api/v3/tickers`, data);
       if (response.status >= 400) {
-        return handleResponseError(params, response.data);
+        return handleResponseError(params, response.data, 'getFundingRates');
       }
       const ticker = response.data.tickers.find(v => params.symbol.toLowerCase() === v.symbol.toLowerCase());
       const current = +ticker.fundingRate / (1 / +ticker.last);
@@ -502,7 +504,7 @@ function Rest(restSettings = {}) {
       const data = {};
       const response = await request.public('GET', `${restSettings.URL}/api/v3/tickers`, data);
       if (response.status >= 400) {
-        return handleResponseError(null, response.data);
+        return handleResponseError(null, response.data, 'getInstrumentsSymbols');
       }
       const symbols = response.data.tickers.map(v => v.symbol.toUpperCase());
       return { data: symbols };
