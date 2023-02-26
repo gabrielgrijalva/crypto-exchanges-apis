@@ -24,6 +24,9 @@ function handleResponseError(params, responseData, callingFunction) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
   if (+responseData.ret_code !== 0) {
+    if (+responseData.ret_code === 30076) {
+      type = 'no-function';
+    }
     if (+responseData.ret_code === 20001 || +responseData.ret_code === 30032
       || +responseData.ret_code === 30034 || +responseData.ret_code === 30037
       || +responseData.ret_code === 20001 || +responseData.ret_code === 30032) {

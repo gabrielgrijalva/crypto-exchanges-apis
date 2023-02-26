@@ -25,7 +25,7 @@ const wait = require('../../_utils/wait');
 function handleResponseError(params, responseData, callingFunction) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
-  console.log('handleResponseError debug', params, responseData)
+  console.log('handleResponseError debug', params, responseData, callingFunction)
   if (responseData.err_code) {
     const errorCode = (responseData.err_code).toString();
     switch (errorCode)
@@ -288,7 +288,9 @@ function Rest(restSettings = {}) {
             return handleResponseError(params, err, 'cancelOrder 1');
           })
         }
-        return handleResponseError(params, response.data, 'cancelOrder 2');
+        else {
+          return handleResponseError(params, response.data, 'cancelOrder 2');
+        } 
       }
       return { data: params };
     },
@@ -457,7 +459,7 @@ function Rest(restSettings = {}) {
       }
 
       const liqPx = +positionData.liquidation_price;
-      const markPx = responseMarkPrice.data.data[0].close;
+      const markPx = responseMarkPrice.data.data.length ? responseMarkPrice.data.data[0].close : 0;
       let liqPxS = 0;
       let liqPxB = 0;
 

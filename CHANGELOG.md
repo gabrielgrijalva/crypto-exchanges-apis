@@ -1,8 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.13.4] - 2023-02-26
+- Bug fixes. Implemented Flatted to all APIs to handle circular JSON strings. Added callingFunction to error handler for debugging purposes.
 ## [2.13.3] - 2023-02-24
-- Bug fixes. Impelemnted Flatted to all APIs to handle circular JSON strings. Added callingFunction to error handler for debugging purposes.
+- Bug fixes. Implemented Flatted to all APIs to handle circular JSON strings. Added callingFunction to error handler for debugging purposes.
 ## [2.13.2] - 2023-02-21
 - Implemented Flatted to handle circular JSON strings.
 ## [2.13.1] - 2023-02-21
