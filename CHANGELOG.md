@@ -1,8 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.13.5] - 2023-03-01
+- Minor bug fixes.
 ## [2.13.4] - 2023-02-26
-- Bug fixes. Implemented Flatted to all APIs to handle circular JSON strings. Added callingFunction to error handler for debugging purposes.
+- Minor bug fixes to huobi-swap api.
 ## [2.13.3] - 2023-02-24
 - Bug fixes. Implemented Flatted to all APIs to handle circular JSON strings. Added callingFunction to error handler for debugging purposes.
 ## [2.13.2] - 2023-02-21

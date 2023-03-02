@@ -25,7 +25,6 @@ const wait = require('../../_utils/wait');
 function handleResponseError(params, responseData, callingFunction) {
   /** @type {import('../../../typings/_rest').restErrorResponseDataType} */
   let type = 'unknown';
-  console.log('handleResponseError debug', params, responseData, callingFunction)
   if (responseData.err_code) {
     const errorCode = (responseData.err_code).toString();
     switch (errorCode)
@@ -282,7 +281,7 @@ function Rest(restSettings = {}) {
       data.contract_code = params.symbol;
       data.client_order_id = params.id;
       const response = await request.private('POST', '/swap-api/v1/swap_cancel', data, 1);
-      if (response && response.data && (response.data.err_code || response.data.data.errors.length)) {
+      if (response && response.data && (response.data.err_code || (response.data.data.errors && response.data.data.errors.length))) {
         if (response.data.data && response.data.data.errors && response.data.data.errors.length){
           response.data.data.errors.forEach(err => {
             return handleResponseError(params, err, 'cancelOrder 1');
@@ -292,7 +291,8 @@ function Rest(restSettings = {}) {
           return handleResponseError(params, response.data, 'cancelOrder 2');
         } 
       }
-      return { data: params };
+      let successes = response.data.data.successes ? response.data.data.successes.split(',') : [];
+      return { data: { successes } };
     },
     /**
      * 
@@ -314,10 +314,18 @@ function Rest(restSettings = {}) {
       const data = {};
       data.contract_code = params.symbol;
       const response = await request.private('POST', '/swap-api/v1/swap_cancelall', data, 1);
-      if (response && response.data && response.data.err_code) {
-        return handleResponseError(params, response.data, 'cancelOrdersAll');
+      if (response && response.data && (response.data.err_code || (response.data.data.errors && response.data.data.errors.length))) {
+        if (response.data.data && response.data.data.errors && response.data.data.errors.length){
+          response.data.data.errors.forEach(err => {
+            return handleResponseError(params, err, 'cancelOrdersAll 1');
+          })
+        }
+        else {
+          return handleResponseError(params, response.data, 'cancelOrdersAll 2');
+        } 
       }
-      return { data: params }
+      let successes = response.data.data.successes ? response.data.data.successes.split(',') : [];
+      return { data: { successes } };
     },
     /**
      * 
@@ -394,7 +402,7 @@ function Rest(restSettings = {}) {
       const data = {};
       data.contract_code = data.symbol;
       const response = await request.private('POST', '/swap-api/v1/swap_position_info', data, 1);
-      if (response && response.data && response.data.err_code) {
+      if (response && response.data && response.data.err_code ) {
         return handleResponseError(params, response.data, 'getPosition');
       }
       const positionData = response.data.data.filter(v => v.contract_code === params.symbol);
@@ -547,6 +555,23 @@ function Rest(restSettings = {}) {
       });
       const lastUpdateId = +response.data.tick.ts;
       return { data: { asks, bids, lastUpdateId } };
+    },
+    /**
+     * 
+     * 
+     * ACTIVATE SUB ACCOUNT
+     * 
+     * 
+     */
+    _activateSubAccount: async (params) => {
+      const data = {};
+      data.sub_uid = params.uid;
+      data.sub_auth = params.auth;
+      const response = await request.private('POST', '/swap-api/v1/swap_sub_auth', data, 1);
+      if (response && response.data && response.data.err_code) {
+        return handleResponseError(params, response.data, '_activateSubAccount');
+      }
+      return { data: { errors: response.data.errors, successes: response.data.errors } }
     },
   };
   return rest;

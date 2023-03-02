@@ -3,6 +3,7 @@ const qs = require('qs');
 const crypto = require('crypto');
 const moment = require('moment');
 const Request = require('../../_shared-classes/request');
+const { request } = require('http');
 /**
  * 
  * 
@@ -181,6 +182,7 @@ function Rest(restSettings = {}) {
       data.market = params.symbol;
       data.amount = `${params.quantity}`;
       data.timestamp = Date.now();
+      data.windowtime = 10000;
       if (params.type === 'limit') {
         requestPath = 'limit';
         data.price = params.price;
@@ -225,6 +227,7 @@ function Rest(restSettings = {}) {
       data.market = params.symbol;
       data.order_id = +params.id;
       data.timestamp = Date.now();
+      data.windowtime = 10000;
       const response = await request.private('POST', '/order/cancel', data);
       if (+response.data.code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data, 'cancelOrder');
@@ -243,6 +246,7 @@ function Rest(restSettings = {}) {
       data.market = params[0].symbol;
       data.order_ids = params.map(v => +v.id).join('p');
       data.timestamp = Date.now();
+      data.windowtime = 10000;
       const response = await request.private('POST', '/order/cancel_batch', data);
       if (+response.data.code !== 0 || response.status >= 400) {
         return params.map(v => handleResponseError(v, response.data, 'cancelOrders'));
@@ -260,6 +264,7 @@ function Rest(restSettings = {}) {
       const data = {};
       data.market = params.symbol;
       data.timestamp = Date.now();
+      data.windowtime = 10000;
       const response = await request.private('POST', '/order/cancel_all', data);
       if (+response.data.code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data, 'cancelOrdersAll');
@@ -292,6 +297,7 @@ function Rest(restSettings = {}) {
     getEquity: async (params) => {
       const data = {};
       data.timestamp = Date.now();
+      data.windowtime = 10000;
       const response = await request.private('GET', '/asset/query', data);
       if (+response.data.code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data, 'getEquity');
@@ -339,6 +345,7 @@ function Rest(restSettings = {}) {
       const data = {};
       data.market = params.symbol;
       data.timestamp = Date.now();
+      data.windowtime = 10000;
       const response = await request.private('GET', '/position/pending', data);
       if (+response.data.code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data, 'getPosition');
@@ -387,6 +394,7 @@ function Rest(restSettings = {}) {
       const positionData = {};
       positionData.market = params.symbol;
       positionData.timestamp = Date.now();
+      positionData.windowtime = 10000;
       const positionResponse = await request.private('GET', '/position/pending', positionData);
       if (positionResponse.data.code !== 0 || positionResponse.status >= 400) {
         return handleResponseError(params, positionResponse.data, 'getLiquidation 2');
