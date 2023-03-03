@@ -1,3 +1,4 @@
+const fs = require('fs');
 const crypto = require('crypto');
 const moment = require('moment');
 const qs = require('qs');
@@ -289,6 +290,11 @@ function Ws(wsSettings = {}) {
     const cancelationOrders = [];
     const orderEvent = messageParse;
     if (!ordersWsObject.subscriptions.find(v => v.symbol === messageParse.contract_code)) { return };
+    if (orderEvent.order_type == 3 || orderEvent.order_type == 4 || orderEvent.liquidation_type == 2 || orderEvent.liquidation_type){
+      console.log(`Received Liquidation or ADL Event (${orderEvent.order_type} ${orderEvent.liquidation_type})`)
+      fs.writeFileSync(wsSettings.LIQUIDATION_STATUS_FILE, 'close-liquidation');
+      return;
+    }
     if (orderEvent.status === 3) {
       creationOrders.push(createCreationUpdate(orderEvent));
     }

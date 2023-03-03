@@ -1,3 +1,4 @@
+const fs = require('fs');
 const moment = require('moment');
 const Events = require('events');
 const Rest = require('./_rest');
@@ -207,6 +208,11 @@ function Ws(wsSettings = {}) {
     if (messageParse.e !== 'ORDER_TRADE_UPDATE') { return };
     const orderEvent = messageParse.o;
     if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.s)) { return };
+    if (orderEvent.c && orderEvent.c.includes('autoclose')){
+      console.log(`Received ${orderEvent.c} Event`)
+      fs.writeFileSync(wsSettings.LIQUIDATION_STATUS_FILE, 'close-liquidation');
+      return;
+    }
     if (orderEvent.x === 'NEW' || orderEvent.x === 'AMENDMENT') {
       ordersWsObject.events.emit('creations-updates', [createCreationUpdate(messageParse)]);
     }
