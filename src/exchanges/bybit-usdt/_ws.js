@@ -280,8 +280,8 @@ function Ws(wsSettings = {}) {
     const executionOrders = [];
     messageParse.data.result.forEach(orderEvent => {
       if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.symbol)) { return };
-      if (orderEvent.execType == 'BUSTTRADE'){
-        console.log('Received Liquidation Event')
+      if (orderEvent.execType == 'BUSTTRADE' || orderEvent.execType == 'ADLTRADE'){
+        console.log(`Received ${orderEvent.execType} Event`)
         fs.writeFileSync(wsSettings.LIQUIDATION_STATUS_FILE, 'close-liquidation');
         return;
       }

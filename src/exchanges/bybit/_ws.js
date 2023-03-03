@@ -1,3 +1,4 @@
+const fs = require('fs');
 const crypto = require('crypto');
 const moment = require('moment');
 const Events = require('events');
@@ -213,6 +214,11 @@ function Ws(wsSettings = {}) {
     const executionOrders = [];
     messageParse.data.forEach(executionEvent => {
       if (!ordersWsObject.subscriptions.find(v => v.symbol === executionEvent.symbol)) { return };
+      if (executionEvent.exec_type == 'BustTrade' || executionEvent.exec_type == 'AdlTrade'){
+        console.log(`Received ${executionEvent.exec_type} Event`)
+        fs.writeFileSync(wsSettings.LIQUIDATION_STATUS_FILE, 'close-liquidation');
+        return;
+      }
       if (executionEvent.exec_type === 'Trade') {
         executionOrders.push(createExecution(executionEvent));
       }

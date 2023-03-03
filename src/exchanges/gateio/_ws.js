@@ -1,8 +1,8 @@
+const fs = require('fs');
 const qs = require('qs');
 const crypto = require('crypto');
 const moment = require('moment');
 const Events = require('events');
-const wait = require('../../_utils/wait');
 const Rest = require('./_rest');
 const WebSocket = require('../../_shared-classes/websocket');
 const OrderBookData = require('../../_shared-classes/order-books-data');
@@ -235,6 +235,11 @@ function Ws(wsSettings = {}) {
     const executionOrders = [];
     messageParse.result.forEach(tradeEvent => {
       if (!ordersWsObject.subscriptions.find(v => v.symbol === tradeEvent.contract)) { return };
+      if (tradeEvent.text == 'auto_deleveraging' || tradeEvent.text == 'liquidation'){
+        console.log(`Received ${tradeEvent.text} Event`)
+        fs.writeFileSync(wsSettings.LIQUIDATION_STATUS_FILE, 'close-liquidation');
+        return;
+      }
       executionOrders.push(createExecution(tradeEvent));
     });
     if (executionOrders.length) { ordersWsObject.events.emit('executions', executionOrders) };

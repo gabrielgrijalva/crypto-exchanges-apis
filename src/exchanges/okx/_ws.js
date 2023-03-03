@@ -1,3 +1,4 @@
+const fs = require('fs');
 const crypto = require('crypto');
 const moment = require('moment');
 const Events = require('events');
@@ -222,6 +223,11 @@ function Ws(wsSettings = {}) {
     const cancelationOrders = [];
     messageParse.data.forEach(orderEvent => {
       if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.instId)) { return };
+      if (orderEvent.category == 'adl' || orderEvent.category == 'full_liquidation' || orderEvent.category == 'partial_liquidation') {
+        console.log(`Received ${orderEvent.category} Event`)
+        fs.writeFileSync(wsSettings.LIQUIDATION_STATUS_FILE, 'close-liquidation');
+        return;
+      }
       if (orderEvent.state === 'live' || orderEvent.amendResult === '0') {
         creationOrders.push(createCreationUpdate(orderEvent));
       }

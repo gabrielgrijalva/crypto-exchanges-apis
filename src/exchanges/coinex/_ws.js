@@ -1,4 +1,4 @@
-const uuid = require('uuid');
+const fs = require('fs');
 const crypto = require('crypto');
 const moment = require('moment');
 const Events = require('events');
@@ -204,6 +204,11 @@ function Ws(wsSettings = {}) {
     if (messageParse.method !== 'order.update') { return };
     const orderEvent = messageParse.params[1];
     if (!ordersWsObject.subscriptions.find(v => v.symbol === orderEvent.market)) { return };
+    if (orderEvent.last_deal_type == 8 || orderEvent.last_deal_type == 9 || orderEvent.last_deal_type == 12 || orderEvent.last_deal_type == 13){
+      console.log(`Received Liquidation or ADL Event (${orderEvent.last_deal_type})`)
+      fs.writeFileSync(wsSettings.LIQUIDATION_STATUS_FILE, 'close-liquidation');
+      return;
+    }
     if (orderEvent.create_time === orderEvent.update_time) {
       ordersWsObject.events.emit('creations-updates', [createCreationUpdate(orderEvent)]);
     }
