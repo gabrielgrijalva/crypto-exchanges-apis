@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.14.0] - 2023-03-10
+- Implemented binance-spot api.
 ## [2.13.7] - 2023-03-03
 - ADL and liquidation implementation for bitmex, binance-coin. Liquidation implementation for huobi-swap.
 ## [2.13.6] - 2023-03-03

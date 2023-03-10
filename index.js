@@ -3,6 +3,7 @@
  */
 const exchanges = [
   'binance-coin',
+  'binance-spot',
   'binance-usds',
   'bitmex',
   'bitstamp',
