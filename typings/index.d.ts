@@ -14,6 +14,7 @@ import WsN = require('./_ws');
  */
 type exchanges =
 'binance-coin' | 
+'binance-spot' |
 'binance-usds' | 
 'bitmex' | 
 'bitstamp' | 

@@ -21,6 +21,7 @@ declare namespace WsN {
   type wsSettings = {
     URL?: string;
     ASSET?: string;
+    ASSET_SPOT?: string;
     API_KEY?: string;
     API_SECRET?: string;
     API_USER_ID?: string;
