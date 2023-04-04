@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const moment = require('moment');
 const Request = require('../../_shared-classes/request');
 const wait = require('../../_utils/wait');
+const Utils = require('./_utils');
 
 // Phemex Exclusive Settings Scale
 
@@ -210,6 +211,7 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       data.side = params.side == 'sell' ? 'Sell' : 'Buy';
       data.orderQty = params.quantity;
+      data.clOrdID = params.id;
       if (params.type == 'limit'){
         data.priceEp = params.price * priceScale;
         data.ordType = 'Limit'
