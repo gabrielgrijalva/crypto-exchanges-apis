@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.14.1] - 2023-04-05
+- Minor changes in phemex API.
 ## [2.14.0] - 2023-03-10
 - Implemented binance-spot api.
 ## [2.13.7] - 2023-03-03
