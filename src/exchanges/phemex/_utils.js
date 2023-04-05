@@ -16,7 +16,7 @@ const UtilsFactory = require('../../_shared-classes/utils');
  */
 function Utils(utilsSettings) {
   const utils = UtilsFactory(utilsSettings);
-  utils.getOrderId = () => 'PhemexLeaderboard_'+uuid();
+  utils.getOrderId = () => 'PhemexLeaderboard_' + uuid();
   return utils;
 };
 module.exports = Utils;
