@@ -90,14 +90,14 @@ function getSignedRequest(type, url, apiKey, apiSecret) {
 function connectWebSocket(type, webSocket, wsSettings) {
   return new Promise((resolve) => {
     let url = '';
-    switch(type){
+    switch (type) {
       case 'index':
         url = wsSettings.URL + '/ws_index';
         break;
       case 'public':
         url = wsSettings.URL + '/swap-ws';
         break;
-      case 'private': 
+      case 'private':
         url = wsSettings.URL + '/swap-notification';
         break;
     }
@@ -117,7 +117,7 @@ function connectWebSocket(type, webSocket, wsSettings) {
       }
     };
     function connectOnMessageFunction(message) {
-      if(!message){ return };
+      if (!message) { return };
       const messageParse = JSON.parse(zlib.unzipSync(message).toString());
       if (messageParse.op === 'auth' && messageParse['err-code'] == 0) {
         resolve();
@@ -200,20 +200,20 @@ function Ws(wsSettings = {}) {
    * 
    * 
    * @type {import('../../../typings/_ws').WebSocket} */
-   const webSocketIndex = WebSocket('huobi:index', wsSettings);
-   webSocketIndex.addOnClose(async () => {
-     await connectWebSocket('index', webSocketIndex, wsSettings);
-     for (const params of liquidationsWsObject.subscriptions) await liquidationsWsObject.subscribe(params);
-   });
-   webSocketIndex.addOnMessage((message) => {
-     const messageParse = JSON.parse(zlib.unzipSync(message).toString());
-     if (messageParse.ping){
+  const webSocketIndex = WebSocket('huobi:index', wsSettings);
+  webSocketIndex.addOnClose(async () => {
+    await connectWebSocket('index', webSocketIndex, wsSettings);
+    for (const params of liquidationsWsObject.subscriptions) await liquidationsWsObject.subscribe(params);
+  });
+  webSocketIndex.addOnMessage((message) => {
+    const messageParse = JSON.parse(zlib.unzipSync(message).toString());
+    if (messageParse.ping) {
       webSocketIndex.send(JSON.stringify({
-         pong: messageParse.ping
-       }))
-     }
-   })
-   if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocketIndex.addOnMessage((message) => console.log(JSON.parse(zlib.unzipSync(message).toString()))) };
+        pong: messageParse.ping
+      }))
+    }
+  })
+  if (wsSettings.WS_ON_MESSAGE_LOGS) { webSocketIndex.addOnMessage((message) => console.log(JSON.parse(zlib.unzipSync(message).toString()))) };
   /** 
    * 
    * 
@@ -230,7 +230,7 @@ function Ws(wsSettings = {}) {
   });
   webSocketPublic.addOnMessage((message) => {
     const messageParse = JSON.parse(zlib.unzipSync(message).toString());
-    if (messageParse.ping){
+    if (messageParse.ping) {
       webSocketPublic.send(JSON.stringify({
         pong: messageParse.ping
       }))
@@ -253,7 +253,7 @@ function Ws(wsSettings = {}) {
   });
   webSocketPrivate.addOnMessage((message) => {
     const messageParse = JSON.parse(zlib.unzipSync(message).toString());
-    if (messageParse.op === 'ping'){
+    if (messageParse.op === 'ping') {
       webSocketPrivate.send(JSON.stringify({
         op: 'pong',
         ts: messageParse.ts
@@ -290,7 +290,7 @@ function Ws(wsSettings = {}) {
     const cancelationOrders = [];
     const orderEvent = messageParse;
     if (!ordersWsObject.subscriptions.find(v => v.symbol === messageParse.contract_code)) { return };
-    if (orderEvent.order_type == 3 || orderEvent.order_type == 4 || orderEvent.liquidation_type == 2 || orderEvent.liquidation_type){
+    if (+orderEvent.order_type == 3 || +orderEvent.order_type == 4 || +orderEvent.liquidation_type == 2 || +orderEvent.liquidation_type) {
       console.log(`Received Liquidation or ADL Event (${orderEvent.order_type} ${orderEvent.liquidation_type})`)
       fs.writeFileSync(wsSettings.LIQUIDATION_STATUS_FILE, 'close-liquidation');
       return;
@@ -302,7 +302,7 @@ function Ws(wsSettings = {}) {
       cancelationOrders.push(createCancelation(orderEvent));
     }
     if (orderEvent.status === 4 || orderEvent.status === 6) {
-      for(let i = 0; i < orderEvent.trade.length; i++){
+      for (let i = 0; i < orderEvent.trade.length; i++) {
         let trade = orderEvent.trade[i]
         trade.contract_code = orderEvent.contract_code;
         trade.client_order_id = orderEvent.client_order_id;
@@ -345,20 +345,20 @@ function Ws(wsSettings = {}) {
     if (positionData) {
       const shortPosition = messageParse.data.find(v => v.direction == 'sell');
       const longPosition = messageParse.data.find(v => v.direction == 'buy');
-      if (shortPosition && longPosition) { 
+      if (shortPosition && longPosition) {
         positionData.qtyS = Math.abs(+shortPosition.volume);
         positionData.pxS = +shortPosition.cost_open;
         positionData.qtyB = Math.abs(+longPosition.volume);
         positionData.pxB = +longPosition.cost_open;
-      } else if ( shortPosition ) {
+      } else if (shortPosition) {
         positionData.qtyS = Math.abs(+shortPosition.volume);
         positionData.pxS = +shortPosition.cost_open;
-      } else if ( longPosition ) { 
+      } else if (longPosition) {
         positionData.qtyB = Math.abs(+longPosition.volume);
         positionData.pxB = +longPosition.cost_open;
-       }
+      }
     }
-    
+
     positionsWsObject.events.emit('update', positionsWsObject.data);
   };
   /** @type {import('../../../typings/_ws').positionsWsObject} */
@@ -399,18 +399,18 @@ function Ws(wsSettings = {}) {
     const messageParse = JSON.parse(zlib.unzipSync(message).toString());
     if (messageParse.op !== 'notify' || !messageParse.topic.includes('positions')) { return };
     const liquidationData = liquidationsWsObject.data.find(v => v.symbol === messageParse.data[0].contract_code);
-    if (liquidationData){
+    if (liquidationData) {
       const shortPosition = messageParse.data.find(v => v.direction == 'sell');
       const longPosition = messageParse.data.find(v => v.direction == 'buy');
-      if (shortPosition && longPosition) { 
+      if (shortPosition && longPosition) {
         liquidationData.qtyS = Math.abs(+shortPosition.volume);
         liquidationData.pxS = +shortPosition.cost_open;
         liquidationData.qtyB = Math.abs(+longPosition.volume);
         liquidationData.pxB = +longPosition.cost_open;
-      } else if ( shortPosition ) {
+      } else if (shortPosition) {
         liquidationData.qtyS = Math.abs(+shortPosition.volume);
         liquidationData.pxS = +shortPosition.cost_open;
-      } else if ( longPosition ) { 
+      } else if (longPosition) {
         liquidationData.qtyB = Math.abs(+longPosition.volume);
         liquidationData.pxB = +longPosition.cost_open;
       }
@@ -421,7 +421,7 @@ function Ws(wsSettings = {}) {
     if (messageParse.op !== 'notify' || !messageParse.topic.includes('accounts')) { return };
     messageParse.data.forEach(positionEvent => {
       const liquidationData = liquidationsWsObject.data.find(v => v.symbol === positionEvent.contract_code);
-      if (liquidationData.qtyB && liquidationData.qtyS){
+      if (liquidationData.qtyB && liquidationData.qtyS) {
         liquidationData.liqPxB = liquidationData.markPx < +positionEvent.liquidation_price ? 0 : positionEvent.liquidation_price;
         liquidationData.liqPxS = liquidationData.markPx > +positionEvent.liquidation_price ? 0 : positionEvent.liquidation_price;
       } else {
