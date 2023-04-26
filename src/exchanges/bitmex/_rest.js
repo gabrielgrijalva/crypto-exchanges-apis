@@ -85,11 +85,11 @@ function getEquityDivisor(asset) {
  * @param {Object} res
  * @param {Object} req
  */
-async function setRateLimit(res, req){
-  if (res.headers && res.headers['x-ratelimit-remaining']){
+async function setRateLimit(res, req) {
+  if (res.headers && res.headers['x-ratelimit-remaining']) {
     const globalRateLimit = Number(res.headers['x-ratelimit-remaining'])
     await req.updateRequestLimit(globalRateLimit)
-    if (res.headers['x-ratelimit-remaining-1s']){
+    if (res.headers['x-ratelimit-remaining-1s']) {
       const oneSecondRateLimit = Number(res.headers['x-ratelimit-remaining-1s'])
       const lowestLimit = oneSecondRateLimit < globalRateLimit ? oneSecondRateLimit : globalRateLimit;
       console.log('Global Rate Limit', globalRateLimit)
@@ -379,8 +379,8 @@ function Rest(restSettings = {}) {
       setRateLimit(response, request);
       const qtyS = Math.abs(response.data[0] && +response.data[0].currentQty < 0 ? +response.data[0].currentQty : 0);
       const qtyB = Math.abs(response.data[0] && +response.data[0].currentQty > 0 ? +response.data[0].currentQty : 0);
-      const pxS = qtyS ? +response.data[0].avgEntryPrice : 0;
-      const pxB = qtyB ? +response.data[0].avgEntryPrice : 0;
+      const pxS = qtyS ? +response.data[0].avgCostPrice : 0;
+      const pxB = qtyB ? +response.data[0].avgCostPrice : 0;
       const position = { qtyS, qtyB, pxS, pxB };
       return { data: position };
     },

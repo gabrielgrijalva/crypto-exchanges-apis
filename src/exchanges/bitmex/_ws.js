@@ -239,8 +239,8 @@ function Ws(wsSettings = {}) {
       if (!positionData) { return };
       if (isNaN(+positionEvent.currentQty)) { return };
       if (positionEvent.lastPrice === null && positionEvent.markPrice === null) return;
-      positionData.pxS = +positionEvent.currentQty < 0 ? (+positionEvent.avgEntryPrice ? +positionEvent.avgEntryPrice : positionData.pxS) : 0;
-      positionData.pxB = +positionEvent.currentQty > 0 ? (+positionEvent.avgEntryPrice ? +positionEvent.avgEntryPrice : positionData.pxB) : 0;
+      positionData.pxS = +positionEvent.currentQty < 0 ? (+positionEvent.avgCostPrice ? +positionEvent.avgCostPrice : positionData.pxS) : 0;
+      positionData.pxB = +positionEvent.currentQty > 0 ? (+positionEvent.avgCostPrice ? +positionEvent.avgCostPrice : positionData.pxB) : 0;
       positionData.qtyS = +positionEvent.currentQty < 0 ? Math.abs(+positionEvent.currentQty) : 0;
       positionData.qtyB = +positionEvent.currentQty > 0 ? Math.abs(+positionEvent.currentQty) : 0;
     });
@@ -286,8 +286,8 @@ function Ws(wsSettings = {}) {
       const liquidationData = liquidationsWsObject.data.find(v => v.symbol === positionEvent.symbol);
       if (!liquidationData) { return };
       if (isNaN(+positionEvent.currentQty)) { return };
-      liquidationData.pxS = +positionEvent.currentQty < 0 ? (+positionEvent.avgEntryPrice ? +positionEvent.avgEntryPrice : liquidationData.pxS) : 0;
-      liquidationData.pxB = +positionEvent.currentQty > 0 ? (+positionEvent.avgEntryPrice ? +positionEvent.avgEntryPrice : liquidationData.pxB) : 0;
+      liquidationData.pxS = +positionEvent.currentQty < 0 ? (+positionEvent.avgCostPrice ? +positionEvent.avgCostPrice : liquidationData.pxS) : 0;
+      liquidationData.pxB = +positionEvent.currentQty > 0 ? (+positionEvent.avgCostPrice ? +positionEvent.avgCostPrice : liquidationData.pxB) : 0;
       liquidationData.qtyS = +positionEvent.currentQty < 0 ? Math.abs(+positionEvent.currentQty) : 0;
       liquidationData.qtyB = +positionEvent.currentQty > 0 ? Math.abs(+positionEvent.currentQty) : 0;
       liquidationData.liqPxS = +positionEvent.currentQty < 0 ? (+positionEvent.liquidationPrice ? +positionEvent.liquidationPrice : liquidationData.liqPxS) : 0;
