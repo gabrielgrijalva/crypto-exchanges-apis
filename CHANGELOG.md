@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.14.2] - 2023-04-26
+- Changed bitmex variable from avgEntryPrice to avgCostPrice.
 ## [2.14.1] - 2023-04-05
 - Minor changes in phemex API.
 ## [2.14.0] - 2023-03-10
