@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.14.4] - 2023-05-13
+- Added latency logging for create/cancel order in huobi and gateio apis.
 ## [2.14.3] - 2023-04-26
 - Corrected error order liquidation type in _ws huobi-swap api.
 ## [2.14.2] - 2023-04-26

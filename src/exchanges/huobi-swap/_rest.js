@@ -110,6 +110,12 @@ function getCandleResolution(interval) {
 };
 /**
  * 
+ */
+function hrtimeToMilliseconds(hrtime) {
+  return (hrtime[0] * 1000) + (hrtime[1] / 1e6);
+}
+/**
+ * 
  * 
  * 
  * =================================
@@ -255,7 +261,10 @@ function Rest(restSettings = {}) {
         data.price = params.price;
         data.order_price_type = 'ioc'
       }
+      let start = process.hrtime();
       const response = await request.private('POST', '/swap-api/v1/swap_order', data, 1);
+      let end = process.hrtime(start);
+      console.log(`Create orderId: ${data.client_order_id}, ${hrtimeToMilliseconds(end)} ms`)
       if (response && response.data && response.data.err_code) {
         return handleResponseError(params, response.data, 'createOrder');
       }
@@ -280,7 +289,10 @@ function Rest(restSettings = {}) {
       const data = {};
       data.contract_code = params.symbol;
       data.client_order_id = params.id;
+      let start = process.hrtime();
       const response = await request.private('POST', '/swap-api/v1/swap_cancel', data, 1);
+      let end = process.hrtime(start);
+      console.log(`Cancel orderId: ${data.client_order_id}, ${hrtimeToMilliseconds(end)} ms`)
       if (response && response.data && (response.data.err_code || (response.data.data.errors && response.data.data.errors.length))) {
         if (response.data.data && response.data.data.errors && response.data.data.errors.length){
           response.data.data.errors.forEach(err => {

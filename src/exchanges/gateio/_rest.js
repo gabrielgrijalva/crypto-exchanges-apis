@@ -64,6 +64,12 @@ function getCandleResolution(interval) {
 };
 /**
  * 
+ */
+function hrtimeToMilliseconds(hrtime) {
+  return (hrtime[0] * 1000) + (hrtime[1] / 1e6);
+}
+/**
+ * 
  * 
  * 
  * =================================
@@ -194,7 +200,10 @@ function Rest(restSettings = {}) {
         data.tif = 'ioc';
         data.price = `${params.price}`;
       }
+      let start = process.hrtime();
       const response = await request.private('POST', `/api/v4/futures/${settle}/orders`, data);
+      let end = process.hrtime(start);
+      console.log(`Create orderId: ${data.text}, ${hrtimeToMilliseconds(end)} ms`)
       if (response.status >= 400) {
         return handleResponseError(params, response.data , 'createOrder');
       }
@@ -217,7 +226,10 @@ function Rest(restSettings = {}) {
      */
     cancelOrder: async (params) => {
       const data = {};
+      let start = process.hrtime();
       const response = await request.private('DELETE', `/api/v4/futures/${settle}/orders/${params.id}`, data);
+      let end = process.hrtime(start);
+      console.log(`Cancel orderId: ${params.id}, ${hrtimeToMilliseconds(end)} ms`)
       if (response.status >= 400) {
         return handleResponseError(params, response.data, 'cancelOrder');
       }
