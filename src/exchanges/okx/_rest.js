@@ -75,6 +75,12 @@ function getCandleResolution(interval) {
 };
 /**
  * 
+ */
+function hrtimeToMilliseconds(hrtime) {
+  return (hrtime[0] * 1000) + (hrtime[1] / 1e6);
+}
+/**
+ * 
  * 
  * 
  * =================================
@@ -207,7 +213,11 @@ function Rest(restSettings = {}) {
         data.px = `${params.price}`;
         data.ordType = 'ioc';
       }
+      let start = process.hrtime();
       const response = await request.private('POST', '/api/v5/trade/order', data);
+      let end = process.hrtime(start);
+      console.log(`Create orderId: ${data.clOrdId}, RTT: ${hrtimeToMilliseconds(end)} ms`)
+
       if (response.data.code !== '0') {
         return handleResponseError(params, response.data.data[0] || response.data, 'createOrder');
       }
@@ -246,7 +256,11 @@ function Rest(restSettings = {}) {
         }
         return orderData;
       });
+      let start = process.hrtime();
       const response = await request.private('POST', '/api/v5/trade/batch-orders', data);
+      let end = process.hrtime(start);
+      console.log(`Create orders: ${data}, RTT: ${hrtimeToMilliseconds(end)} ms`)
+
       if (response.data.code !== '0') {
         return params.map((v, i) => handleResponseError(v, response.data.data[i] || response.data, 'createOrders 1'));
       }
@@ -266,7 +280,11 @@ function Rest(restSettings = {}) {
       const data = {};
       data.instId = params.symbol;
       data.clOrdId = params.id;
+      let start = process.hrtime();
       const response = await request.private('POST', '/api/v5/trade/cancel-order', data);
+      let end = process.hrtime(start);
+      console.log(`Cancel orderId: ${data.clOrdId}, RTT: ${hrtimeToMilliseconds(end)} ms`)
+
       if (response.data.code !== '0') {
         return handleResponseError(params, response.data.data[0] || response.data, 'cancelOrder');
       }
@@ -283,7 +301,11 @@ function Rest(restSettings = {}) {
       const data = params.map(v => {
         return { instId: v.symbol, clOrdId: v.id }
       });
+      let start = process.hrtime();
       const response = await request.private('POST', '/api/v5/trade/cancel-batch-orders', data);
+      let end = process.hrtime(start);
+      console.log(`Cancel orders: ${data}, RTT: ${hrtimeToMilliseconds(end)} ms`)
+
       if (response.data.code !== '0') {
         return params.map((v, i) => handleResponseError(v, response.data.data[i] || response.data, 'cancelOrders 1'));
       }
@@ -303,7 +325,11 @@ function Rest(restSettings = {}) {
       // Get open orders
       const ordersData = {};
       ordersData.instId = params.symbol;
+      let start = process.hrtime();
       const ordersResponse = await request.private('GET', '/api/v5/trade/orders-pending', null, ordersData);
+      let end = process.hrtime(start);
+      console.log(`Cancel orders all pending, RTT: ${hrtimeToMilliseconds(end)} ms`)
+
       if (ordersResponse.data.code !== '0') {
         return handleResponseError(params, ordersResponse.data.data[0] || ordersResponse.data, 'cancelOrdersAll 1');
       }
@@ -314,7 +340,11 @@ function Rest(restSettings = {}) {
       const cancelData = ordersResponse.data.data.map(v => {
         return { instId: params.symbol, ordId: v.ordId };
       });
+      start = process.hrtime();
       const cancelResponse = await request.private('POST', '/api/v5/trade/cancel-batch-orders', cancelData);
+      end = process.hrtime(start);
+      console.log(`Cancel orders all batch, RTT: ${hrtimeToMilliseconds(end)} ms`)
+
       if (cancelResponse.data.code !== '0') {
         return handleResponseError(params, cancelResponse.data.data[0] || cancelResponse.data, 'cancelOrdersAll 2');
       }
@@ -338,7 +368,11 @@ function Rest(restSettings = {}) {
       if (params.quantity) {
         data.newSz = `${params.quantity}`;
       }
+      let start = process.hrtime();
       const response = await request.private('POST', '/api/v5/trade/amend-order', data);
+      let end = process.hrtime(start);
+      console.log(`Update orderId: ${data.clOrdId}, RTT: ${hrtimeToMilliseconds(end)} ms`)
+
       if (response.data.code !== '0') {
         return handleResponseError(params, response.data.data[0] || response.data, 'updateOrder');
       }
@@ -365,7 +399,11 @@ function Rest(restSettings = {}) {
         }
         return orderData;
       });
+      let start = process.hrtime();
       const response = await request.private('POST', '/api/v5/trade/amend-batch-orders', data);
+      let end = process.hrtime(start);
+      console.log(`Update orders: ${data}, RTT: ${hrtimeToMilliseconds(end)} ms`)
+
       if (response.data.code !== '0') {
         return params.map((v, i) => handleResponseError(v, response.data.data[i] || response.data, 'updateOrders 1'));
       }

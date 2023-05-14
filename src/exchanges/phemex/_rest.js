@@ -95,6 +95,12 @@ function getCandleResolution(interval) {
 };
 /**
  * 
+ */
+function hrtimeToMilliseconds(hrtime) {
+  return (hrtime[0] * 1000) + (hrtime[1] / 1e6);
+}
+/**
+ * 
  * 
  * 
  * =================================
@@ -231,7 +237,10 @@ function Rest(restSettings = {}) {
         data.ordType = 'Limit'
         data.timeInForce = 'ImmediateOrCancel'
       }
+      let start = process.hrtime();
       const response = await request.private('PUT', '/orders/create', data, '', 1);
+      let end = process.hrtime(start);
+      console.log(`Create orderId: ${data.clOrdID}, RTT: ${hrtimeToMilliseconds(end)} ms`)
       
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){
@@ -265,7 +274,10 @@ function Rest(restSettings = {}) {
       const data = {};
       data.symbol = params.symbol;
       data.orderID = params.id;
+      let start = process.hrtime();
       const response = await request.private('DELETE', '/orders/cancel', data, '', 1);
+      let end = process.hrtime(start);
+      console.log(`Cancel orderId: ${data.orderID}, RTT: ${hrtimeToMilliseconds(end)} ms`)
       
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){
@@ -297,7 +309,10 @@ function Rest(restSettings = {}) {
       // Get open orders
       const data = {};
       data.symbol = params.symbol;
+      let start = process.hrtime();
       const response = await request.private('DELETE', '/orders/all', data, '', 3);
+      let end = process.hrtime(start);
+      console.log(`Cancel orders all, RTT: ${hrtimeToMilliseconds(end)} ms`)
       
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){
@@ -329,8 +344,10 @@ function Rest(restSettings = {}) {
       if (params.quantity) {
         data.orderQty = params.quantity;
       }
-
+      let start = process.hrtime();
       const response = await request.private('PUT', '/orders/replace', data, '', 1);
+      let end = process.hrtime(start);
+      console.log(`Update orderId: ${data.orderID}, RTT: ${hrtimeToMilliseconds(end)} ms`)
 
       if (response.data.code) {
         if (response.data && response.data.data && response.data.data[0]){

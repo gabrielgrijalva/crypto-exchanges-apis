@@ -69,6 +69,12 @@ function getCandleResolution(interval) {
 };
 /**
  * 
+ */
+function hrtimeToMilliseconds(hrtime) {
+  return (hrtime[0] * 1000) + (hrtime[1] / 1e6);
+}
+/**
+ * 
  * 
  * 
  * =================================
@@ -200,11 +206,14 @@ function Rest(restSettings = {}) {
         data.price = params.price;
         data.effect_type = 2;
       }
+      let start = process.hrtime();
       const response = await request.private('POST', `/order/put_${requestPath}`, data);
+      let end = process.hrtime(start);
       if (+response.data.code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data, 'createOrder');
       }
       params.id = response.data.data.order_id.toString();
+      console.log(`Create orderId: ${params.id}, RTT: ${hrtimeToMilliseconds(end)} ms`)
       return { data: params };
     },
     /**
@@ -228,7 +237,10 @@ function Rest(restSettings = {}) {
       data.order_id = +params.id;
       data.timestamp = Date.now();
       data.windowtime = 10000;
+      let start = process.hrtime();
       const response = await request.private('POST', '/order/cancel', data);
+      let end = process.hrtime(start);
+      console.log(`Cancel orderId: ${data.order_id}, RTT: ${hrtimeToMilliseconds(end)} ms`)
       if (+response.data.code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data, 'cancelOrder');
       }
@@ -247,7 +259,10 @@ function Rest(restSettings = {}) {
       data.order_ids = params.map(v => +v.id).join('p');
       data.timestamp = Date.now();
       data.windowtime = 10000;
+      let start = process.hrtime();
       const response = await request.private('POST', '/order/cancel_batch', data);
+      let end = process.hrtime(start);
+      console.log(`Cancel orderIds: ${data.order_ids}, ${hrtimeToMilliseconds(end)} ms`)
       if (+response.data.code !== 0 || response.status >= 400) {
         return params.map(v => handleResponseError(v, response.data, 'cancelOrders'));
       }
@@ -265,7 +280,10 @@ function Rest(restSettings = {}) {
       data.market = params.symbol;
       data.timestamp = Date.now();
       data.windowtime = 10000;
+      let start = process.hrtime();
       const response = await request.private('POST', '/order/cancel_all', data);
+      let end = process.hrtime(start);
+      console.log(`Cancel orders all, RTT: ${hrtimeToMilliseconds(end)} ms`)
       if (+response.data.code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data, 'cancelOrdersAll');
       }

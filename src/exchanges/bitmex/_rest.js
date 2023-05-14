@@ -73,6 +73,12 @@ function getCandleResolution(interval) {
 };
 /**
  * 
+ */
+function hrtimeToMilliseconds(hrtime) {
+  return (hrtime[0] * 1000) + (hrtime[1] / 1e6);
+}
+/**
+ * 
  * @param {string} asset
  */
 function getEquityDivisor(asset) {
@@ -211,7 +217,10 @@ function Rest(restSettings = {}) {
         data.ordType = 'Limit';
         data.timeInForce = 'ImmediateOrCancel';
       }
+      let start = process.hrtime();
       const response = await request.private('POST', '/api/v1/order', data);
+      let end = process.hrtime(start);
+      console.log(`Create orderId: ${data.clOrdID}, RTT: ${hrtimeToMilliseconds(end)} ms`)
       if (response.status >= 400) {
         return handleResponseError(params, response.data, 'createOrder');
       }
@@ -236,7 +245,10 @@ function Rest(restSettings = {}) {
     cancelOrder: async (params) => {
       const data = {};
       data.clOrdID = [params.id];
+      let start = process.hrtime();
       const response = await request.private('DELETE', '/api/v1/order', data);
+      let end = process.hrtime(start);
+      console.log(`Cancel orderId: ${data.clOrdID}, RTT: ${hrtimeToMilliseconds(end)} ms`)
       if (response.status >= 400) {
         return handleResponseError(params, response.data, 'cancelOrder');
       }
@@ -253,7 +265,10 @@ function Rest(restSettings = {}) {
     cancelOrders: async (params) => {
       const data = {};
       data.clOrdID = params.map(v => v.id);
+      let start = process.hrtime();
       const response = await request.private('DELETE', '/api/v1/order', data);
+      let end = process.hrtime(start);
+      console.log(`Cancel orderId: ${data.clOrdID}, RTT: ${hrtimeToMilliseconds(end)} ms`)
       if (response.status >= 400) {
         return params.map(v => handleResponseError(v, response.data, 'cancelOrders 1'));
       }
@@ -275,7 +290,10 @@ function Rest(restSettings = {}) {
     cancelOrdersAll: async (params) => {
       const data = {};
       data.symbol = params.symbol;
+      let start = process.hrtime();
       const response = await request.private('DELETE', '/api/v1/order/all', data);
+      let end = process.hrtime(start);
+      console.log(`Cancel orders all, RTT: ${hrtimeToMilliseconds(end)} ms`)
       if (response.status >= 400) {
         return handleResponseError(params, response.data, 'cancelOrdersAll');
       }
@@ -298,7 +316,10 @@ function Rest(restSettings = {}) {
       if (params.quantity) {
         data.orderQty = params.quantity;
       }
+      let start = process.hrtime();
       const response = await request.private('PUT', '/api/v1/order', data);
+      let end = process.hrtime(start);
+      console.log(`Update orderId: ${data.origClOrdID}, RTT: ${hrtimeToMilliseconds(end)} ms`)
       if (response.status >= 400) {
         return handleResponseError(params, response.data, 'updateOrder');
       }

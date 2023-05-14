@@ -203,7 +203,7 @@ function Rest(restSettings = {}) {
       let start = process.hrtime();
       const response = await request.private('POST', `/api/v4/futures/${settle}/orders`, data);
       let end = process.hrtime(start);
-      console.log(`Create orderId: ${data.text}, ${hrtimeToMilliseconds(end)} ms`)
+      console.log(`Create orderId: ${data.text}, RTT: ${hrtimeToMilliseconds(end)} ms`)
       if (response.status >= 400) {
         return handleResponseError(params, response.data , 'createOrder');
       }
@@ -229,7 +229,8 @@ function Rest(restSettings = {}) {
       let start = process.hrtime();
       const response = await request.private('DELETE', `/api/v4/futures/${settle}/orders/${params.id}`, data);
       let end = process.hrtime(start);
-      console.log(`Cancel orderId: ${params.id}, ${hrtimeToMilliseconds(end)} ms`)
+      console.log(`Cancel orderId: ${params.id}, RTT: ${hrtimeToMilliseconds(end)} ms`)
+      
       if (response.status >= 400) {
         return handleResponseError(params, response.data, 'cancelOrder');
       }
@@ -253,7 +254,11 @@ function Rest(restSettings = {}) {
     cancelOrdersAll: async (params) => {
       const data = {};
       data.contract = params.symbol;
+      let start = process.hrtime();
       const response = await request.private('DELETE', `/api/v4/futures/${settle}/orders`, data);
+      let end = process.hrtime(start);
+      console.log(`Cancel orders all, RTT: ${hrtimeToMilliseconds(end)} ms`)
+
       if (response.status >= 400) {
         return handleResponseError(params, response.data, 'cancelOrdersAll');
       }

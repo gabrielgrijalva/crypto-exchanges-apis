@@ -82,6 +82,12 @@ function getCandleResolution(interval) {
 };
 /**
  * 
+ */
+function hrtimeToMilliseconds(hrtime) {
+  return (hrtime[0] * 1000) + (hrtime[1] / 1e6);
+}
+/**
+ * 
  * @param {string} symbol 
  */
 function getBasePath(symbol) {
@@ -219,7 +225,10 @@ function Rest(restSettings = {}) {
         data.time_in_force = 'ImmediateOrCancel';
       }
       const basePath = getBasePath(params.symbol);
+      let start = process.hrtime();
       const response = await request.private('POST', `/${basePath}/private/order/create`, data);
+      let end = process.hrtime(start);
+      console.log(`Create orderId: ${data.order_link_id}, RTT: ${hrtimeToMilliseconds(end)} ms`)
       if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data, 'createOrder');
       }
@@ -245,7 +254,10 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       data.order_link_id = params.id;
       const basePath = getBasePath(params.symbol);
+      let start = process.hrtime();
       const response = await request.private('POST', `/${basePath}/private/order/cancel`, data);
+      let end = process.hrtime(start);
+      console.log(`Cancel orderId: ${data.order_link_id}, RTT: ${hrtimeToMilliseconds(end)} ms`)
       if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data, 'cancelOrder');
       }
@@ -270,7 +282,10 @@ function Rest(restSettings = {}) {
       const data = {};
       data.symbol = params.symbol;
       const basePath = getBasePath(params.symbol);
+      let start = process.hrtime();
       const response = await request.private('POST', `/${basePath}/private/order/cancelAll`, data);
+      let end = process.hrtime(start);
+      console.log(`Cancel orders all, RTT: ${hrtimeToMilliseconds(end)} ms`)
       if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data, 'cancelOrdersAll');
       }
@@ -294,7 +309,10 @@ function Rest(restSettings = {}) {
         data.p_r_qty = params.quantity;
       }
       const basePath = getBasePath(params.symbol);
+      let start = process.hrtime();
       const response = await request.private('POST', `/${basePath}/private/order/replace`, data);
+      let end = process.hrtime(start);
+      console.log(`Update orderId: ${data.order_link_id}, RTT: ${hrtimeToMilliseconds(end)} ms`)
       if (+response.data.ret_code !== 0 || response.status >= 400) {
         return handleResponseError(params, response.data, 'updateOrder');
       }
