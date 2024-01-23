@@ -352,6 +352,14 @@ function Rest(restSettings = {}) {
     /**
      * 
      * 
+     * GET EQUITY AND PNL
+     * 
+     * 
+     */
+    getEquityAndPnl: null,
+    /**
+     * 
+     * 
      * GET CANDLES
      * 
      * 

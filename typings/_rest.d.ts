@@ -83,6 +83,9 @@ declare namespace RestN {
   type getEquityParams = {
     asset: string;
   }
+  type getEquityAndPnlParams = {
+    asset: string;
+  }
   type getCandlesParams = {
     start: string;
     symbol: string;
@@ -130,6 +133,10 @@ declare namespace RestN {
   type cancelOrdersAllResponseData = cancelOrdersAllParams | { successes: any[] };
   type updateOrderResponseData = updateOrderParams;
   type getEquityResponseData = number;
+  type getEquityAndPnlResponseData = {
+    equity: number;
+    pnl: number;
+  }
   type getCandlesResponseData = {
     timestamp: string;
     open: number;
@@ -260,6 +267,7 @@ declare namespace RestN {
      * INFORMATION FUNCTIONS
      */
     getEquity(params: getEquityParams): Promise<RestResponse<getEquityResponseData>>;
+    getEquityAndPnl(params: getEquityAndPnlParams): Promise<RestResponse<getEquityAndPnlResponseData>>;
     getCandles(params: getCandlesParams): Promise<RestResponse<getCandlesResponseData>>;
     getPosition(params: getPositionParams): Promise<RestResponse<getPositionResponseData>>;
     getLastPrice(params: getLastPriceParams): Promise<RestResponse<getLastPriceResponseData>>;

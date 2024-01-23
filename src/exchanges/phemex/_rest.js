@@ -34,8 +34,7 @@ function handleResponseError(params, responseData, callingFunction) {
   let type = 'unknown';
   if (responseData.code) {
     const errorCode = (responseData.code).toString();
-    switch (errorCode)
-    {
+    switch (errorCode) {
       case '11006':
         type = 'no-function';
         break;
@@ -64,10 +63,10 @@ function handleResponseError(params, responseData, callingFunction) {
       case '11058':
       case '10500':
         type = 'request-not-accepted';
-        break; 
+        break;
       case '11015':
         type = 'immidiate-or-cancel-reject';
-        break; 
+        break;
     }
   }
   return {
@@ -218,41 +217,38 @@ function Rest(restSettings = {}) {
       data.side = params.side == 'sell' ? 'Sell' : 'Buy';
       data.orderQty = params.quantity;
       data.clOrdID = params.id;
-      if (params.type == 'limit'){
+      if (params.type == 'limit') {
         data.priceEp = params.price * priceScale;
         data.ordType = 'Limit'
         data.timeInForce = 'GoodTillCancel'
       }
-      if (params.type == 'market'){
+      if (params.type == 'market') {
         data.ordType = 'Market'
         data.timeInForce = 'ImmediateOrCancel'
       }
-      if (params.type == 'post-only'){
+      if (params.type == 'post-only') {
         data.priceEp = params.price * priceScale;
         data.ordType = 'Limit'
         data.timeInForce = 'PostOnly'
       }
-      if (params.type == 'immidiate-or-cancel'){
+      if (params.type == 'immidiate-or-cancel') {
         data.priceEp = params.price * priceScale;
         data.ordType = 'Limit'
         data.timeInForce = 'ImmediateOrCancel'
       }
       let start = process.hrtime();
       const response = await request.private('PUT', '/orders/create', data, '', 1);
-      let end = process.hrtime(start);
-      console.log(`Create orderId: ${data.clOrdID}, RTT: ${hrtimeToMilliseconds(end)} ms`)
-      
       if (response.data.code) {
-        if (response.data && response.data.data && response.data.data[0]){
+        if (response.data && response.data.data && response.data.data[0]) {
           return handleResponseError(params, response.data.data[0], 'createOrder 1')
         }
-        if (response.data){
+        if (response.data) {
           return handleResponseError(params, response.data, 'createOrder 2')
         }
       }
 
       params.id = response.data.data.orderID
-      
+
       return { data: params };
     },
     /**
@@ -262,7 +258,7 @@ function Rest(restSettings = {}) {
      * 
      * 
      */
-     createOrders: (params) => Promise.all(params.map(v => rest.createOrder(v))),
+    createOrders: (params) => Promise.all(params.map(v => rest.createOrder(v))),
     /**
      * 
      * 
@@ -276,18 +272,15 @@ function Rest(restSettings = {}) {
       data.orderID = params.id;
       let start = process.hrtime();
       const response = await request.private('DELETE', '/orders/cancel', data, '', 1);
-      let end = process.hrtime(start);
-      console.log(`Cancel orderId: ${data.orderID}, RTT: ${hrtimeToMilliseconds(end)} ms`)
-      
       if (response.data.code) {
-        if (response.data && response.data.data && response.data.data[0]){
+        if (response.data && response.data.data && response.data.data[0]) {
           return handleResponseError(params, response.data.data[0], 'cancelOrder 1')
         }
-        if (response.data){
+        if (response.data) {
           return handleResponseError(params, response.data, 'cancelOrder 2')
         }
       }
-      
+
       return { data: params };
     },
     /**
@@ -297,7 +290,7 @@ function Rest(restSettings = {}) {
      * 
      * 
      */
-     cancelOrders: (params) => Promise.all(params.map(v => rest.cancelOrder(v))),
+    cancelOrders: (params) => Promise.all(params.map(v => rest.cancelOrder(v))),
     /**
      * 
      * 
@@ -311,18 +304,15 @@ function Rest(restSettings = {}) {
       data.symbol = params.symbol;
       let start = process.hrtime();
       const response = await request.private('DELETE', '/orders/all', data, '', 3);
-      let end = process.hrtime(start);
-      console.log(`Cancel orders all, RTT: ${hrtimeToMilliseconds(end)} ms`)
-      
       if (response.data.code) {
-        if (response.data && response.data.data && response.data.data[0]){
+        if (response.data && response.data.data && response.data.data[0]) {
           return handleResponseError(params, response.data.data[0], 'cancelOrdersAll 1')
         }
-        if (response.data){
+        if (response.data) {
           return handleResponseError(params, response.data, 'cancelOrdersAll 2')
         }
       }
-      
+
       return { data: params }
     },
     /**
@@ -334,7 +324,7 @@ function Rest(restSettings = {}) {
      */
     updateOrder: async (params) => {
 
-      const data ={};
+      const data = {};
       data.orderID = params.id;
       data.symbol = params.symbol;
 
@@ -350,14 +340,14 @@ function Rest(restSettings = {}) {
       console.log(`Update orderId: ${data.orderID}, RTT: ${hrtimeToMilliseconds(end)} ms`)
 
       if (response.data.code) {
-        if (response.data && response.data.data && response.data.data[0]){
+        if (response.data && response.data.data && response.data.data[0]) {
           return handleResponseError(params, response.data.data[0], 'updateOrder 1')
         }
-        if (response.data){
+        if (response.data) {
           return handleResponseError(params, response.data, 'updateOrder 2')
         }
       }
-      
+
 
       return { data: params }
     },
@@ -381,23 +371,31 @@ function Rest(restSettings = {}) {
       const data = {};
       data.currency = params.asset;
       const response = await request.private('GET', '/accounts/positions', data, '', 25);
-      
+
       if (response.data.code) {
-        if (response.data && response.data.data && response.data.data[0]){
+        if (response.data && response.data.data && response.data.data[0]) {
           return handleResponseError(params, response.data.data[0], 'getEquity 1')
         }
-        if (response.data){
+        if (response.data) {
           return handleResponseError(params, response.data, 'getEquity 2')
         }
       }
 
       // Get pnl for all asset positions
-      const unrealised_pnl = response.data.data.positions.map(v => 
+      const unrealised_pnl = response.data.data.positions.map(v =>
         v.unRealisedPnlEv
       ).reduce((a, b) => a + b)
       const equity = (response.data.data.account.accountBalanceEv + unrealised_pnl) / valueScale;
       return { data: equity };
     },
+    /**
+     * 
+     * 
+     * GET EQUITY AND PNL
+     * 
+     * 
+     */
+    getEquityAndPnl: null,
     /**
      * 
      * 
@@ -411,38 +409,38 @@ function Rest(restSettings = {}) {
       data.resolution = getCandleResolution(params.interval);
       data.limit = 1000;
       let response = await request.public('GET', '/exchange/public/md/v2/kline', data, 10);
-      
+
       if (response.data.code) {
-        if (response.data && response.data.data && response.data.data[0]){
+        if (response.data && response.data.data && response.data.data[0]) {
           return handleResponseError(params, response.data.data[0], 'getCandles 1')
         }
-        if (response.data){
+        if (response.data) {
           return handleResponseError(params, response.data, 'getCandles 2')
         }
       }
 
-      if (!response.data.data || !response.data.data || !response.data.data.rows) { 
+      if (!response.data.data || !response.data.data || !response.data.data.rows) {
 
         console.log('Empty response query candles.')
 
         let retryCount = 0;
 
-        while(retryCount < 15){
+        while (retryCount < 15) {
           retryCount++;
           console.log(`Query query candles Retry (${retryCount}).`)
           await wait(1000);
           response = await request.public('GET', '/exchange/public/md/v2/kline', data, 10);
-          
+
           if (response.data.code) {
-            if (response.data && response.data.data && response.data.data[0]){
+            if (response.data && response.data.data && response.data.data[0]) {
               return handleResponseError(params, response.data.data[0], 'getCandles 3')
             }
-            if (response.data){
+            if (response.data) {
               return handleResponseError(params, response.data, 'getCandles 4')
             }
           }
-          
-          if (response.data.data && response.data.data.length && response.data.data.rows){
+
+          if (response.data.data && response.data.data.length && response.data.data.rows) {
             break;
           }
         }
@@ -451,10 +449,10 @@ function Rest(restSettings = {}) {
           console.log('Empty response on retry. No error code.')
           // Send order not found error if orderID isn't found in retry
           response.data.code = 10002;
-          if (response.data && response.data.data && response.data.data[0]){
+          if (response.data && response.data.data && response.data.data[0]) {
             return handleResponseError(params, response.data.data[0], 'getCandles 5')
           }
-          if (response.data){
+          if (response.data) {
             return handleResponseError(params, response.data, 'getCandles 6')
           }
         }
@@ -466,7 +464,7 @@ function Rest(restSettings = {}) {
 
       const candles = response.data.data.rows.reverse().map(v => {
         const candle = {};
-        candle.timestamp = moment(+v[0]*1000).utc().format('YYYY-MM-DD HH:mm:ss');
+        candle.timestamp = moment(+v[0] * 1000).utc().format('YYYY-MM-DD HH:mm:ss');
         candle.open = +v[3] / priceScale;
         candle.high = +v[4] / priceScale;
         candle.low = +v[5] / priceScale;
@@ -485,7 +483,7 @@ function Rest(restSettings = {}) {
      */
     getPosition: async (params) => {
       const data = {};
-      switch(params.symbol){
+      switch (params.symbol) {
         case 'BTCUSD':
           data.currency = 'BTC';
           break
@@ -496,18 +494,18 @@ function Rest(restSettings = {}) {
           data.currency = 'USD';
       }
       const response = await request.private('GET', '/accounts/positions', data, '', 25);
-      
+
       if (response.data.code) {
-        if (response.data && response.data.data && response.data.data[0]){
+        if (response.data && response.data.data && response.data.data[0]) {
           return handleResponseError(params, response.data.data[0], 'getPosition 1')
         }
-        if (response.data){
+        if (response.data) {
           return handleResponseError(params, response.data, 'getPosition 2')
         }
       }
 
       if (!response || !response.data || !response.data.data || !response.data.data.positions) { return };
-      
+
       const positionData = response.data.data.positions.find(v => v.symbol === params.symbol);
       const qtyS = positionData && positionData.side == 'Sell' ? Math.abs(+positionData.size) : 0;
       const qtyB = positionData && positionData.side == 'Buy' ? Math.abs(+positionData.size) : 0;
@@ -529,10 +527,10 @@ function Rest(restSettings = {}) {
       const response = await request.public('GET', '/v1/md/ticker/24hr', data);
 
       if (response.data.code) {
-        if (response.data && response.data.data && response.data.data[0]){
+        if (response.data && response.data.data && response.data.data[0]) {
           return handleResponseError(params, response.data.data[0], 'getLastPrice 1')
         }
-        if (response.data){
+        if (response.data) {
           return handleResponseError(params, response.data, 'getLastPrice 2')
         }
       }
@@ -551,16 +549,16 @@ function Rest(restSettings = {}) {
       const data = {};
       data.currency = params.asset;
       const response = await request.private('GET', '/accounts/positions', data, '', 25);
-      
+
       if (response.data.code) {
-        if (response.data && response.data.data && response.data.data[0]){
+        if (response.data && response.data.data && response.data.data[0]) {
           return handleResponseError(params, response.data.data[0], 'getLiquidation 1')
         }
-        if (response.data){
+        if (response.data) {
           return handleResponseError(params, response.data, 'getLiquidation 2')
         }
       }
-      
+
       const positionData = response.data.data.positions.find(v => v.symbol === params.symbol);
       // Calculate liquidation
       const markPx = +positionData.markPriceEp / priceScale;
@@ -580,12 +578,12 @@ function Rest(restSettings = {}) {
       const data = {};
       data.symbol = params.symbol;
       const response = await request.public('GET', '/v1/md/ticker/24hr', data);
-      
+
       if (response.data.code) {
-        if (response.data && response.data.data && response.data.data[0]){
+        if (response.data && response.data.data && response.data.data[0]) {
           return handleResponseError(params, response.data.data[0], 'getFundingRates 1')
         }
-        if (response.data){
+        if (response.data) {
           return handleResponseError(params, response.data, 'getFundingRates 2')
         }
       }
@@ -613,12 +611,12 @@ function Rest(restSettings = {}) {
     getInstrumentsSymbols: async () => {
       const data = {};
       const response = await request.public('GET', '/public/products', data);
-      
+
       if (response.data.code) {
-        if (response.data && response.data.data && response.data.data[0]){
+        if (response.data && response.data.data && response.data.data[0]) {
           return handleResponseError(null, response.data.data[0], 'getInstrumentsSymbols 1')
         }
-        if (response.data){
+        if (response.data) {
           return handleResponseError(null, response.data, 'getInstrumentsSymbols 2')
         }
       }
@@ -636,18 +634,18 @@ function Rest(restSettings = {}) {
       const data = {};
       data.symbol = params.symbol;
       const response = await request.public('GET', '/md/orderbook', data);
-      
+
       if (response.data.code) {
-        if (response.data && response.data.data && response.data.data[0]){
+        if (response.data && response.data.data && response.data.data[0]) {
           return handleResponseError(params, response.data.data[0], '_getOrderBook 1')
         }
-        if (response.data){
+        if (response.data) {
           return handleResponseError(params, response.data, '_getOrderBook 2')
         }
       }
 
       const orderbook = response.data.result.book;
-      
+
       const asks = orderbook.asks.map(ask => {
         return { id: +ask[0] / priceScale, price: +ask[0] / priceScale, quantity: +ask[1] };
       });

@@ -397,6 +397,22 @@ function Rest(restSettings = {}) {
     /**
      * 
      * 
+     * GET EQUITY AND PNL
+     * 
+     * 
+     */
+    getEquityAndPnl: async (params) => {
+      const data = {};
+      const response = await request.private('GET', '/dapi/v1/account', data);
+      if (response.status >= 400) {
+        return handleResponseError(params, response.data, 'getEquity');
+      }
+      const assetInfo = response.data.assets.find(v => v.asset === params.asset);
+      return { data: { equity: +assetInfo.marginBalance, pnl: +assetInfo.unrealizedProfit } };
+    },
+    /**
+     * 
+     * 
      * GET CANDLES
      * 
      * 
