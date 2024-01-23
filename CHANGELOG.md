@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.14.6] - 2024-01-23
+- Corrected project version.
 ## [2.14.4] - 2024-01-23
 - Added new function to exchanges implementations.
 ## [2.14.3] - 2023-04-26
